@@ -254,6 +254,30 @@ mod tests {
     }
 
     #[test]
+    fn p_10_1_an_answer_with_a_reason_of_17_1_is_never_kept() {
+        use procurauth_core::authzen::Reason;
+        let mut cache = AnswerCache::new(5000, 10);
+        for reason in [
+            Reason::ApprovalRequired,
+            Reason::ApprovalPending,
+            Reason::ApprovalDenied,
+            Reason::ApprovalExpired,
+        ] {
+            cache.put(key("a", "x", "h"), Decision::deny(Some(reason)), 0, 5000);
+            assert!(cache.get(&key("a", "x", "h"), 1).is_none());
+        }
+        assert_eq!(cache.len(), 0);
+        // Another reason can be kept.
+        cache.put(
+            key("a", "x", "h"),
+            Decision::deny(Some(Reason::UnknownSubject)),
+            0,
+            5000,
+        );
+        assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
     fn p_10_1b_a_full_table_keeps_no_new_answer() {
         let mut cache = AnswerCache::new(5000, 2);
         cache.put(key("a", "x", "1"), yes(), 0, 5000);
