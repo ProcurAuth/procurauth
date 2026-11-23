@@ -1,11 +1,16 @@
 //! The metadata of the PDP (AuthZEN 1.0, Policy Decision Point Metadata).
 //!
 //! The PEP reads `/.well-known/authzen-configuration` to find the endpoints.
-//! It also reads the four members of this protocol: `procurauth_usage_max_seconds`
+//! It also reads the members of this protocol: `procurauth_usage_max_seconds`
 //! (6.9), `procurauth_idle_max_seconds` (10.7), `procurauth_evaluations_max_bytes`
-//! and `procurauth_evaluations_max_items` (10.7a). A member that the PEP does not
+//! and `procurauth_evaluations_max_items` (10.7a), and
+//! `procurauth_directory_max_age_seconds` (3.9). A member that the PEP does not
 //! know is ignored. A member that it knows and that has a bad value makes the
-//! metadata not valid.
+//! metadata not valid. Each member is optional: an older PDP can omit it.
+//!
+//! The PEP takes no decision on `procurauth_directory_max_age_seconds`. It is
+//! the age bound of the copy of the directory that the PDP uses. Read it in
+//! [`PdpMetadata::directory_max_age_seconds`], for example for a log line at start.
 //!
 //! The PEP sends the credential of the service to the endpoints only. An
 //! endpoint must have the origin of the PDP. The PEP refuses an endpoint on
@@ -59,6 +64,10 @@ pub struct PdpMetadata {
     pub evaluations_max_bytes: Option<u64>,
     /// `procurauth_evaluations_max_items`: the most items of an Access Evaluations request (10.7a).
     pub evaluations_max_items: Option<u64>,
+    /// `procurauth_directory_max_age_seconds`: the age bound of the copy of the
+    /// directory that the PDP uses (3.9). It is for the logs only. The PEP takes
+    /// no decision on it.
+    pub directory_max_age_seconds: Option<u64>,
 }
 
 /// The URL of the metadata document for the PDP at this URL (AuthZEN 1.0).
@@ -79,7 +88,15 @@ impl PdpMetadata {
             idle_max_seconds: None,
             evaluations_max_bytes: None,
             evaluations_max_items: None,
+            directory_max_age_seconds: None,
         }
+    }
+
+    /// `procurauth_directory_max_age_seconds` (3.9): the age bound, in seconds,
+    /// of the copy of the directory that the PDP uses. It is `None` when the PDP
+    /// does not publish it. It is for the logs only.
+    pub fn directory_max_age_seconds(&self) -> Option<u64> {
+        self.directory_max_age_seconds
     }
 
     /// Read the metadata document of the PDP at `base`.
@@ -146,6 +163,7 @@ impl PdpMetadata {
             idle_max_seconds: whole("procurauth_idle_max_seconds")?,
             evaluations_max_bytes: whole("procurauth_evaluations_max_bytes")?,
             evaluations_max_items: whole("procurauth_evaluations_max_items")?,
+            directory_max_age_seconds: whole("procurauth_directory_max_age_seconds")?,
         })
     }
 }
@@ -187,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn p_10_7a_the_four_members_of_the_protocol_are_read() {
+    fn p_10_7a_the_members_of_the_protocol_are_read() {
         let body = br#"{
             "policy_decision_point": "http://127.0.0.1:8181",
             "access_evaluation_endpoint": "http://127.0.0.1:8181/e1",
@@ -196,15 +214,39 @@ mod tests {
             "procurauth_idle_max_seconds": 30,
             "procurauth_evaluations_max_bytes": 1048576,
             "procurauth_evaluations_max_items": 100,
+            "procurauth_directory_max_age_seconds": 60,
             "unknown_member": [1]
         }"#;
         let meta = PdpMetadata::parse(&base(), body).unwrap();
         assert_eq!(meta.evaluation_endpoint.path, "/e1");
-        assert_eq!(meta.evaluations_endpoint.unwrap().path, "/e2");
+        assert_eq!(meta.evaluations_endpoint.as_ref().unwrap().path, "/e2");
         assert_eq!(meta.usage_max_seconds, Some(5));
         assert_eq!(meta.idle_max_seconds, Some(30));
         assert_eq!(meta.evaluations_max_bytes, Some(1_048_576));
         assert_eq!(meta.evaluations_max_items, Some(100));
+        assert_eq!(meta.directory_max_age_seconds(), Some(60));
+    }
+
+    #[test]
+    fn p_3_9_the_age_bound_of_the_directory_is_optional_and_a_bad_value_is_not_valid() {
+        let absent = br#"{"policy_decision_point": "http://127.0.0.1:8181"}"#;
+        let meta = PdpMetadata::parse(&base(), absent).unwrap();
+        assert_eq!(meta.directory_max_age_seconds(), None);
+        let one = br#"{"policy_decision_point": "http://127.0.0.1:8181", "procurauth_directory_max_age_seconds": 1}"#;
+        let meta = PdpMetadata::parse(&base(), one).unwrap();
+        assert_eq!(meta.directory_max_age_seconds(), Some(1));
+        for value in ["0", "-1", "1.5", "\"60\"", "null", "true"] {
+            let body = format!(
+                r#"{{"policy_decision_point": "http://127.0.0.1:8181", "procurauth_directory_max_age_seconds": {value}}}"#
+            );
+            let error = PdpMetadata::parse(&base(), body.as_bytes()).unwrap_err();
+            assert!(
+                error
+                    .to_string()
+                    .contains("procurauth_directory_max_age_seconds"),
+                "{error}"
+            );
+        }
     }
 
     #[test]
