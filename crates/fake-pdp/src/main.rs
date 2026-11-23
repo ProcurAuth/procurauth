@@ -59,7 +59,7 @@ struct Cli {
     #[arg(long, value_name = "FILE")]
     credential_file: Option<PathBuf>,
 
-    /// Read more failures from this file. It can use the kinds close, invalid_json and no_units.
+    /// Read more failures from this file. It can use the kinds close, invalid_json, no_units and submit_*.
     #[arg(long, value_name = "FILE")]
     failures: Option<PathBuf>,
 

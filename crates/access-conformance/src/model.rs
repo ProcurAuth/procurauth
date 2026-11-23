@@ -107,9 +107,7 @@ impl Condition {
             Self::NoInputTool => "the service has no tool that asks for input",
             Self::NoMultiAction => "the service has no use that needs two permissions",
             Self::SingleKeySet => "the key set of the edge holds one key",
-            Self::NoApprovalSupport => {
-                "the target does not give approvals yet (protocol section 17)"
-            }
+            Self::NoApprovalSupport => "the target gives no approval (protocol section 17)",
             Self::NoPdpCredential => "the profile gives no credential of the service for the PDP",
         }
     }

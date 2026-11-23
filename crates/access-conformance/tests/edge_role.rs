@@ -42,7 +42,7 @@ fn a_correct_edge_passes_every_case_that_the_runner_can_run() {
     assert_eq!(out.ids_with("skip"), vec!["E15", "E16", "E19"]);
     assert!(
         out.line("E19")
-            .ends_with("the target does not give approvals yet (protocol section 17)")
+            .ends_with("the target gives no approval (protocol section 17)")
     );
     assert!(
         out.line("E15")

@@ -861,3 +861,48 @@ fn a_case_of_the_approval_profile_has_the_condition_no_approval_support_unless_i
         );
     }
 }
+
+/// The number of case files of a series.
+fn series_count(series: &str) -> usize {
+    fs::read_dir(conformance_dir().join("cases").join(series))
+        .unwrap()
+        .filter(|e| {
+            e.as_ref()
+                .unwrap()
+                .path()
+                .extension()
+                .is_some_and(|x| x == "json")
+        })
+        .count()
+}
+
+#[test]
+fn the_readme_and_the_site_give_the_real_number_of_cases() {
+    let (u, d, e) = (series_count("U"), series_count("D"), series_count("E"));
+    let total = u + d + e;
+    let root = repository_root();
+    let readme = fs::read_to_string(root.join("README.md")).unwrap();
+    for text in [
+        format!("conformance-{total}%20cases"),
+        format!("{total} conformance cases: {u} for a PEP, {d} for a PDP and {e} for an edge"),
+        format!("the JSON schemas, {total} conformance cases"),
+    ] {
+        assert!(
+            readme.contains(&text),
+            "README.md: the text {text:?} is absent"
+        );
+    }
+    for page in ["docs/conformance.html", "docs/assets/conformance.svg"] {
+        let text = fs::read_to_string(root.join(page)).unwrap();
+        assert!(
+            text.contains(&total.to_string()),
+            "{page}: the total {total} is absent"
+        );
+        for count in [u, d, e] {
+            assert!(
+                text.contains(&count.to_string()),
+                "{page}: the count {count} is absent"
+            );
+        }
+    }
+}
