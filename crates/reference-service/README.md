@@ -88,7 +88,7 @@ The section `pdp` is an object. Its keys have the prefix `pdp.` in the table.
 
 A test checks that this table is the table of the code. The function `reference_service::config::reference_table()` makes it.
 
-The key `pdp.url` takes only an `http` URL, because this program has no TLS client. The link to the PDP must be secured (10.0, step 4). A deployment builds its own service with the library, and it gives the library a transport with TLS. See the README of `procurauth-pep`.
+The key `pdp.url` takes only an `http` URL, with `pdp.allow_plain_http` true. This program uses `HttpTransport`, and it builds the library without the feature `tls`. The link to the PDP must be secured (10.0, step 4). A deployment builds its own service with the library. It gives the library `TlsTransport` (feature `tls`), or another transport with TLS. See the README of `procurauth-pep`.
 
 The key `cache_ttl_seconds` has the default 0. A kept answer can show an old right for `cache_ttl_seconds` at most (3.5). The conformance cases also expect that each request reaches the PDP.
 

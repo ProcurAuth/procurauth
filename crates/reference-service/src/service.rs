@@ -27,7 +27,8 @@ const QUEUE: usize = 64;
 
 /// Build the service from the configuration of the PEP. The transport is
 /// `HttpTransport`: it has no TLS, so the link to the PDP is `http`. A deployment
-/// that needs TLS builds the [`App`] with its own transport.
+/// that needs TLS builds the [`App`] with `TlsTransport` (feature `tls` of
+/// `procurauth-pep`), or with another transport.
 ///
 /// # Errors
 /// Returns every error of the configuration of the PEP, of the action document and of the map of the tools.

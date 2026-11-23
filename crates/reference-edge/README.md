@@ -124,7 +124,7 @@ The sections `upstream`, `signing` and `pdp` are objects. Their keys have the pr
 
 A test checks that this table is the table of the code. The function `reference_edge::config::reference_table()` makes it.
 
-The keys `upstream.url` and `pdp.url` take only an `http` URL, because this program has no TLS client. The link to the PDP must be secured (10.0, step 4). Use a proxy that ends TLS, or build an edge with the library and give it a transport with TLS.
+The keys `upstream.url` and `pdp.url` take only an `http` URL, because this program has no TLS client. The link to the PDP must be secured (10.0, step 4). Use a proxy that ends TLS. Or build an edge with the library, and give it `TlsTransport` (feature `tls` of `procurauth-pep`) or another transport with TLS.
 
 The paths in the examples start at the root of the repository. Run the program from there.
 
