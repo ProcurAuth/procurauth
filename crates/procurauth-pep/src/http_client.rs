@@ -1,9 +1,13 @@
-//! A synchronous HTTP/1.1 client over `std::net`, for `http` URLs.
+//! A synchronous HTTP/1.1 client over `std::net`.
 //!
-//! This client has no TLS. A deployment needs a secured link to the PDP
-//! (10.0, step 4). Use this client for tests on the loopback address, or
-//! for a link that another layer secures. For `https`, implement
-//! [`PdpTransport`] with a TLS client.
+//! [`HttpTransport`] sends the requests over plain TCP, for `http` URLs. It has
+//! no TLS. A deployment needs a secured link to the PDP (10.0, step 4). Use
+//! this client for tests on the loopback address, or for a link that another
+//! layer secures. For `https`, use `TlsTransport` of the module `tls` (feature
+//! `tls`), or implement [`PdpTransport`] with another TLS client.
+//!
+//! The HTTP/1.1 code of this module works on any byte stream. The plain client
+//! and the TLS client share it: the pool, the request and the reader of the answer.
 //!
 //! # Connections (10.7)
 //!
@@ -18,6 +22,8 @@
 //!
 //! A failure before the first byte of the request is [`TransportError::NotSent`].
 //! A failure after it is [`TransportError::Lost`] or [`TransportError::Timeout`].
+//! A failure to open a connection is `NotSent`. For TLS, this includes a failure
+//! of the handshake.
 
 use std::io::{ErrorKind, Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
@@ -39,7 +45,7 @@ const MAX_HEADERS: usize = 100;
 pub struct HttpTransportConfig {
     /// The most connections at one time. The value is a small fixed number (10.7).
     pub max_connections: usize,
-    /// The longest wait for a new connection.
+    /// The longest wait for a new connection. For TLS, the wait includes the handshake.
     pub connect_timeout: Duration,
     /// The longest idle time of a connection, until the PEP gives another value.
     pub idle_close_after: Duration,
@@ -60,43 +66,92 @@ impl HttpTransportConfig {
     }
 }
 
-struct Conn {
-    stream: TcpStream,
+/// A byte stream to the PDP: a TCP connection, or a TLS session over a TCP connection.
+pub(crate) trait Wire: Read + Write + Send {
+    /// The TCP connection under the stream. The client sets the timeouts on it.
+    fn socket(&self) -> &TcpStream;
+
+    /// True when the PDP has not closed the connection, and no stray byte waits on it.
+    fn is_alive(&mut self) -> bool;
+}
+
+/// The way to open a stream to the PDP for one scheme.
+pub(crate) trait Connector: Send + Sync {
+    /// The stream that the connector opens.
+    type Stream: Wire;
+
+    /// The scheme of the URLs that the connector can use.
+    fn scheme(&self) -> Scheme;
+
+    /// The text of the error for a URL with another scheme.
+    fn other_scheme(&self) -> &'static str;
+
+    /// Make a stream from a new TCP connection. No byte of a request goes on the
+    /// connection before this function returns. Thus a failure here is `NotSent`.
+    /// The function must return before `deadline`.
+    fn open(&self, url: &Url, socket: TcpStream, deadline: Instant)
+    -> Result<Self::Stream, String>;
+}
+
+impl Wire for TcpStream {
+    fn socket(&self) -> &TcpStream {
+        self
+    }
+
+    fn is_alive(&mut self) -> bool {
+        is_alive(self)
+    }
+}
+
+/// The connector of plain TCP, for `http` URLs.
+#[derive(Debug)]
+pub(crate) struct Plain;
+
+impl Connector for Plain {
+    type Stream = TcpStream;
+
+    fn scheme(&self) -> Scheme {
+        Scheme::Http
+    }
+
+    fn other_scheme(&self) -> &'static str {
+        "this client has no TLS: give it an `http` URL, or use a transport with TLS"
+    }
+
+    fn open(&self, _url: &Url, socket: TcpStream, _deadline: Instant) -> Result<TcpStream, String> {
+        Ok(socket)
+    }
+}
+
+struct Conn<S> {
+    stream: S,
     authority: String,
     last_used: Instant,
 }
 
-#[derive(Default)]
-struct Pool {
-    idle: Vec<Conn>,
+struct Pool<S> {
+    idle: Vec<Conn<S>>,
     /// The connections that exist: the idle ones and the ones in use.
     open: usize,
 }
 
-/// A synchronous HTTP/1.1 client with a small pool of connections.
-pub struct HttpTransport {
+/// The pool, the requests and the answers, for one kind of stream.
+pub(crate) struct Client<C: Connector> {
+    connector: C,
     config: HttpTransportConfig,
     idle_close_millis: AtomicU64,
-    pool: Mutex<Pool>,
+    pool: Mutex<Pool<C::Stream>>,
     freed: Condvar,
 }
 
-impl std::fmt::Debug for HttpTransport {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HttpTransport")
-            .field("config", &self.config)
-            .finish_non_exhaustive()
-    }
-}
-
 /// A connection that the pool lent. It goes back to the pool, or it is closed.
-struct Lent<'a> {
-    transport: &'a HttpTransport,
-    conn: Option<Conn>,
+struct Lent<'a, C: Connector> {
+    client: &'a Client<C>,
+    conn: Option<Conn<C::Stream>>,
 }
 
-impl Lent<'_> {
-    fn stream(&mut self) -> Result<&mut TcpStream, TransportError> {
+impl<C: Connector> Lent<'_, C> {
+    fn stream(&mut self) -> Result<&mut C::Stream, TransportError> {
         self.conn
             .as_mut()
             .map(|c| &mut c.stream)
@@ -106,44 +161,55 @@ impl Lent<'_> {
     fn give_back(mut self) {
         if let Some(mut conn) = self.conn.take() {
             conn.last_used = Instant::now();
-            let mut pool = self.transport.lock();
+            let mut pool = self.client.lock();
             pool.idle.push(conn);
             drop(pool);
-            self.transport.freed.notify_one();
+            self.client.freed.notify_one();
         }
     }
 }
 
-impl Drop for Lent<'_> {
+impl<C: Connector> Drop for Lent<'_, C> {
     fn drop(&mut self) {
         if self.conn.take().is_some() {
-            let mut pool = self.transport.lock();
+            let mut pool = self.client.lock();
             pool.open = pool.open.saturating_sub(1);
             drop(pool);
-            self.transport.freed.notify_one();
+            self.client.freed.notify_one();
         }
     }
 }
 
-impl HttpTransport {
+fn millis(duration: Duration) -> u64 {
+    u64::try_from(duration.as_millis()).unwrap_or(u64::MAX)
+}
+
+impl<C: Connector> Client<C> {
     /// A client with these bounds.
-    pub fn new(config: HttpTransportConfig) -> Self {
+    pub(crate) fn new(connector: C, config: HttpTransportConfig) -> Self {
         Self {
-            idle_close_millis: AtomicU64::new(
-                u64::try_from(config.idle_close_after.as_millis()).unwrap_or(u64::MAX),
-            ),
+            idle_close_millis: AtomicU64::new(millis(config.idle_close_after)),
+            connector,
             config,
-            pool: Mutex::new(Pool::default()),
+            pool: Mutex::new(Pool {
+                idle: Vec::new(),
+                open: 0,
+            }),
             freed: Condvar::new(),
         }
     }
 
+    /// The bounds of the client.
+    pub(crate) fn config(&self) -> &HttpTransportConfig {
+        &self.config
+    }
+
     /// The number of connections that exist now, idle or in use.
-    pub fn open_connections(&self) -> usize {
+    pub(crate) fn open_connections(&self) -> usize {
         self.lock().open
     }
 
-    fn lock(&self) -> MutexGuard<'_, Pool> {
+    fn lock(&self) -> MutexGuard<'_, Pool<C::Stream>> {
         self.pool.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
@@ -152,24 +218,24 @@ impl HttpTransport {
     }
 
     /// Close the idle connections that are too old.
-    fn sweep(&self, pool: &mut Pool) {
+    fn sweep(&self, pool: &mut Pool<C::Stream>) {
         let limit = self.idle_close();
         let before = pool.idle.len();
         pool.idle.retain(|c| c.last_used.elapsed() < limit);
         pool.open = pool.open.saturating_sub(before - pool.idle.len());
     }
 
-    fn checkout(&self, url: &Url, deadline: Instant) -> Result<Lent<'_>, TransportError> {
+    fn checkout(&self, url: &Url, deadline: Instant) -> Result<Lent<'_, C>, TransportError> {
         let authority = url.authority();
         let mut pool = self.lock();
         loop {
             self.sweep(&mut pool);
             // Take the connection that was used last: the others age and close.
             if let Some(index) = pool.idle.iter().rposition(|c| c.authority == authority) {
-                let conn = pool.idle.remove(index);
-                if is_alive(&conn.stream) {
+                let mut conn = pool.idle.remove(index);
+                if conn.stream.is_alive() {
                     return Ok(Lent {
-                        transport: self,
+                        client: self,
                         conn: Some(conn),
                     });
                 }
@@ -179,11 +245,9 @@ impl HttpTransport {
             if pool.open < self.config.max_connections {
                 pool.open += 1;
                 drop(pool);
-                let remaining = deadline.saturating_duration_since(Instant::now());
-                let wait = self.config.connect_timeout.min(remaining);
-                return match connect(&authority, wait) {
+                return match self.open(url, &authority, deadline) {
                     Ok(stream) => Ok(Lent {
-                        transport: self,
+                        client: self,
                         conn: Some(Conn {
                             stream,
                             authority,
@@ -195,9 +259,7 @@ impl HttpTransport {
                         pool.open = pool.open.saturating_sub(1);
                         drop(pool);
                         self.freed.notify_one();
-                        Err(TransportError::NotSent(format!(
-                            "no connection to {authority}: {error}"
-                        )))
+                        Err(error)
                     }
                 };
             }
@@ -221,7 +283,25 @@ impl HttpTransport {
         }
     }
 
-    fn exchange(
+    /// Open a new connection: TCP, then the stream of the connector. Each failure is `NotSent`.
+    fn open(
+        &self,
+        url: &Url,
+        authority: &str,
+        deadline: Instant,
+    ) -> Result<C::Stream, TransportError> {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let wait = self.config.connect_timeout.min(remaining);
+        let open_deadline = Instant::now() + wait;
+        let socket = connect(authority, wait).map_err(|error| {
+            TransportError::NotSent(format!("no connection to {authority}: {error}"))
+        })?;
+        self.connector
+            .open(url, socket, open_deadline)
+            .map_err(|error| TransportError::NotSent(format!("{authority}: {error}")))
+    }
+
+    pub(crate) fn exchange(
         &self,
         method: &str,
         url: &str,
@@ -231,10 +311,9 @@ impl HttpTransport {
     ) -> Result<HttpResponse, TransportError> {
         let url =
             Url::parse_request(url).map_err(|e| TransportError::Unsupported(e.to_string()))?;
-        if url.scheme != Scheme::Http {
+        if url.scheme != self.connector.scheme() {
             return Err(TransportError::Unsupported(
-                "this client has no TLS: give it an `http` URL, or use a transport with TLS"
-                    .to_owned(),
+                self.connector.other_scheme().to_owned(),
             ));
         }
         let head = build_head(
@@ -258,6 +337,38 @@ impl HttpTransport {
         }
         Ok(response)
     }
+
+    pub(crate) fn set_idle_close(&self, idle_close_after: Duration) {
+        self.idle_close_millis
+            .store(millis(idle_close_after), Ordering::SeqCst);
+    }
+}
+
+/// A synchronous HTTP/1.1 client with a small pool of connections, for `http` URLs.
+pub struct HttpTransport {
+    client: Client<Plain>,
+}
+
+impl std::fmt::Debug for HttpTransport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HttpTransport")
+            .field("config", self.client.config())
+            .finish_non_exhaustive()
+    }
+}
+
+impl HttpTransport {
+    /// A client with these bounds.
+    pub fn new(config: HttpTransportConfig) -> Self {
+        Self {
+            client: Client::new(Plain, config),
+        }
+    }
+
+    /// The number of connections that exist now, idle or in use.
+    pub fn open_connections(&self) -> usize {
+        self.client.open_connections()
+    }
 }
 
 impl PdpTransport for HttpTransport {
@@ -272,7 +383,8 @@ impl PdpTransport for HttpTransport {
         body: &[u8],
         timeout: Duration,
     ) -> Result<HttpResponse, TransportError> {
-        self.exchange("POST", url, headers, Some(body), timeout)
+        self.client
+            .exchange("POST", url, headers, Some(body), timeout)
     }
 
     fn get_json(
@@ -281,14 +393,11 @@ impl PdpTransport for HttpTransport {
         headers: &[(String, String)],
         timeout: Duration,
     ) -> Result<HttpResponse, TransportError> {
-        self.exchange("GET", url, headers, None, timeout)
+        self.client.exchange("GET", url, headers, None, timeout)
     }
 
     fn set_idle_close(&self, idle_close_after: Duration) {
-        self.idle_close_millis.store(
-            u64::try_from(idle_close_after.as_millis()).unwrap_or(u64::MAX),
-            Ordering::SeqCst,
-        );
+        self.client.set_idle_close(idle_close_after);
     }
 }
 
@@ -358,14 +467,22 @@ fn build_head(
 }
 
 /// Write the whole request. A failure before the first byte is `NotSent`.
-fn write_all(stream: &mut TcpStream, data: &[u8], deadline: Instant) -> Result<(), TransportError> {
+///
+/// For TLS, `written` counts the bytes that the TLS layer took, and some of them
+/// can wait in that layer. Thus a later failure is `Lost` or `Timeout`, never
+/// `NotSent`. This is the safe side of 10.6.
+fn write_all<S: Wire>(
+    stream: &mut S,
+    data: &[u8],
+    deadline: Instant,
+) -> Result<(), TransportError> {
     let mut written = 0;
     while written < data.len() {
         let remaining = deadline.saturating_duration_since(Instant::now());
         if remaining.is_zero() {
             return Err(failure_after_write(written, TransportError::Timeout));
         }
-        let _ = stream.set_write_timeout(Some(remaining));
+        let _ = stream.socket().set_write_timeout(Some(remaining));
         match stream.write(&data[written..]) {
             Ok(0) => {
                 return Err(failure_after_write(
@@ -386,8 +503,27 @@ fn write_all(stream: &mut TcpStream, data: &[u8], deadline: Instant) -> Result<(
             }
         }
     }
-    let _ = stream.flush();
-    Ok(())
+    // Send the bytes that a layer keeps, for example the TLS layer. A TCP socket keeps none.
+    loop {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining.is_zero() {
+            return Err(failure_after_write(written, TransportError::Timeout));
+        }
+        let _ = stream.socket().set_write_timeout(Some(remaining));
+        match stream.flush() {
+            Ok(()) => return Ok(()),
+            Err(e) if e.kind() == ErrorKind::Interrupted => {}
+            Err(e) if matches!(e.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut) => {
+                return Err(failure_after_write(written, TransportError::Timeout));
+            }
+            Err(e) => {
+                return Err(failure_after_write(
+                    written,
+                    TransportError::Lost(e.to_string()),
+                ));
+            }
+        }
+    }
 }
 
 fn failure_after_write(written: usize, error: TransportError) -> TransportError {
@@ -399,14 +535,14 @@ fn failure_after_write(written: usize, error: TransportError) -> TransportError 
 }
 
 /// A reader of the answer, with a deadline.
-struct Reader<'a> {
-    stream: &'a mut TcpStream,
+struct Reader<'a, S: Wire> {
+    stream: &'a mut S,
     buf: Vec<u8>,
     pos: usize,
     deadline: Instant,
 }
 
-impl Reader<'_> {
+impl<S: Wire> Reader<'_, S> {
     /// Read more bytes into the buffer. Returns the number of bytes, 0 at the end.
     fn fill(&mut self) -> Result<usize, TransportError> {
         let mut chunk = [0_u8; 8192];
@@ -415,7 +551,7 @@ impl Reader<'_> {
             if remaining.is_zero() {
                 return Err(TransportError::Timeout);
             }
-            let _ = self.stream.set_read_timeout(Some(remaining));
+            let _ = self.stream.socket().set_read_timeout(Some(remaining));
             match self.stream.read(&mut chunk) {
                 Ok(n) => {
                     if self.pos > 0 && self.pos == self.buf.len() {
@@ -493,8 +629,8 @@ fn header_values<'a>(
 }
 
 /// Read one answer. The second value is true when the connection can serve another request.
-fn read_response(
-    stream: &mut TcpStream,
+fn read_response<S: Wire>(
+    stream: &mut S,
     deadline: Instant,
     max_body: u64,
 ) -> Result<(HttpResponse, bool), TransportError> {
@@ -615,8 +751,8 @@ fn read_response(
     ))
 }
 
-fn read_chunked(
-    reader: &mut Reader<'_>,
+fn read_chunked<S: Wire>(
+    reader: &mut Reader<'_, S>,
     body: &mut Vec<u8>,
     max_body: u64,
 ) -> Result<(), TransportError> {
