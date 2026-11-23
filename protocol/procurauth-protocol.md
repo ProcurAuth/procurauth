@@ -262,7 +262,7 @@ The read of the action document and a health-probe route (10.1c) are the two exc
 9.5 `owner` is for logs and for approvals. A service MUST NOT use it in a decision.
 9.6 The service sends no claim other than `sub` (3.3) to the PDP.
 9.7 The token carries no grant, no limit and no decision. A decision comes only from the PDP.
-A service MAY keep the result of a token check until the `exp` of the token, only for that exact token. It bounds the number of kept results.
+A service MAY keep the result of a token check until `exp` plus its clock skew (9.4), only for that exact token. It bounds the number of kept results.
 9.8 An edge that refuses a key answers HTTP 401 with `WWW-Authenticate: Bearer`. When the request has the text of a key, the header also has `error="invalid_token"` [RFC 6750, 3.1]. The edge never redirects a request that has the text of a key.
 The body of this answer is empty. Thus the edge needs no part of the body of the request.
 9.9 An edge MAY keep an identity token that it made, and give it again to the same subject for the same service. It gives a kept token only after it authenticated the client and got a `true` decision for `access` (8.3) for this request. It gives a kept token only before its `exp`, and it bounds the number of kept tokens.
