@@ -163,6 +163,20 @@ pub const RULES: &[Rule] = &[
     ),
     row(
         D,
+        "6.1",
+        "ceiling_unit_plural",
+        W,
+        "ceiling unit is not a plural noun",
+    ),
+    row(
+        D,
+        "6.1",
+        "budget_unit_singular",
+        W,
+        "budget unit is not a singular noun",
+    ),
+    row(
+        D,
         "7.1",
         "ceiling_name",
         E,

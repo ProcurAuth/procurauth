@@ -261,7 +261,7 @@ mod tests {
             ],
             "limits": [
                 {"name": "requests", "label": "R", "description": "R.", "unit": "request", "kind": "budget"},
-                {"name": "max_rows", "label": "R", "description": "R.", "unit": "row", "kind": "ceiling", "min": 1, "max": 100}
+                {"name": "max_rows", "label": "R", "description": "R.", "unit": "rows", "kind": "ceiling", "min": 1, "max": 100}
             ]
         }))
         .unwrap()

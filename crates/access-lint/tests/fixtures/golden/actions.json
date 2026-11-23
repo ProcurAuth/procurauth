@@ -57,7 +57,7 @@
       "name": "max_rows",
       "label": "Most rows",
       "description": "The most rows that one read gives.",
-      "unit": "row",
+      "unit": "rows",
       "kind": "ceiling",
       "min": 1,
       "max": 1000000

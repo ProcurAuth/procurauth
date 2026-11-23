@@ -666,8 +666,8 @@ mod tests {
                 "resources": [{"path": "host:prod", "label": "Production"}],
                 "limits": [
                     {"name": "requests", "label": "Requests", "description": "Requests that run.", "unit": "request", "kind": "budget"},
-                    {"name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "row", "kind": "ceiling", "min": 1, "max": 1_000_000},
-                    {"name": "max_duration", "label": "Longest run", "description": "The longest run of one use, in seconds.", "unit": "second", "kind": "ceiling", "min": 1, "max": 600}]
+                    {"name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "rows", "kind": "ceiling", "min": 1, "max": 1_000_000},
+                    {"name": "max_duration", "label": "Longest run", "description": "The longest run of one use, in seconds.", "unit": "seconds", "kind": "ceiling", "min": 1, "max": 600}]
             }}],
             "subjects": [
                 {"id": "alice", "grants": [

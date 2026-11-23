@@ -191,8 +191,8 @@ mod tests {
             ],
             "limits": [
                 {"name": "requests", "label": "R", "description": "R.", "unit": "request", "kind": "budget"},
-                {"name": "max_rows", "label": "R", "description": "R.", "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000},
-                {"name": "max_duration", "label": "D", "description": "D.", "unit": "second", "kind": "ceiling", "min": 1, "max": 600}
+                {"name": "max_rows", "label": "R", "description": "R.", "unit": "rows", "kind": "ceiling", "min": 1, "max": 1000000},
+                {"name": "max_duration", "label": "D", "description": "D.", "unit": "seconds", "kind": "ceiling", "min": 1, "max": 600}
             ]
         }))
         .unwrap()

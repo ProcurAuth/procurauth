@@ -60,6 +60,8 @@ The checks of `grants` and `options` that need the document run only when the do
 | document | 6.1 | `number_too_large` | error | number is above 2^53-1 | `min` or `max` of a ceiling is above 9007199254740991, the largest integer that is safe in JSON. |
 | document | 6.1 | `min_above_max` | error | min is above max | `min` is above `max`. |
 | document | 6.1 | `budget_name_window` | warning | budget name has a window or a unit | A budget name has a part that gives a window or a unit, for example `per` or `minute`. 6.1 says that a budget name has none. |
+| document | 6.1 | `ceiling_unit_plural` | warning | ceiling unit is not a plural noun | The unit of a ceiling does not end like a plural noun, for example `row`. 6.1 says that it is a plural noun, for example `rows`. The test is a heuristic, so the finding is a warning. |
+| document | 6.1 | `budget_unit_singular` | warning | budget unit is not a singular noun | The unit of a budget ends like a plural noun, for example `requests`. 6.1 says that it is a singular noun, for example `request`. The test is a heuristic, so the finding is a warning. |
 | document | 7.1 | `ceiling_name` | error | ceiling name is not max_ and a noun | A ceiling name does not start with `max_`. This makes the document bad (7.1). |
 | document | 5.3c | `above_reader_minimum` | warning | above the minimum of a reader | A size, a count or a length is above the minimum that a reader must accept: 64 KiB, 64 actions, 16 types, 256 resources, 16 limits, label 60, description 300, unit 20. A reader can treat the document as bad. |
 | grants | 3.5 | `bad_json` | error | text is not valid JSON | The text is not JSON, or an object has the same member two times. |

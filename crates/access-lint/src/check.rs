@@ -83,6 +83,7 @@ pub fn check_document(text: &str) -> (Option<ActionDocument>, Vec<LintFinding>) 
     let mut report = analysis.report;
     if let Some(document) = &analysis.document {
         budget_names(document, &mut report);
+        limit_units(document, &mut report);
     }
     (analysis.document, convert(report))
 }
@@ -110,6 +111,46 @@ fn budget_names(document: &ActionDocument, report: &mut Report) {
                     limit.name
                 ),
             );
+        }
+    }
+}
+
+/// True when the last word of a unit looks like a plural noun. The word ends with `s`, but
+/// not with `ss`, `us` or `is`. Many singular nouns end so, for example `access` and `status`.
+/// The test is a heuristic, so the rules that use it give warnings only.
+fn looks_plural(unit: &str) -> bool {
+    let word = unit
+        .rsplit([' ', '_', '-'])
+        .next()
+        .unwrap_or(unit)
+        .to_ascii_lowercase();
+    word.ends_with('s') && !(word.ends_with("ss") || word.ends_with("us") || word.ends_with("is"))
+}
+
+/// The unit of a ceiling is a plural noun, and the unit of a budget is a singular noun (6.1).
+fn limit_units(document: &ActionDocument, report: &mut Report) {
+    for (index, limit) in document.limits.iter().enumerate() {
+        let path = JsonPath::root().key("limits").index(index).key("unit");
+        match limit.kind {
+            LimitKind::Ceiling if !looks_plural(&limit.unit) => report.warning(
+                &path,
+                "6.1",
+                "ceiling_unit_plural",
+                format!(
+                    "Ceiling `{}` has the unit `{}`. The unit of a ceiling is a plural noun, for example `rows`.",
+                    limit.name, limit.unit
+                ),
+            ),
+            LimitKind::Budget if looks_plural(&limit.unit) => report.warning(
+                &path,
+                "6.1",
+                "budget_unit_singular",
+                format!(
+                    "Budget `{}` has the unit `{}`. The unit of a budget is a singular noun, for example `request`.",
+                    limit.name, limit.unit
+                ),
+            ),
+            _ => {}
         }
     }
 }

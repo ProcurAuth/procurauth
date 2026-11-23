@@ -131,6 +131,8 @@ rule_tests! {
     p_6_1_document_number_too_large: Document, "6.1", "number_too_large";
     p_6_1_document_min_above_max: Document, "6.1", "min_above_max";
     p_6_1_document_budget_name_window: Document, "6.1", "budget_name_window";
+    p_6_1_document_ceiling_unit_plural: Document, "6.1", "ceiling_unit_plural";
+    p_6_1_document_budget_unit_singular: Document, "6.1", "budget_unit_singular";
     p_7_1_document_ceiling_name: Document, "7.1", "ceiling_name";
     p_5_3c_document_above_reader_minimum: Document, "5.3c", "above_reader_minimum";
     p_3_5_grants_bad_json: Grants, "3.5", "bad_json";

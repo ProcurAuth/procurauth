@@ -2906,7 +2906,7 @@
             "name": "max_items_1",
             "label": "Most items 1",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2915,7 +2915,7 @@
             "name": "max_items_2",
             "label": "Most items 2",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2924,7 +2924,7 @@
             "name": "max_items_3",
             "label": "Most items 3",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2933,7 +2933,7 @@
             "name": "max_items_4",
             "label": "Most items 4",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2942,7 +2942,7 @@
             "name": "max_items_5",
             "label": "Most items 5",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2951,7 +2951,7 @@
             "name": "max_items_6",
             "label": "Most items 6",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2960,7 +2960,7 @@
             "name": "max_items_7",
             "label": "Most items 7",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000
@@ -2969,7 +2969,7 @@
             "name": "max_items_8",
             "label": "Most items 8",
             "description": "The most items that one use gives.",
-            "unit": "item",
+            "unit": "items",
             "kind": "ceiling",
             "min": 1,
             "max": 1000000

@@ -69,7 +69,7 @@ pub fn reference_document_with(
             "max_rows",
             "Most rows",
             "The most rows that one read gives.",
-            "row",
+            "rows",
             1,
             1_000_000,
         )
@@ -77,7 +77,7 @@ pub fn reference_document_with(
             "max_duration",
             "Longest run",
             "The longest run of one use, in seconds.",
-            "second",
+            "seconds",
             1,
             600,
         )

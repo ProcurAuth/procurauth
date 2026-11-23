@@ -123,7 +123,7 @@ pub fn document() -> Value {
             {"name": "requests", "label": "Requests", "description": "Requests that run.",
              "unit": "request", "kind": "budget"},
             {"name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.",
-             "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000}
+             "unit": "rows", "kind": "ceiling", "min": 1, "max": 1000000}
         ]
     })
 }

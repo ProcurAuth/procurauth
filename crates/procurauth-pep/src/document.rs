@@ -13,7 +13,7 @@
 //!     .resource_type("folder", "service", "One folder.")
 //!     .action("notes.read", &["service", "folder"], "Read notes.", &["requests", "max_items"])
 //!     .budget("requests", "Requests", "Requests that run.", "request")
-//!     .ceiling("max_items", "Most items", "The most items of one read.", "item", 1, 1000)
+//!     .ceiling("max_items", "Most items", "The most items of one read.", "items", 1, 1000)
 //!     .build()?;
 //! assert!(document.action_lists_budget("notes.read"));
 //! # Ok::<(), Vec<procurauth_core::finding::Finding>>(())
@@ -291,7 +291,7 @@ mod tests {
                 "max_rows",
                 "Most rows",
                 "The most rows that one read gives.",
-                "row",
+                "rows",
                 1,
                 1_000_000,
             )
@@ -322,7 +322,7 @@ mod tests {
     #[test]
     fn p_6_1_a_budget_with_a_ceiling_range_is_not_possible_and_a_ceiling_range_is_checked() {
         let findings = builder()
-            .ceiling("max_time", "Time", "Seconds.", "second", 10, 5)
+            .ceiling("max_time", "Time", "Seconds.", "seconds", 10, 5)
             .build()
             .unwrap_err();
         assert!(!findings.is_empty());

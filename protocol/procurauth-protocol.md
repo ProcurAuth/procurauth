@@ -70,7 +70,7 @@ The words PDP, PEP, subject, action, resource and evaluation have the meaning of
 - **Window**: the fixed period in which a counter counts (6.3). The member `window` of an item of a budget value gives its length (6.1).
 - **Amount**: the units that a grant gives to a budget for one window.
 - **Units**: the quantity that one use takes from a budget, as a number in the unit of the budget, in `context.usage.units` (6.4).
-- **Unit**: the unit of measure of a limit, which the member `unit` of its declaration names (6.1). Examples: `request` for the budget `requests`, `row` for the ceiling `max_rows`.
+- **Unit**: the unit of measure of a limit, which the member `unit` of its declaration names (6.1). Examples: `request` for the budget `requests`, `rows` for the ceiling `max_rows` (6.1).
 - **Operation**: one request that a client sends to a service. An operation can ask several questions.
 - **Use**: one run of an action that a service does for one operation. A use takes units from budgets.
   A question to the PDP is not a use. A question for a display, for example to choose the options of 5.6, is not a use.
@@ -185,6 +185,8 @@ The caller bounds the size of an answer and the number of its items. A larger an
 
 ## 6. Limits and budgets
 6.1 A limit declaration has `name`, `label`, `description`, `unit` and `kind`. The kind is `ceiling` or `budget`. A name is unique in the document.
+
+The `unit` of a ceiling is a plural noun, for example `rows`, `bytes` or `seconds`. The `unit` of a budget is a singular noun, for example `query`, `export` or `request`. A ceiling gives a maximum of many units, and one use takes one unit of a budget (6.4). A form can show "100 rows" and "1 request" with no change of the text.
 
 A ceiling also has `min` and `max`. They are whole numbers, `min` is 0 or more, and `min` is not above `max`. Another value makes the document bad (5.3).
 A whole number of a limit is at most 2^53-1, which is 9007199254740991. This is the largest integer that is safe in JSON. It applies to `min`, `max`, the value of a ceiling and each `amount`. A larger number makes the document bad, and a PDP refuses a grant with such a value. A budget has neither: a budget declaration with `min` or `max` makes the document bad (5.3).
@@ -350,9 +352,9 @@ The action document of the service:
   "limits": [ { "name": "requests", "label": "Requests", "description": "Requests that run.",
                 "unit": "request", "kind": "budget" },
               { "name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.",
-                "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000 },
+                "unit": "rows", "kind": "ceiling", "min": 1, "max": 1000000 },
               { "name": "max_duration", "label": "Longest run", "description": "The longest run of one use, in seconds.",
-                "unit": "second", "kind": "ceiling", "min": 1, "max": 600 } ] }
+                "unit": "seconds", "kind": "ceiling", "min": 1, "max": 600 } ] }
 ```
 The list of the options gives the databases below `host:prod`, as the example of 5.8 shows.
 
