@@ -269,7 +269,7 @@ impl Shared {
             Some(FaultKind::NoAnswer) => return Action::Hold,
             Some(FaultKind::Close) => return Action::Close,
             Some(FaultKind::InvalidJson) => return Action::Respond(invalid_json_response()),
-            Some(FaultKind::NoUnits) | None => {}
+            Some(FaultKind::NoUnits | FaultKind::Submit(_)) | None => {}
         }
         let base = self.base_url(request);
         let s = &self.settings;

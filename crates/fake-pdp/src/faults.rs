@@ -5,6 +5,9 @@
 //! `invalid_json` and `no_units`. A rule applies to a question when each
 //! member of its `when` is equal to the question. The first rule that
 //! applies, and that has uses left, makes the failure.
+//!
+//! The kinds `submit_*` apply to a submission of the approval API (17.4,
+//! binding 5.7a), not to a question. Such a rule has no `when`.
 
 use procurauth_core::directory::{Endpoint, FailureKind, FailureMatch, FailureRule};
 use procurauth_core::finding::{Finding, JsonPath, Report, show};
@@ -29,6 +32,33 @@ pub enum FaultKind {
     InvalidJson,
     /// Answer as usual, but remove `context.usage.units` from a `true` answer (6.12).
     NoUnits,
+    /// Refuse a submission of the approval API with an error, and keep nothing (17.4).
+    Submit(SubmitFault),
+}
+
+/// An error that a submission gets on purpose (17.4, binding 5.7a).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SubmitFault {
+    /// HTTP 422 `explanation_required`.
+    ExplanationRequired,
+    /// HTTP 409 `cannot_supersede`.
+    CannotSupersede,
+    /// HTTP 422 `invalid_evaluation`.
+    InvalidEvaluation,
+    /// HTTP 422 with a code that 17.4 does not list, `fake_unknown_code`.
+    UnknownCode,
+}
+
+impl SubmitFault {
+    /// The HTTP status and the code of the error.
+    pub fn answer(self) -> (u16, &'static str) {
+        match self {
+            Self::ExplanationRequired => (422, "explanation_required"),
+            Self::CannotSupersede => (409, "cannot_supersede"),
+            Self::InvalidEvaluation => (422, "invalid_evaluation"),
+            Self::UnknownCode => (422, "fake_unknown_code"),
+        }
+    }
 }
 
 impl FaultKind {
@@ -41,6 +71,10 @@ impl FaultKind {
             Self::Close => "close",
             Self::InvalidJson => "invalid_json",
             Self::NoUnits => "no_units",
+            Self::Submit(SubmitFault::ExplanationRequired) => "submit_explanation_required",
+            Self::Submit(SubmitFault::CannotSupersede) => "submit_cannot_supersede",
+            Self::Submit(SubmitFault::InvalidEvaluation) => "submit_invalid_evaluation",
+            Self::Submit(SubmitFault::UnknownCode) => "submit_unknown_code",
         }
     }
 }
@@ -149,9 +183,10 @@ impl FaultSet {
 
     /// Find the first rule that applies to a request, and use it one time.
     /// A request with several questions matches when one question matches.
+    /// A rule of a kind `submit_*` never applies to a question.
     pub fn take(&mut self, facts: &[Facts]) -> Option<FaultKind> {
         for (fault, left) in &mut self.rules {
-            if *left == Some(0) {
+            if *left == Some(0) || matches!(fault.kind, FaultKind::Submit(_)) {
                 continue;
             }
             if facts.iter().any(|f| f.matches(&fault.when)) {
@@ -162,6 +197,34 @@ impl FaultSet {
             }
         }
         None
+    }
+}
+
+impl FaultSet {
+    /// Find the first rule of a kind `submit_*` that has uses left, and use it one time.
+    pub fn take_submit(&mut self) -> Option<SubmitFault> {
+        for (fault, left) in &mut self.rules {
+            if let FaultKind::Submit(kind) = fault.kind
+                && *left != Some(0)
+            {
+                if let Some(count) = left {
+                    *count -= 1;
+                }
+                return Some(kind);
+            }
+        }
+        None
+    }
+}
+
+/// The kinds `submit_*`, by name.
+fn submit_kind(name: &str) -> Option<SubmitFault> {
+    match name {
+        "submit_explanation_required" => Some(SubmitFault::ExplanationRequired),
+        "submit_cannot_supersede" => Some(SubmitFault::CannotSupersede),
+        "submit_invalid_evaluation" => Some(SubmitFault::InvalidEvaluation),
+        "submit_unknown_code" => Some(SubmitFault::UnknownCode),
+        _ => None,
     }
 }
 
@@ -219,6 +282,31 @@ fn read_fault(value: &Value, path: &JsonPath, report: &mut Report) -> Option<Fau
     let times = obj.whole_opt("times", report);
     let when = obj.object_opt("when", "6.9", Unknown::Error, report);
     obj.finish(report);
+    if let Some(submit) = kind.and_then(submit_kind) {
+        if delay.is_some() || when.is_some() {
+            report.error(
+                path,
+                "17.4",
+                "bad_submit_failure",
+                "A failure of a kind `submit_*` has no member `delay_ms` and no member `when`.",
+            );
+            return None;
+        }
+        if times == Some(0) {
+            report.error(
+                &path.key("times"),
+                "6.9",
+                "bad_value",
+                "Member `times`: expected a whole number from 1, found 0.",
+            );
+            return None;
+        }
+        return Some(Fault {
+            kind: FaultKind::Submit(submit),
+            when: FailureMatch::default(),
+            times,
+        });
+    }
     let kind = match (kind, delay) {
         (Some("delay"), Some(ms)) if ms >= 1 => Some(FaultKind::Delay(ms)),
         (Some("delay"), _) => {
@@ -255,7 +343,7 @@ fn read_fault(value: &Value, path: &JsonPath, report: &mut Report) -> Option<Fau
                 "6.9",
                 "bad_kind",
                 format!(
-                    "Member `kind`: expected `error_503`, `delay`, `no_answer`, `close`, `invalid_json` or `no_units`, found {}.",
+                    "Member `kind`: expected `error_503`, `delay`, `no_answer`, `close`, `invalid_json`, `no_units` or a kind `submit_*`, found {}.",
                     show(&Value::String(other.to_owned()))
                 ),
             );

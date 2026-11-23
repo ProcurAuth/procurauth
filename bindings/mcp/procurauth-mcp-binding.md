@@ -120,12 +120,14 @@ When protocol 17.7 tells that the action waits, the service answers HTTP 200 wit
 
 5.7a A refused call of a tool, for a cause of protocol section 17, is a tool error, in the form of 5.3. It has a fixed message and never has the text of the owner (protocol 17.12). The codes are:
 - `approval_denied`, `retryable` false: the PDP answered `approval_denied` (protocol 17.1);
-- `approval_expired`, `retryable` false: the PDP answered `approval_expired`. The code does not tell if the approval expired, was abandoned, was cancelled or was replaced (protocol 17.6);
-- `invalid_argument`, `retryable` false: a control argument is bad, or the call needs an approval and has none of the three (5.7). The code also covers a command larger than `max_command_bytes` (protocol 17.3a). It covers a 413 `command_too_large`, and a 422 with `invalid_argument`, `invalid_lease` or `lease_required` (protocol 17.4);
+- `approval_expired`, `retryable` false: the PDP answered `approval_expired`, or it refused two `evaluation_id` of the call (below). The code does not tell if the approval expired, was abandoned, was cancelled or was replaced (protocol 17.6);
+- `invalid_argument`, `retryable` false: a control argument is bad, or the call needs an approval and has none of the three (5.7). The code also covers a command larger than `max_command_bytes` (protocol 17.3a). It covers a 413 `command_too_large`, a 422 with `invalid_argument`, `invalid_lease`, `lease_required` or `explanation_required`, and a 409 `cannot_supersede` (protocol 17.4);
 - `approval_unavailable`, `retryable` true: the PDP answered 409 `no_device` to a submission (protocol 17.4);
 - `approval_rate_limited`, `retryable` true, with `retry_after`: the PDP answered 429 to a submission. The service copies `retry_after`.
 
-Another answer of the approval API gives HTTP 503 and the JSON-RPC error of 5.5. A call to the approval API that fails gives the same result. A request that the service sends again is a new request (protocol 12).
+A 422 `invalid_evaluation` to a submission tells that the `evaluation_id` is unknown or late (protocol 17.9). The service then asks the question with the effect one more time (protocol 17.7, step 3). It submits again with the new `evaluation_id`, as protocol 17.7 says. When this second submission also gets `invalid_evaluation`, the call gets the tool error `approval_expired`. The service does not ask a third time.
+
+Another answer of the approval API gives HTTP 503 and the JSON-RPC error of 5.5. This includes a code that this list does not name, a 401 and a 403 (protocol 17.4). A call to the approval API that fails gives the same result. A request that the service sends again is a new request (protocol 12).
 
 5.7b A service with a tool also has the tool `get_action_status`. Each tool can give a result that waits. Its argument is `request_id`. Its result has `structuredContent` equal to `{"status": "<verdict>"}`, with a verdict of protocol 17.6. The annotation `readOnlyHint` is true. The result is not an error, also for `denied` and `void`.
 

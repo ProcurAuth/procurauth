@@ -230,6 +230,11 @@ impl Shared {
             Ok(submission) => submission,
             Err(code) => return bad(code),
         };
+        // A failure of the test: the submission gets an error, and the PDP keeps nothing.
+        if let Some(fault) = self.state().faults.take_submit() {
+            let (status, code) = fault.answer();
+            return Action::Respond(Response::json(status, &json!({ "error": code })));
+        }
         let now = self.now_seconds();
         let result = self
             .state()

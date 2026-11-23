@@ -106,13 +106,15 @@ An empty `when` matches each question. A question that no rule matches gets the 
 
 A `respond` gives a `body` and an optional `status`, or it has `no_answer`. The status is 200 by default. For a request with items, a rule matches each item on its own.
 
+A rule can have `times`, a whole number from 1. The rule then answers that number of questions in the case, and the runner reads the next rules after them. A case uses it to give two answers to the same question in order, for example a second `evaluation_id`.
+
 The test PDP follows protocol 6.11. A request that has `context.usage` at any level and has items gets HTTP 400. The runner counts the items of such a request as questions.
 
 ### Script of the approval API
 
 A PEP case that follows protocol section 17 also gives `approval_script`. Each rule has `when` and `respond`, as in `pdp_script`. The runner reads the rules in order, and the first rule that matches a request gives the answer. A request that no rule matches gets HTTP 404 with the error `not_found`.
 
-A `when` has the members `route` and `request_id`. The route is `submit` for `POST /approval/v1/requests`, `status` for a read of a request, and `keepalive` for the keepalive route. The member `request_id` is the id in the path of a status or of a keepalive. The `respond` is the same as in `pdp_script`.
+A `when` has the members `route` and `request_id`. The route is `submit` for `POST /approval/v1/requests`, `status` for a read of a request, and `keepalive` for the keepalive route. The member `request_id` is the id in the path of a status or of a keepalive. The `respond` is the same as in `pdp_script`. A rule of the approval script can also have `times`.
 
 ## Steps
 

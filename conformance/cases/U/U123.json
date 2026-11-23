@@ -1,0 +1,180 @@
+{
+  "id": "U123",
+  "title": "A submission that gets invalid_evaluation makes the service ask the question with the effect again, and submit with the new evaluation_id.",
+  "role": "pep",
+  "paragraphs": [
+    "mcp:5.7a",
+    "17.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_mcp_endpoint"
+  ],
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "action": "{{other_action}}",
+          "usage": false,
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      },
+      {
+        "when": {
+          "no_effect": true
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": false
+        },
+        "times": 1,
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required",
+              "evaluation_id": "ev_conformance_1"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": false
+        },
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required",
+              "evaluation_id": "ev_conformance_2"
+            }
+          }
+        }
+      }
+    ],
+    "approval_script": [
+      {
+        "when": {
+          "route": "submit"
+        },
+        "times": 1,
+        "respond": {
+          "status": 422,
+          "body": {
+            "error": "invalid_evaluation"
+          }
+        }
+      },
+      {
+        "when": {
+          "route": "submit"
+        },
+        "respond": {
+          "status": 201,
+          "body": {
+            "request_id": "apr_conf_2",
+            "code": "K7QG",
+            "verdict": "pending"
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The call",
+      "request": {
+        "operation": "mcp_call_approval",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/result/isError": {
+            "absent": true
+          },
+          "/result/structuredContent/action/status": {
+            "equals": "awaiting_approval"
+          },
+          "/result/structuredContent/action/id": {
+            "equals": "apr_conf_2"
+          }
+        },
+        "pdp_questions": [
+          {
+            "json": {
+              "/context/approval/effect": {
+                "equals": "{{effect}}"
+              },
+              "/context/usage": {
+                "absent": true
+              }
+            },
+            "count": {
+              "equals": 2
+            }
+          },
+          {
+            "json": {
+              "/context/usage": {
+                "present": true
+              },
+              "/context/approval/effect": {
+                "present": true
+              }
+            },
+            "count": {
+              "equals": 0
+            }
+          }
+        ],
+        "pdp_approvals": [
+          {
+            "route": "submit",
+            "json": {
+              "/evaluation_id": {
+                "equals": "ev_conformance_1"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          },
+          {
+            "route": "submit",
+            "json": {
+              "/evaluation_id": {
+                "equals": "ev_conformance_2"
+              }
+            },
+            "count": {
+              "equals": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -80,6 +80,18 @@ enum RespondSpec {
 struct RuleSpec {
     when: WhenSpec,
     respond: RespondSpec,
+    #[serde(default)]
+    times: Option<u64>,
+}
+
+/// Check the member `times` of a rule: a whole number from 1.
+fn check_times(times: Option<u64>) -> Result<Option<u64>, String> {
+    match times {
+        Some(0) => {
+            Err("the member times of a rule must be a whole number from 1, found 0".to_owned())
+        }
+        other => Ok(other),
+    }
 }
 
 /// What a rule does.
@@ -105,6 +117,8 @@ pub(crate) struct Rule {
     no_effect: Option<bool>,
     permission_only: Option<bool>,
     reaction: Reaction,
+    /// The most questions that the rule answers. Without it, the rule answers each question.
+    times: Option<u64>,
 }
 
 impl Rule {
@@ -152,6 +166,7 @@ impl Rule {
             no_effect: spec.when.no_effect,
             permission_only: spec.when.permission_only,
             reaction,
+            times: check_times(spec.times)?,
         })
     }
 
@@ -218,6 +233,8 @@ struct ApprovalRuleSpec {
     #[serde(default)]
     when: ApprovalWhen,
     respond: RespondSpec,
+    #[serde(default)]
+    times: Option<u64>,
 }
 
 /// One rule of `approval_script`.
@@ -226,6 +243,8 @@ pub(crate) struct ApprovalRule {
     route: Option<ApprovalRoute>,
     request_id: Option<String>,
     reaction: Reaction,
+    /// The most requests that the rule answers. Without it, the rule answers each request.
+    times: Option<u64>,
 }
 
 fn reaction_of(spec: RespondSpec) -> Result<Reaction, String> {
@@ -265,6 +284,7 @@ impl ApprovalRule {
             route: spec.when.route,
             request_id: spec.when.request_id,
             reaction: reaction_of(spec.respond)?,
+            times: check_times(spec.times)?,
         })
     }
 
@@ -370,7 +390,11 @@ pub(crate) struct Question {
 #[derive(Default)]
 struct Inner {
     rules: Vec<Rule>,
+    /// The questions that each rule answered in this case.
+    rule_uses: Vec<u64>,
     approval_rules: Vec<ApprovalRule>,
+    /// The requests that each rule of the approval script answered in this case.
+    approval_uses: Vec<u64>,
     approvals: Vec<ApprovalRequest>,
     fallback: Option<Authority>,
     questions: Vec<Question>,
@@ -400,9 +424,17 @@ impl Core {
     }
 
     fn answer(&self, question: &Value) -> Answer {
-        let inner = self.lock();
-        for rule in &inner.rules {
+        let mut inner = self.lock();
+        let Inner {
+            rules, rule_uses, ..
+        } = &mut *inner;
+        rule_uses.resize(rules.len(), 0);
+        for (rule, used) in rules.iter().zip(rule_uses.iter_mut()) {
+            if rule.times.is_some_and(|t| *used >= t) {
+                continue;
+            }
             if rule.matches(question) {
+                *used += 1;
                 return match &rule.reaction {
                     Reaction::Body {
                         status,
@@ -633,11 +665,23 @@ impl Core {
                 json,
                 query: query_of(&request.target),
             });
-            inner
-                .approval_rules
+            let Inner {
+                approval_rules,
+                approval_uses,
+                ..
+            } = &mut *inner;
+            approval_uses.resize(approval_rules.len(), 0);
+            approval_rules
                 .iter()
-                .find(|rule| rule.matches(route, request_id.as_deref()))
-                .map(|rule| rule.reaction.clone())
+                .zip(approval_uses.iter_mut())
+                .find(|(rule, used)| {
+                    rule.times.is_none_or(|t| **used < t)
+                        && rule.matches(route, request_id.as_deref())
+                })
+                .map(|(rule, used)| {
+                    *used += 1;
+                    rule.reaction.clone()
+                })
         };
         match reaction {
             Some(Reaction::Body {
@@ -687,8 +731,10 @@ impl TestPdp {
         self.server.release_held();
         {
             let mut inner = self.core.lock();
+            inner.rule_uses = vec![0; rules.len()];
             inner.rules = rules;
             inner.approval_rules.clear();
+            inner.approval_uses.clear();
             inner.approvals.clear();
             inner.fallback = fallback;
             inner.questions.clear();
@@ -699,7 +745,9 @@ impl TestPdp {
 
     /// Set the script of the approval API for the case. Call it after [`TestPdp::begin_case`].
     pub(crate) fn set_approval_rules(&self, rules: Vec<ApprovalRule>) {
-        self.core.lock().approval_rules = rules;
+        let mut inner = self.core.lock();
+        inner.approval_uses = vec![0; rules.len()];
+        inner.approval_rules = rules;
     }
 
     /// The number of requests on the approval API so far. A step uses it as a mark.
@@ -1046,6 +1094,46 @@ mod tests {
             post(&pdp, EVALUATION_PATH, &other, vec![]).text(),
             "{\"decision\":false}"
         );
+        pdp.shutdown();
+    }
+
+    #[test]
+    fn a_rule_with_times_answers_that_number_of_questions_and_requests() {
+        let pdp = start();
+        pdp.begin_case(
+            vec![
+                rule(json!({"when": {}, "times": 1, "respond": {"body": {"decision": true}}})),
+                rule(json!({"when": {}, "respond": {"body": {"decision": false}}})),
+            ],
+            None,
+        );
+        let first = post(&pdp, EVALUATION_PATH, &question("alice", false), vec![]);
+        assert_eq!(first.text(), "{\"decision\":true}");
+        let second = post(&pdp, EVALUATION_PATH, &question("alice", false), vec![]);
+        assert_eq!(second.text(), "{\"decision\":false}");
+        pdp.set_approval_rules(vec![
+            ApprovalRule::parse(&json!({"when": {"route": "submit"}, "times": 1, "respond": {"status": 422, "body": {"error": "invalid_evaluation"}}})).unwrap(),
+            ApprovalRule::parse(&json!({"when": {"route": "submit"}, "respond": {"status": 201, "body": {"request_id": "apr_1"}}})).unwrap(),
+        ]);
+        let body = json!({"effect": "e"});
+        assert_eq!(
+            api(&pdp, "POST", "/approval/v1/requests", Some(&body)).status,
+            422
+        );
+        assert_eq!(
+            api(&pdp, "POST", "/approval/v1/requests", Some(&body)).status,
+            201
+        );
+        // A new case starts the counts again.
+        pdp.begin_case(
+            vec![rule(
+                json!({"when": {}, "times": 1, "respond": {"body": {"decision": true}}}),
+            )],
+            None,
+        );
+        let again = post(&pdp, EVALUATION_PATH, &question("alice", false), vec![]);
+        assert_eq!(again.text(), "{\"decision\":true}");
+        assert!(Rule::parse(&json!({"when": {}, "times": 0, "respond": {"body": {}}})).is_err());
         pdp.shutdown();
     }
 

@@ -383,6 +383,16 @@ impl State {
         let Ok(decision) = Decision::from_value(&answer) else {
             return Decided::Unavailable;
         };
+        // Protocol 5.5a: a reason of 17.1 for an other permission is an answer that is not valid.
+        if permission_only
+            && decision
+                .context
+                .reason
+                .as_ref()
+                .is_some_and(|reason| reason.is_approval())
+        {
+            return Decided::Unavailable;
+        }
         let unknown_ceiling = decision
             .context
             .limits
@@ -928,79 +938,116 @@ impl State {
             json!({"subject": {"type": "user", "id": sub}, "action": {"name": action},
                    "resource": resource, "context": context})
         };
-        let Ok(answer) = self.ask(&question(false)) else {
-            return Self::rpc_error(503, id, -32603, "Internal error", None);
-        };
-        let Ok(decision) = Decision::from_value(&answer) else {
-            return Self::rpc_error(503, id, -32603, "Internal error", None);
-        };
-        if decision.decision {
-            // Step 6: the question with usage and the effect.
-            let Ok(answer) = self.ask(&question(true)) else {
+        // Binding 5.7a: one `invalid_evaluation` gets one more question with the effect.
+        let mut retried = false;
+        loop {
+            let Ok(answer) = self.ask(&question(false)) else {
                 return Self::rpc_error(503, id, -32603, "Internal error", None);
             };
-            return match Decision::from_value(&answer) {
-                Ok(d) if d.allows(true) => Self::rpc_result(id, &ok),
-                Ok(d) if d.context.reason == Some(Reason::ApprovalExpired) => {
+            let Ok(decision) = Decision::from_value(&answer) else {
+                return Self::rpc_error(503, id, -32603, "Internal error", None);
+            };
+            if decision.decision {
+                // Step 6: the question with usage and the effect.
+                let Ok(answer) = self.ask(&question(true)) else {
+                    return Self::rpc_error(503, id, -32603, "Internal error", None);
+                };
+                return match Decision::from_value(&answer) {
+                    Ok(d) if d.allows(true) => Self::rpc_result(id, &ok),
+                    Ok(d) if d.context.reason == Some(Reason::ApprovalExpired) => Self::tool_error(
+                        id,
+                        "approval_expired",
+                        "The approval is not valid.",
+                        false,
+                    ),
+                    _ => self.tool_answer(id, Decided::Denied(None), ok),
+                };
+            }
+            return match decision.context.reason {
+                Some(Reason::ApprovalRequired | Reason::ApprovalPending) => {
+                    let Some(evaluation_id) = decision.context.evaluation_id.clone() else {
+                        return self.tool_answer(id, Decided::Denied(None), ok);
+                    };
+                    // A call with no control argument cannot give a lease (binding 5.7).
+                    let Some(control) = controls.first() else {
+                        return Self::tool_error(
+                            id,
+                            "invalid_argument",
+                            "An argument is not valid.",
+                            false,
+                        );
+                    };
+                    let view = json!({"title": "Run a tool",
+                    "fields": [["Table", "/table"]]});
+                    let mut submission = json!({"evaluation_id": evaluation_id, "effect": effect,
+                    "op": op, "view": view});
+                    submission[*control] = args[*control].clone();
+                    match self.api("POST", "/approval/v1/requests", Some(&submission)) {
+                        Some((200 | 201, answer)) => {
+                            let (Some(request_id), Some(code)) = (
+                                answer.get("request_id").and_then(Value::as_str),
+                                answer.get("code").and_then(Value::as_str),
+                            ) else {
+                                return Self::rpc_error(503, id, -32603, "Internal error", None);
+                            };
+                            let structured = json!({"action": {"id": request_id,
+                            "status": "awaiting_approval", "code": code, "executed": false}});
+                            Self::rpc_result(
+                                id,
+                                &json!({
+                                    "resultType": "complete",
+                                    "content": [
+                                        {"type": "text", "text": structured.to_string()},
+                                        {"type": "text", "text": "NOT EXECUTED. The action waits for the approval of its owner."}
+                                    ],
+                                    "structuredContent": structured,
+                                }),
+                            )
+                        }
+                        Some((status, body)) => {
+                            let code = body.get("error").and_then(Value::as_str).unwrap_or("");
+                            match (status, code) {
+                                (422, "invalid_evaluation") if !retried => {
+                                    retried = true;
+                                    continue;
+                                }
+                                (422, "invalid_evaluation") => Self::tool_error(
+                                    id,
+                                    "approval_expired",
+                                    "The approval is not valid.",
+                                    false,
+                                ),
+                                (413, "command_too_large")
+                                | (
+                                    422,
+                                    "invalid_argument"
+                                    | "invalid_lease"
+                                    | "lease_required"
+                                    | "explanation_required",
+                                )
+                                | (409, "cannot_supersede") => Self::tool_error(
+                                    id,
+                                    "invalid_argument",
+                                    "An argument is not valid.",
+                                    false,
+                                ),
+                                _ => Self::rpc_error(503, id, -32603, "Internal error", None),
+                            }
+                        }
+                        None => Self::rpc_error(503, id, -32603, "Internal error", None),
+                    }
+                }
+                Some(Reason::ApprovalDenied) => Self::tool_error(
+                    id,
+                    "approval_denied",
+                    "The owner declined the action.",
+                    false,
+                ),
+                Some(Reason::ApprovalExpired) => {
                     Self::tool_error(id, "approval_expired", "The approval is not valid.", false)
                 }
                 _ => self.tool_answer(id, Decided::Denied(None), ok),
             };
-        }
-        match decision.context.reason {
-            Some(Reason::ApprovalRequired | Reason::ApprovalPending) => {
-                let Some(evaluation_id) = decision.context.evaluation_id.clone() else {
-                    return self.tool_answer(id, Decided::Denied(None), ok);
-                };
-                // A call with no control argument cannot give a lease (binding 5.7).
-                let Some(control) = controls.first() else {
-                    return Self::tool_error(
-                        id,
-                        "invalid_argument",
-                        "An argument is not valid.",
-                        false,
-                    );
-                };
-                let view = json!({"title": "Run a tool",
-                    "fields": [["Table", "/table"]]});
-                let mut submission = json!({"evaluation_id": evaluation_id, "effect": effect,
-                    "op": op, "view": view});
-                submission[*control] = args[*control].clone();
-                match self.api("POST", "/approval/v1/requests", Some(&submission)) {
-                    Some((200 | 201, answer)) => {
-                        let (Some(request_id), Some(code)) = (
-                            answer.get("request_id").and_then(Value::as_str),
-                            answer.get("code").and_then(Value::as_str),
-                        ) else {
-                            return Self::rpc_error(503, id, -32603, "Internal error", None);
-                        };
-                        let structured = json!({"action": {"id": request_id,
-                            "status": "awaiting_approval", "code": code, "executed": false}});
-                        Self::rpc_result(
-                            id,
-                            &json!({
-                                "resultType": "complete",
-                                "content": [
-                                    {"type": "text", "text": structured.to_string()},
-                                    {"type": "text", "text": "NOT EXECUTED. The action waits for the approval of its owner."}
-                                ],
-                                "structuredContent": structured,
-                            }),
-                        )
-                    }
-                    _ => Self::rpc_error(503, id, -32603, "Internal error", None),
-                }
-            }
-            Some(Reason::ApprovalDenied) => Self::tool_error(
-                id,
-                "approval_denied",
-                "The owner declined the action.",
-                false,
-            ),
-            Some(Reason::ApprovalExpired) => {
-                Self::tool_error(id, "approval_expired", "The approval is not valid.", false)
-            }
-            _ => self.tool_answer(id, Decided::Denied(None), ok),
         }
     }
 

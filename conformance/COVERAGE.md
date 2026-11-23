@@ -95,7 +95,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 5.3c | pep | U17 |
 | 5.4 | pep | none |
 | 5.5 | pep | U34 |
-| 5.5a | pep | U34, U35, U96 |
+| 5.5a | pep | U34, U35, U96, U126 |
 | 5.6 | pep | U05, U70, U71, U72, U74, U83 |
 | 5.7 | pep | U71, U75, U76, U77, U78, U79, U80, U81, U82 |
 | 5.8 | pep | U72, U73, U82 |
@@ -120,7 +120,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 10.1a | pep | U34, U35 |
 | 10.1b | pep | none |
 | 10.2 | pep | U36, U37 |
-| 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90, U105, U113 |
+| 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90, U105, U113, U126 |
 | 10.6 | pep | U68 |
 | 10.7 | pep | U69 |
 | 10.7a | pep | none |
@@ -132,8 +132,8 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 17.2 | pep | U102 |
 | 17.3 | pep | U103, U108 |
 | 17.3a | pep | U103, U108, U111 |
-| 17.4 | pep | U100, U101, U109, U121 |
-| 17.7 | pep | U30, U100, U101, U102, U104, U106, U110, U115, U116, U117 |
+| 17.4 | pep | U100, U101, U109, U121, U122, U125 |
+| 17.7 | pep | U30, U100, U101, U102, U104, U106, U110, U115, U116, U117, U123, U124 |
 | 17.7a | pep | U113, U114 |
 | 17.9 | pep | U107, U108 |
 | 17.9a | pep | U103, U109 |
@@ -148,7 +148,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | mcp:3.5a | pep | U30 |
 | mcp:3.6 | pep | U18 |
 | mcp:3.6a | pep | U29, U95, U114 |
-| mcp:3.7 | pep | U34, U35, U96, U97 |
+| mcp:3.7 | pep | U34, U35, U96, U97, U126 |
 | mcp:4.1 | pep | U26, U88 |
 | mcp:4.2 | pep | U26, U89 |
 | mcp:4.3 | pep | none |
@@ -165,7 +165,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | mcp:5.6 | pep | U94 |
 | mcp:5.6a | pep | U27, U86 |
 | mcp:5.7 | pep | U30, U100, U115, U116 |
-| mcp:5.7a | pep | U105, U116, U121 |
+| mcp:5.7a | pep | U105, U116, U121, U122, U123, U124, U125 |
 | mcp:5.7b | pep | U106, U110 |
 | mcp:7.1 | pep | none |
 | mcp:7.2 | pep | none |
@@ -271,7 +271,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | mcp:4.3a | pep | The schema and the description of each tool in `tools/list` tell the control arguments and the retry. | The text is free, and a matcher cannot judge it. The runner reads no description. |
 | mcp:4.4 | pep | The paragraph gives an example of the load on the PDP. | The paragraph is informative. It states no rule. |
 | mcp:5.7 | pep | The service waits at most wait_s seconds for a verdict, and it bounds wait_s. | The bound is a setting of the service, and a case cannot wait. |
-| mcp:5.7a | pep | The codes approval_unavailable, approval_rate_limited and invalid_argument, and HTTP 503 for another answer of the approval API. | A case for each one needs a step for each answer of the approval API. This version tests the codes that follow a reason of the PDP (U105). |
+| mcp:5.7a | pep | The codes approval_unavailable and approval_rate_limited, and invalid_argument for a 413 and for the codes of a bad lease. | The cases U121 to U125 test the codes of the ruling of the lot AL1. A case for each other code is possible with `approval_script`, and a later version can add them. |
 | mcp:7.1 | pep | For a request with a standalone key, the service asks the PDP no question. | The profile of the service under test has no standalone key in this version. |
 | mcp:7.2 | pep | The text of a standalone key is mcp_ and 43 base64url characters. | The profile of the service under test has no standalone key in this version. |
 | mcp:7.4 | pep | For a standalone key, the 401 and the 429 have an empty body, and the 429 has Retry-After. | The profile of the service under test has no standalone key in this version. |

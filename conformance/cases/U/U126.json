@@ -1,0 +1,170 @@
+{
+  "id": "U126",
+  "title": "An answer approval_required or approval_pending to a question with permission_only is not valid, and the PEP gives HTTP 503.",
+  "role": "pep",
+  "paragraphs": [
+    "5.5a",
+    "10.3",
+    "mcp:3.7"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_budget_action",
+    "no_multi_action"
+  ],
+  "notes": "The PDP never gives a reason of 17.1 for an other permission (protocol 5.5a). The steps of a route and of a tool run when the profile defines the operation.",
+  "given": {
+    "tokens": {
+      "person": {
+        "subject": "alice"
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {
+          "permission_only": true
+        },
+        "times": 1,
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "permission_only": true
+        },
+        "times": 1,
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_pending"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "permission_only": true
+        },
+        "times": 1,
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_required"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "permission_only": true
+        },
+        "times": 1,
+        "respond": {
+          "body": {
+            "decision": false,
+            "context": {
+              "reason": "approval_pending"
+            }
+          }
+        }
+      },
+      {
+        "when": {
+          "usage": true
+        },
+        "respond": {
+          "body": {
+            "decision": true,
+            "context": {
+              "usage": {
+                "units": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "approval_required for the other permission of a route",
+      "request": {
+        "operation": "use_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "approval_pending for the other permission of a route",
+      "request": {
+        "operation": "use_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        }
+      }
+    },
+    {
+      "name": "approval_required for the other permission of a tool",
+      "skip_if": [
+        "no_mcp_endpoint"
+      ],
+      "request": {
+        "operation": "mcp_call_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32603
+          }
+        }
+      }
+    },
+    {
+      "name": "approval_pending for the other permission of a tool",
+      "skip_if": [
+        "no_mcp_endpoint"
+      ],
+      "request": {
+        "operation": "mcp_call_multi",
+        "token": "person"
+      },
+      "expect": {
+        "status": {
+          "equals": 503
+        },
+        "json": {
+          "/error/code": {
+            "equals": -32603
+          }
+        }
+      }
+    }
+  ]
+}

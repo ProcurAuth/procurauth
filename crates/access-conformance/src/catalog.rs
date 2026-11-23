@@ -219,7 +219,7 @@ mod tests {
     #[test]
     fn the_binary_holds_the_cases_of_each_series() {
         let catalog = Catalog::embedded().unwrap();
-        assert_eq!(catalog.cases_of(Role::Pep).len(), 121);
+        assert_eq!(catalog.cases_of(Role::Pep).len(), 126);
         assert_eq!(catalog.cases_of(Role::Pdp).len(), 98);
         assert_eq!(catalog.cases_of(Role::Edge).len(), 20);
         assert!(catalog.directory("datastore.json").is_some());

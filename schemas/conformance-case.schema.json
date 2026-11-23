@@ -197,7 +197,12 @@
             "request_id": { "description": "The id in the path of a status or a keepalive.", "type": "string", "minLength": 1 }
           }
         },
-        "respond": { "$ref": "#/$defs/script_rule/properties/respond" }
+        "respond": { "$ref": "#/$defs/script_rule/properties/respond" },
+        "times": {
+          "description": "The most requests that the rule answers in the case. After them, the runner reads the next rules. Without it, the rule answers each request that it matches.",
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "token": {
@@ -280,6 +285,11 @@
               "properties": { "no_answer": { "const": true } }
             }
           ]
+        },
+        "times": {
+          "description": "The most questions that the rule answers in the case. After them, the runner reads the next rules. Without it, the rule answers each question that it matches.",
+          "type": "integer",
+          "minimum": 1
         }
       }
     },

@@ -61,7 +61,7 @@ The command `--print-config` checks all the files, prints each key with its valu
 | `--clock-start` | flag | whole seconds since the Unix epoch | none, the system clock | A fixed clock. It stops at this time. Do not give it with `clock.now`. |
 | `--admin` | flag | no value | off | Enable the admin endpoints under `/__fake/`. |
 | `--credential-file` | flag | path | none, no credential | The file with the credential of the PEP. The PDP then requires `Authorization: Bearer`. |
-| `--failures` | flag | path | none | A file with more failures. It can use the kinds `close`, `invalid_json` and `no_units`. |
+| `--failures` | flag | path | none | A file with more failures. It can use the kinds `close`, `invalid_json`, `no_units` and `submit_*`. |
 | `--workers` | flag | whole number from 1 to 256 | 8 | The number of worker threads. One open connection uses one thread. |
 | `--print-config` | flag | no value | off | Check everything, print the values that apply, and exit with 0. The port stays closed. |
 | `clock.now` | data file | whole seconds since the Unix epoch | none, the system clock | A fixed clock. Do not give it with `--clock-start`. |
@@ -88,7 +88,7 @@ The data file is a JSON object. The schema is `schemas/fake-pdp-data.schema.json
 
 The example `examples/datastore.json` is the data of protocol section 13. It has Alice, her key, Bob and his key. The example `examples/datastore-with-counters.json` also has first counter values, metadata and a failure.
 
-The failure file of the flag `--failures` has the member `failures` only. It uses the same format, and it adds the kinds `close`, `invalid_json` and `no_units`. See `examples/failures.json`.
+The failure file of the flag `--failures` has the member `failures` only. It uses the same format, and it adds the kinds `close`, `invalid_json`, `no_units` and `submit_*`. See `examples/failures.json`.
 
 ## Endpoints
 
@@ -195,8 +195,14 @@ The data file can make the PDP fail, so that a PEP can be tested against 6.9, 6.
 | `close` | Decide and count, then close the connection with no byte (10.6). |
 | `invalid_json` | Decide and count, then answer HTTP 200 with a body that is not valid JSON (10.3). |
 | `no_units` | Answer as usual, but remove `context.usage.units` from a `true` answer (6.12). |
+| `submit_explanation_required` | A submission of the approval API gets HTTP 422 `explanation_required`, and the PDP keeps nothing (17.4). |
+| `submit_cannot_supersede` | A submission gets HTTP 409 `cannot_supersede`, and the PDP keeps nothing. |
+| `submit_invalid_evaluation` | A submission gets HTTP 422 `invalid_evaluation`, and the PDP keeps nothing. |
+| `submit_unknown_code` | A submission gets HTTP 422 with the code `fake_unknown_code`, which 17.4 does not list. |
 
 The members of `when` are `subject`, `action`, `resource`, `usage` and `endpoint`. A rule matches when each member that it has is equal to the question. For a request with items, a rule matches when one item matches.
+
+A rule of a kind `submit_*` applies to the next submissions of the approval API, not to a question. It has no `when` and no `delay_ms`. With `times`, it applies to that number of submissions. These kinds test the map of binding 5.7a in a PEP: `explanation_required` and `cannot_supersede` give `invalid_argument`. One `invalid_evaluation` makes the PEP ask one more time, and a second one gives `approval_expired`.
 
 ## Credential of the PEP
 

@@ -507,7 +507,7 @@ fn p_17_4_a_status_read_renews_with_the_subject_and_a_keepalive_posts_the_subjec
 
 #[test]
 fn p_17_4_each_error_of_the_approval_api_has_its_refusal() {
-    let cases: [(u16, Value, Refusal); 11] = [
+    let cases: [(u16, Value, Refusal); 12] = [
         (
             429,
             json!({"error": "rate_limited", "retry_after": 60}),
@@ -544,10 +544,16 @@ fn p_17_4_each_error_of_the_approval_api_has_its_refusal() {
             json!({"error": "effect_mismatch"}),
             Refusal::Unavailable(UnavailableCause::Status(422)),
         ),
+        // Binding 5.7a: these two are faults of the call of the agent.
         (
             409,
             json!({"error": "cannot_supersede"}),
-            Refusal::Unavailable(UnavailableCause::Status(409)),
+            Refusal::Approval(ApprovalRefusal::InvalidArgument),
+        ),
+        (
+            422,
+            json!({"error": "explanation_required"}),
+            Refusal::Approval(ApprovalRefusal::InvalidArgument),
         ),
         (
             500,
@@ -572,6 +578,61 @@ fn p_17_4_each_error_of_the_approval_api_has_its_refusal() {
         let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
         assert_eq!(outcome.refusal(), Some(&expected), "{status} {body}");
     }
+}
+
+#[test]
+fn p_mcp_5_7a_an_invalid_evaluation_gets_one_more_question_and_a_second_submission() {
+    let asked = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let counter = asked.clone();
+    let question = move |_: &Value| {
+        let n = counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
+        json!({"decision": false, "context": {"reason": "approval_required", "evaluation_id": format!("ev_{n}")}})
+    };
+    let (pep, t, who, _) = rig(pdp(question, |seen| {
+        if seen.body.as_ref().and_then(|b| b.get("evaluation_id")) == Some(&json!("ev_1")) {
+            (422, json!({"error": "invalid_evaluation"}))
+        } else {
+            submitted()
+        }
+    }));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
+    assert!(
+        matches!(outcome, Outcome::ApprovalRequired(ref p) if p.request_id == "apr_1"),
+        "{outcome:?}"
+    );
+    let submissions: Vec<Value> = api_calls(&t).into_iter().filter_map(|s| s.body).collect();
+    assert_eq!(submissions.len(), 2);
+    assert_eq!(submissions[1]["evaluation_id"], "ev_2");
+    // Two questions with the effect, and none with usage.
+    let with_effect: Vec<Value> = questions(&t)
+        .into_iter()
+        .filter(|q| q.pointer("/context/approval").is_some())
+        .collect();
+    assert_eq!(with_effect.len(), 2);
+    assert!(
+        with_effect
+            .iter()
+            .all(|q| q.pointer("/context/usage").is_none())
+    );
+}
+
+#[test]
+fn p_mcp_5_7a_a_second_invalid_evaluation_gives_approval_expired() {
+    let (pep, t, who, _) = rig(pdp(evaluation, |_| {
+        (422, json!({"error": "invalid_evaluation"}))
+    }));
+    let outcome = run(&pep, &who, call(Control::LeaseSeconds(900)));
+    assert_eq!(
+        outcome.refusal(),
+        Some(&Refusal::Approval(ApprovalRefusal::Expired))
+    );
+    assert_eq!(api_calls(&t).len(), 2, "one submission, then one more");
+    assert!(
+        questions(&t)
+            .iter()
+            .all(|q| q.pointer("/context/usage").is_none()
+                || q.pointer("/context/approval").is_none())
+    );
 }
 
 #[test]

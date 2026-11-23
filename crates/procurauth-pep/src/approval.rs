@@ -131,6 +131,14 @@ pub enum ApprovalRefusal {
     },
 }
 
+/// Why a submission failed.
+pub(crate) enum SubmitError {
+    /// The PDP answered 422 `invalid_evaluation`: the `evaluation_id` is unknown or late.
+    InvalidEvaluation,
+    /// Any other failure, with the refusal of binding 5.7a or HTTP 503.
+    Refused(Refusal),
+}
+
 /// What the PEP received from the PDP on the approval API and in the answers that carry an effect.
 /// A test reads it to prove that the PEP learned only the verdict.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -259,10 +267,14 @@ impl PdpClient {
                 Refusal::Approval(ApprovalRefusal::RateLimited { retry_after })
             }
             (409, "no_device") => Refusal::Approval(ApprovalRefusal::NoDevice),
+            // Binding 5.7a: a bad argument of the agent, a missing explanation, and a request
+            // in `supersedes` that is consumed are faults of the call.
             (413, "command_too_large")
-            | (422, "invalid_argument" | "invalid_lease" | "lease_required") => {
-                Refusal::Approval(ApprovalRefusal::InvalidArgument)
-            }
+            | (
+                422,
+                "invalid_argument" | "invalid_lease" | "lease_required" | "explanation_required",
+            )
+            | (409, "cannot_supersede") => Refusal::Approval(ApprovalRefusal::InvalidArgument),
             (404, _) if unknown_request => Refusal::Approval(ApprovalRefusal::InvalidArgument),
             // 401: the PDP does not know the credential of the service. 403 `forbidden`: the PDP
             // gives no approval. Both are faults of the PDP or of its configuration (17.4): HTTP 503.
@@ -272,8 +284,9 @@ impl PdpClient {
         }
     }
 
-    /// Submit a request (17.4).
-    pub(crate) fn submit_approval(&self, body: &Value) -> Result<PendingApproval, Refusal> {
+    /// Submit a request (17.4). A 422 `invalid_evaluation` is a separate error, because the PEP
+    /// asks the question with the effect one more time for it (binding 5.7a).
+    pub(crate) fn submit_approval(&self, body: &Value) -> Result<PendingApproval, SubmitError> {
         {
             let mut stats = self.stats();
             stats.submissions += 1;
@@ -289,13 +302,19 @@ impl PdpClient {
                 Some(body.to_string().into_bytes()),
                 self.request_timeout,
             )
-            .map_err(Refusal::Unavailable)?;
+            .map_err(|cause| SubmitError::Refused(Refusal::Unavailable(cause)))?;
         if !matches!(response.status, 200 | 201) {
-            return Err(self.api_refusal(&response, false));
+            let code = parse_slice(&response.body)
+                .ok()
+                .and_then(|b| b.get("error").and_then(Value::as_str).map(str::to_owned));
+            if response.status == 422 && code.as_deref() == Some("invalid_evaluation") {
+                return Err(SubmitError::InvalidEvaluation);
+            }
+            return Err(SubmitError::Refused(self.api_refusal(&response, false)));
         }
         let map = self
             .read_members(&response, &["request_id", "code", "verdict"])
-            .map_err(Refusal::Unavailable)?;
+            .map_err(|cause| SubmitError::Refused(Refusal::Unavailable(cause)))?;
         let text = |name: &str| {
             map.get(name)
                 .and_then(Value::as_str)
@@ -303,8 +322,10 @@ impl PdpClient {
                 .map(str::to_owned)
         };
         let (Some(request_id), Some(code)) = (text("request_id"), text("code")) else {
-            return Err(Refusal::Unavailable(UnavailableCause::Answer(
-                "the answer to a submission has no `request_id` or no `code`".to_owned(),
+            return Err(SubmitError::Refused(Refusal::Unavailable(
+                UnavailableCause::Answer(
+                    "the answer to a submission has no `request_id` or no `code`".to_owned(),
+                ),
             )));
         };
         if let Some(verdict) = map.get("verdict").and_then(Value::as_str) {
@@ -495,8 +516,11 @@ impl Pep {
         )
         .map_err(|_| Refusal::Approval(ApprovalRefusal::InvalidArgument))?;
         let mut wait = call.wait_seconds.map(|w| w.min(WAIT_MAX_SECONDS));
-        // At most two rounds: after a wait that ends with `approved`, the PEP asks again from the start.
-        for _ in 0..2 {
+        // An `evaluation_id` that the PDP refuses gets one more question with the effect (binding 5.7a).
+        let mut evaluation_retry = true;
+        // At most three rounds: one more after a wait that ends with `approved`, and one more after
+        // an `invalid_evaluation`. Each new round asks again from the question with the effect.
+        for _ in 0..3 {
             let plain = self
                 .client
                 .ask(
@@ -526,14 +550,25 @@ impl Pep {
             let Some(control) = call.control.as_ref() else {
                 return Err(Refusal::Approval(ApprovalRefusal::InvalidArgument));
             };
-            let pending = self.client.submit_approval(&submission(
+            let pending = match self.client.submit_approval(&submission(
                 &evaluation_id,
                 &effect,
                 &call.op,
                 &call.view,
                 control,
                 call.supersedes.as_deref(),
-            ))?;
+            )) {
+                Ok(pending) => pending,
+                Err(SubmitError::Refused(refusal)) => return Err(refusal),
+                Err(SubmitError::InvalidEvaluation) if evaluation_retry => {
+                    evaluation_retry = false;
+                    continue;
+                }
+                // The second `evaluation_id` is also refused: the approval cannot go on (binding 5.7a).
+                Err(SubmitError::InvalidEvaluation) => {
+                    return Err(Refusal::Approval(ApprovalRefusal::Expired));
+                }
+            };
             let Some(seconds) = wait.take().filter(|w| *w > 0) else {
                 return Ok(Outcome::ApprovalRequired(pending));
             };

@@ -967,3 +967,50 @@ fn p_5_5a_a_bad_permission_only_gets_http_400_and_a_batch_item_gets_invalid_requ
         "invalid_request"
     );
 }
+
+#[test]
+fn p_mcp_5_7a_a_submit_failure_answers_its_error_and_keeps_nothing() {
+    let faults = fake_pdp::faults::read_faults_str(
+        r#"{"failures": [
+            {"kind": "submit_invalid_evaluation", "times": 1},
+            {"kind": "submit_cannot_supersede", "times": 1},
+            {"kind": "submit_explanation_required", "times": 1},
+            {"kind": "submit_unknown_code", "times": 1}
+        ]}"#,
+    )
+    .unwrap();
+    let server = start_with(
+        &directory(),
+        fake_pdp::Options {
+            extra_faults: faults,
+            ..fake_pdp::Options::default()
+        },
+    );
+    let op = op();
+    let id = evaluation_id(&server, KEY, &op);
+    let body = submission(&id, &op, json!({"lease_s": 60}));
+    for (status, code) in [
+        (422, "invalid_evaluation"),
+        (409, "cannot_supersede"),
+        (422, "explanation_required"),
+        (422, "fake_unknown_code"),
+    ] {
+        let reply = submit(&server, &body);
+        assert_eq!(reply.status, status, "{code}");
+        assert_eq!(reply.json(), json!({ "error": code }));
+    }
+    // Each rule had one use: the next submission makes the request.
+    let reply = submit(&server, &body);
+    assert_eq!(reply.status, 201, "{}", reply.text());
+}
+
+#[test]
+fn a_submit_failure_has_no_when_and_no_delay() {
+    for text in [
+        r#"{"failures": [{"kind": "submit_cannot_supersede", "when": {"subject": "alice"}}]}"#,
+        r#"{"failures": [{"kind": "submit_cannot_supersede", "delay_ms": 5}]}"#,
+        r#"{"failures": [{"kind": "submit_cannot_supersede", "times": 0}]}"#,
+    ] {
+        assert!(fake_pdp::faults::read_faults_str(text).is_err(), "{text}");
+    }
+}

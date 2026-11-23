@@ -99,7 +99,7 @@ pub const KEYS: [Key; 15] = [
         source: "flag",
         value: "path",
         default: "none",
-        meaning: "A file with more failures. It can use the kinds `close`, `invalid_json` and `no_units`.",
+        meaning: "A file with more failures. It can use the kinds `close`, `invalid_json`, `no_units` and `submit_*`.",
     },
     Key {
         name: "--workers",

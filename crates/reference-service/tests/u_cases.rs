@@ -195,15 +195,30 @@ fn approval_route(method: &str, path: &str) -> Option<(&'static str, Option<Stri
     }
 }
 
+/// Use a rule one time. A rule with `times` answers that number of requests, then no more.
+fn use_rule(rule: &mut Value) -> bool {
+    match rule.get("times").and_then(Value::as_u64) {
+        Some(0) => false,
+        Some(left) => {
+            rule["times"] = json!(left - 1);
+            true
+        }
+        None => true,
+    }
+}
+
 /// Answer a request of the approval API with the first rule that matches, or with 404.
-fn approval_answer(script: &[Value], route: &str, request_id: Option<&str>) -> (u16, Value) {
-    for rule in script {
+fn approval_answer(script: &mut [Value], route: &str, request_id: Option<&str>) -> (u16, Value) {
+    for rule in script.iter_mut() {
+        if rule.get("times").and_then(Value::as_u64) == Some(0) {
+            continue;
+        }
         let when = &rule["when"];
         let route_ok = when.get("route").is_none_or(|r| r == route);
         let id_ok = when
             .get("request_id")
             .is_none_or(|i| i.as_str() == request_id);
-        if route_ok && id_ok {
+        if route_ok && id_ok && use_rule(rule) {
             let status = rule["respond"]
                 .get("status")
                 .and_then(Value::as_u64)
@@ -217,10 +232,23 @@ fn approval_answer(script: &[Value], route: &str, request_id: Option<&str>) -> (
     (404, json!({"error": "not_found"}))
 }
 
-/// The answer of the script to one question: a status and a body, or `None` for no answer.
-fn answer_for(script: &[Value], question: &Value) -> Option<(u16, Value)> {
-    for rule in script {
-        if rule_matches(&rule["when"], question) {
+/// The first rule of the script that matches a question and has uses left. The rule is used one time.
+fn take_rule(script: &mut [Value], question: &Value) -> Value {
+    for rule in script.iter_mut() {
+        if rule.get("times").and_then(Value::as_u64) == Some(0) {
+            continue;
+        }
+        if rule_matches(&rule["when"], question) && use_rule(rule) {
+            return rule.clone();
+        }
+    }
+    panic!("no rule of the script matches the question {question}");
+}
+
+/// The answer of a rule to one question: a status and a body, or `None` for no answer.
+fn answer_for(rule: &Value) -> Option<(u16, Value)> {
+    {
+        {
             let respond = &rule["respond"];
             if respond.get("no_answer") == Some(&json!(true)) {
                 return None;
@@ -229,10 +257,9 @@ fn answer_for(script: &[Value], question: &Value) -> Option<(u16, Value)> {
                 thread::sleep(Duration::from_millis(ms));
             }
             let status = respond.get("status").and_then(Value::as_u64).unwrap_or(200);
-            return Some((u16::try_from(status).unwrap(), respond["body"].clone()));
+            Some((u16::try_from(status).unwrap(), respond["body"].clone()))
         }
     }
-    panic!("no rule of the script matches the question {question}");
 }
 
 fn serve_connection(mut stream: TcpStream, state: &Mutex<PdpState>, stop: &AtomicBool) {
@@ -253,7 +280,7 @@ fn serve_connection(mut stream: TcpStream, state: &Mutex<PdpState>, stop: &Atomi
             let (status, answer) = {
                 let mut guard = state.lock().unwrap();
                 guard.approvals.push(ApprovalReq { route, json, query });
-                approval_answer(&guard.approval_script, route, request_id.as_deref())
+                approval_answer(&mut guard.approval_script, route, request_id.as_deref())
             };
             respond(&mut stream, status, &answer);
             continue;
@@ -266,9 +293,8 @@ fn serve_connection(mut stream: TcpStream, state: &Mutex<PdpState>, stop: &Atomi
             respond(&mut stream, 400, &json!({}));
             continue;
         };
-        let (questions, script) = {
+        let (_questions, rules) = {
             let mut guard = state.lock().unwrap();
-            let script = guard.script.clone();
             let questions: Vec<Value> =
                 if path.ends_with("/evaluations") && value.get("evaluations").is_some() {
                     if value.to_string().contains("\"usage\"") {
@@ -307,13 +333,17 @@ fn serve_connection(mut stream: TcpStream, state: &Mutex<PdpState>, stop: &Atomi
                     headers: headers.clone(),
                 });
             }
-            (questions, script)
+            let rules: Vec<Value> = questions
+                .iter()
+                .map(|q| take_rule(&mut guard.script, q))
+                .collect();
+            (questions, rules)
         };
         let is_batch = path.ends_with("/evaluations") && value.get("evaluations").is_some();
         let mut answers = Vec::new();
         let mut silent = false;
-        for q in &questions {
-            match answer_for(&script, q) {
+        for rule in &rules {
+            match answer_for(rule) {
                 None => {
                     silent = true;
                     break;
@@ -1310,7 +1340,7 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
     if cfg!(feature = "mcp") {
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
         // U30 and U100 to U117 are the cases of the approval profile: they run, for each action.
-        assert_eq!(ran, 120, "the number of cases that ran");
+        assert_eq!(ran, 125, "the number of cases that ran");
         skipped_ids.sort();
         assert_eq!(skipped_ids, ["U95"]);
     }
