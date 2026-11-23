@@ -869,6 +869,8 @@ fn build_operation(op: &str, variant: Option<&str>, call: Option<&Value>) -> Bui
             body: Some(copy.to_string().into_bytes()),
         },
         "read_actions" => get("/.well-known/procurauth/actions".into()),
+        "read_health" => get("/health".into()),
+        "use_no_action" => get("/static/about.txt".into()),
         "list_options" => get("/.well-known/procurauth/resources?type=host".into()),
         "mcp_call_plain" => mcp(tools_call(
             "list_tables",
@@ -1340,7 +1342,7 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
     if cfg!(feature = "mcp") {
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
         // U30 and U100 to U117 are the cases of the approval profile: they run, for each action.
-        assert_eq!(ran, 125, "the number of cases that ran");
+        assert_eq!(ran, 126, "the number of cases that ran");
         skipped_ids.sort();
         assert_eq!(skipped_ids, ["U95"]);
     }

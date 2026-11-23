@@ -315,7 +315,7 @@
         "operation": {
           "description": "For a PEP. The runner maps the operation to a request of the service under test with its profile. The README of the directory conformance/ explains each operation.",
           "enum": [
-            "use_plain", "use_budget", "use_ceiling", "use_service", "use_multi", "read_actions", "list_options",
+            "use_plain", "use_budget", "use_ceiling", "use_service", "use_multi", "read_actions", "list_options", "read_health", "use_no_action",
             "mcp_call_plain", "mcp_call_budget", "mcp_call_input", "mcp_call_multi",
             "mcp_call_approval", "mcp_approve", "mcp_refuse"
           ]

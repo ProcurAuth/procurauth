@@ -100,6 +100,14 @@
         "path": "/hosts",
         "action": "data.inspect"
       },
+      "read_health": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "use_no_action": {
+        "method": "GET",
+        "path": "/static/about.txt"
+      },
       "use_multi": {
         "method": "POST",
         "path": "/copy",

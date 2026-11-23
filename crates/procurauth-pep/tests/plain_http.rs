@@ -210,3 +210,36 @@ fn the_token_cache_avoids_a_second_check_of_the_same_token() {
     ));
     assert_eq!(pep.kept_tokens(), 0);
 }
+
+#[test]
+fn p_10_1c_a_route_with_no_action_asks_access_on_the_service() {
+    let t = yes_to_all();
+    let (pep, who) = service(t.clone(), |_| {});
+    pep.decide_route_without_action(&who).unwrap();
+    let posts = t.posts();
+    assert_eq!(posts.len(), 1);
+    let question = posts[0].body.as_ref().unwrap();
+    assert_eq!(question["action"]["name"], "access");
+    assert_eq!(question["resource"]["type"], "service");
+    assert_eq!(question["resource"]["id"], SERVICE);
+    assert!(
+        question
+            .pointer("/resource/properties/ancestors/0")
+            .is_none()
+    );
+    assert!(question.pointer("/context/usage").is_none());
+    assert!(question.pointer("/context/approval").is_none());
+    // A `false` answer gives 403, and a reason of 17.1 is an answer that is not valid: 503.
+    for (answer, status) in [
+        (json!({"decision": false}), 403),
+        (
+            json!({"decision": false, "context": {"reason": "approval_required"}}),
+            503,
+        ),
+    ] {
+        let reply = answer.clone();
+        let (pep, who) = service(Scripted::answering(move |_| reply.clone()), |_| {});
+        let refusal = pep.decide_route_without_action(&who).unwrap_err();
+        assert_eq!(refusal.to_http().status, status, "{answer}");
+    }
+}

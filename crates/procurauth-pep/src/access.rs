@@ -1,8 +1,9 @@
 //! The question of an edge: may this subject use this service? (protocol 8.3)
 //!
 //! An edge gives an identity token for a service only to a subject with a `true`
-//! decision for the action `access` on that service. The PEP of a service never
-//! asks for this action (8.3). This module is the part of the library for an
+//! decision for the action `access` on that service. The PEP of a service asks
+//! this action only for a route that runs no action of the action document (10.1c,
+//! `Pep::decide_route_without_action`). This module is the part of the library for an
 //! edge. It uses the same link to the PDP as the PEP: the metadata, the
 //! credential, the timeouts and the connections.
 //!

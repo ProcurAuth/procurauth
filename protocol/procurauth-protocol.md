@@ -31,7 +31,7 @@ A service (its PEP) conforms when it follows these paragraphs:
 - 6.1, 6.2, 6.4, 6.11 and 6.12;
 - 7.1 and 7.3 to 7.6;
 - the last sentence of 8.3;
-- 9.3 to 9.7, 10 and 11, and item 6 of section 15.
+- 9.3 to 9.7, 10 and 11.
 
 An edge conforms when it follows 1.4, 8.3, 9.1 to 9.3, the second paragraph of 9.4, 9.8 and 9.9. The system that makes keys follows 3.2 and 3.8 for this job. A caller of the route of 5.6 follows 5.6 to 5.9. A service with an MCP endpoint, and an edge in front of such a service, also follow the MCP binding [MCP-BINDING].
 
@@ -233,7 +233,7 @@ The action document of the service is its adoption: the PDP gives only the ceili
 8.1 Limits narrow access. No limit widens it. A decision for a key has two sides, the key and its owner, and each limit value of both sides applies (3.5). For a ceiling, the lowest value applies: among the grants of the asked action that cover the resource (7.3), and between the two sides. For a budget, each side has its own counters (6.7). The PDP never compares two budgets.
 8.2 A value that only one grant or only one side gives stays as it is.
 8.3 A subject has one value for each budget of a service. It is on the grant of the action `access` on the service: the grant that opens the service to the subject. The PDP ignores a budget value on any other grant.
-An edge gives an identity token for a service only to a subject with a `true` decision for the action `access` on that service (3.5). The PEP never asks for `access`.
+An edge gives an identity token for a service only to a subject with a `true` decision for the action `access` on that service (3.5). A PEP asks for `access` only for a route that runs no action of the action document (10.1c).
 8.4 For a ceiling, a value of a key above the value of its owner has no effect (8.1). For a budget, the counters of the owner still bound each use of the key (6.7). The budget of a key adds no units to its owner.
 
 ## 9. The identity token
@@ -252,13 +252,13 @@ The edge MUST use its signing key only for the identity token.
 
 The edge gives its public keys as a JWK Set [RFC 7517, 5]. When the set holds more than one key, the edge puts `kid` in the header of each token [RFC 7515, 4.1.4]. The service then checks the token with the key that has this `kid`. The service refuses a token with a `kid` that the set does not hold. When its set holds more than one key, the service refuses a token without `kid`. It never tries each key of the set.
 
-For each request other than a read of its action document (5.1), the service MUST check that `alg` is one of the algorithms of 9.2 [RFC 8725, 3.1]. It MUST also check the signature, `typ` (`JWT`), `iss`, `aud` and `exp`. It refuses a token without `iss`, `sub`, `aud`, `iat` or `exp` (9.3). It refuses a token whose `iat`, `exp` or `nbf` does not have the form of 9.3. It never rounds or converts such a value. `aud` is the id of the service, or an array that holds it [RFC 7519, 4.1.3].
+For each request other than a read of its action document (5.1) or of a health-probe route (10.1c), the service MUST check that `alg` is one of the algorithms of 9.2 [RFC 8725, 3.1]. It MUST also check the signature, `typ` (`JWT`), `iss`, `aud` and `exp`. It refuses a token without `iss`, `sub`, `aud`, `iat` or `exp` (9.3). It refuses a token whose `iat`, `exp` or `nbf` does not have the form of 9.3. It never rounds or converts such a value. `aud` is the id of the service, or an array that holds it [RFC 7519, 4.1.3].
 
 The service refuses a token whose `exp` minus `iat` is more than its maximum age. It also refuses a token whose `iat` is later than its clock plus the skew. The skew also applies to `exp`: the service refuses a token when its clock is later than `exp` plus the skew. When the token has `nbf`, the service refuses it when `nbf` is later than its clock plus the skew. It refuses any other `typ`, for example `at+jwt` [RFC 8725, 3.12].
 
 The service takes the token only from the header that the edge sets, never from `Authorization`, a cookie or a query parameter. The service MUST accept requests only through the edge, for example with a network rule (section 12). The service answers a read of its action document (5.1) without a token, through the edge. A request with no token, or with a token that is not valid, gets HTTP 401. The service MUST ignore an unknown claim.
 
-The read of the action document is the one exception to the rule on the edge. The service can also answer this read directly to the reader of 5.3 that the operator names.
+The read of the action document and a health-probe route (10.1c) are the two exceptions to the rule on the edge. The service can answer this read directly to the reader of 5.3 that the operator names. It can answer a health probe directly to the system that supervises it.
 9.5 `owner` is for logs and for approvals. A service MUST NOT use it in a decision.
 9.6 The service sends no claim other than `sub` (3.3) to the PDP.
 9.7 The token carries no grant, no limit and no decision. A decision comes only from the PDP.
@@ -274,14 +274,14 @@ The number of kept tokens grows with the pairs of a subject and a service that t
 
 Then the PEP integrates in seven steps:
 1. Check the identity token as 9.4 says. Send `sub` as the subject id, with the type `user` (3.3).
-2. Refuse each request without a valid identity token, on each route except the route of the action document (5.1). Accept requests only through the edge, for example with a network rule (9.4).
+2. Refuse each request without a valid identity token, on each route except the route of the action document (5.1) and a health-probe route (10.1c). Accept requests only through the edge, for example with a network rule (9.4).
 3. Give each use one action and one resource with its chain (5.5). Declare the actions and their limits in the action document (section 5).
 4. Ask the PDP for each operation. Use the endpoints of its metadata `/.well-known/authzen-configuration`, or the default paths [AUTHZEN 1.0, l.1382]. Send the credential of the service for the PDP in `Authorization: Bearer`, a choice that AuthZEN 1.0 leaves free [AUTHZEN 1.0, l.1743-1749]. The PEP MUST secure the link to the PDP by adequate means, for example TLS [AUTHZEN 1.0, l.1739]. Keep answers for `cache_ttl` at most (10.1).
 5. For a use of an action that lists a budget, send one Access Evaluation with `"context": {"usage": {"units": 1}}` (6.4, 6.11). Treat a `true` answer without `context.usage.units` as `false` (6.12). Reuse a kept answer only as 10.1 says. Do not send it again, except as 10.6 says.
 6. Apply each ceiling of `context.limits` (7.5). For a use, take the ceilings of the action of the use from the answer to its question. For an action that lists a budget, this is the question with `context.usage` (6.4). Take the ceilings of each other permission from its own answer (5.5a).
 7. Map each refusal with 10.3.
 
-10.1 The PEP MUST ask the PDP for each operation, with two exceptions. For a read of the action document (5.1), the PEP asks no question. For a request to the route of 5.6, it asks only the questions of 5.6, without `context.usage`. For a use of an action that lists a budget, the question with `context.usage` is the question of the operation (6.4). The PEP MUST NOT send the same question without `context.usage` before it, except to choose among several actions (below). The questions of the other permissions of the operation have `context.permission_only` (5.5a). When the answer has a reason of 17.1, 17.7 gives more questions. The PEP MAY keep an answer to a question without `context.usage` for at most `cache_ttl`, a time that its configuration sets.
+10.1 The PEP MUST ask the PDP for each operation, with three exceptions. For a read of the action document (5.1) and for a health-probe route (10.1c), the PEP asks no question. For a request to the route of 5.6, it asks only the questions of 5.6, without `context.usage`. For a use of an action that lists a budget, the question with `context.usage` is the question of the operation (6.4). The PEP MUST NOT send the same question without `context.usage` before it, except to choose among several actions (below). The questions of the other permissions of the operation have `context.permission_only` (5.5a). When the answer has a reason of 17.1, 17.7 gives more questions. The PEP MAY keep an answer to a question without `context.usage` for at most `cache_ttl`, a time that its configuration sets.
 
 A kept answer applies only to the same subject, action, resource with its chain (`resource.properties.ancestors`), and `context.match`. These rules apply to the kept answers:
 - A kept `true` answer never starts a use of an action that lists a budget. The PEP keeps the answers to questions with `context.usage` separate from the other answers. It never keeps a `true` answer with `units` above 0. It MAY keep a `true` answer with `units` equal to 0 for at most `cache_ttl`. That kept answer is the one exception: it lets a use run with no question (6.12).
@@ -295,6 +295,11 @@ A kept answer applies only to the same subject, action, resource with its chain 
 
 The value `max_rows` 1000 applies to the read: thus the copy reads 1000 rows at most. The first question takes no unit, although `data.read` also lists the budget `requests`.
 10.1b The PEP bounds the number of kept answers (10.1). The bound does not depend on the requests of the clients, because a client chooses the resources of the questions. When the table is full, the PEP keeps no new answer.
+10.1c A route of a service that runs no action of the action document follows one of two rules:
+- A health-probe route gives no data of the service, for example a fixed text that tells that the service runs. It needs no identity token, and the PEP asks no question for it. The service gives each such route in its documentation.
+- Each other route needs a valid identity token (10.0, step 2). This includes a route that gives a static file. For each request, the PEP asks the action `access` on the resource of type `service`, with the id of the service (4.1). The question has no `context.usage` and no `context.approval`. The route runs only after a `true` answer, and the PEP maps a refusal as 10.3 says.
+
+The action `access` is never in the action document (5.2). `confirm` has no effect on it (17.8), so such a route never waits for an approval. A reason of 17.1 in the answer is an answer that is not valid (10.3). The PEP MAY keep the answer for `cache_ttl` (10.1).
 10.2 The PEP applies the ceilings as 7.3 and 7.5 say.
 10.3 The PEP MUST fail closed. It MUST NOT send `context.reason` to the client. On an HTTP route, it maps each answer of the PDP as the list below shows. The MCP binding gives the map for an MCP request [MCP-BINDING]. Its tool errors for `budget_exceeded` and for the reasons of 17.1 are exceptions to the rule on `context.reason`. The error code `approval_cannot_wait` is an exception too.
 - `false` with no reason, or with a reason other than `budget_exceeded`: HTTP 403.
@@ -444,7 +449,7 @@ The PEP keeps this answer and asks `data.read` with `context.usage`. The next ru
 3. A later version can add `remaining` to `context.usage`. A PEP can then copy it into the `RateLimit` field [RATELIMIT]. The seconds to the end of a window keep one name: `retry_after`.
 4. Before a publication outside the network of the author, register the well-known name `procurauth` [RFC 8615]. The two documents of this protocol are below this name: `/.well-known/procurauth/actions` (5.1) and `/.well-known/procurauth/resources` (5.6).
 5. The token issuance profile registers a capability URN for an extension that adds response vocabulary. `context.limits` is such a vocabulary. The project ProcurAuth defines a capability URN later, after a check of its format. No URN member exists in this version. Until then, `context.usage.units` in each counted answer shows that a PDP counts (6.12).
-6. A PEP asks the PDP for each operation (10.1). A later version can give a rule for a request that runs no action of the action document, for example a static file. Until then, the service declares an action for such a request, on the type `service`, and asks it.
+6. Unused. Paragraph 10.1c gives the rule for a route that runs no action of the action document.
 7. In this version, only the MCP binding gives an interface that can wait for an approval (17.7a). A call to an HTTP route gets HTTP 403 with the code `approval_cannot_wait` when the PDP asks for an approval. A later version can define a form of an HTTP route that waits, with a result and the controls of 17.5.
 8. An operation can need a permission on another action (5.5a). One approval covers the action of the use only. The other permissions limit the scope, and the PDP ignores their `confirm`. A later version can let one approval cover the whole operation.
 

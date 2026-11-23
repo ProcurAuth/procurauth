@@ -795,8 +795,8 @@ fn read_approval(r: &mut Reader, obj: &mut Obj<'_>, operation: Operation) -> Opt
 fn check_operation(r: &mut Reader, operation: Operation, def: &OpDef, path: &JsonPath) {
     use Operation::{
         ListOptions, McpApprove, McpCallApproval, McpCallBudget, McpCallInput, McpCallMulti,
-        McpCallPlain, McpRefuse, ReadActions, UseBudget, UseCeiling, UseMulti, UsePlain,
-        UseService,
+        McpCallPlain, McpRefuse, ReadActions, ReadHealth, UseBudget, UseCeiling, UseMulti,
+        UseNoAction, UsePlain, UseService,
     };
     let mut need = |present: bool, name: &str| {
         if !present {
@@ -842,6 +842,9 @@ fn check_operation(r: &mut Reader, operation: Operation, def: &OpDef, path: &Jso
         }
         McpApprove | McpRefuse => {
             need(def.body.is_some() || def.body_text.is_some(), "body");
+        }
+        ReadHealth | UseNoAction => {
+            need(def.path.is_some(), "path");
         }
         ReadActions | ListOptions => {}
     }

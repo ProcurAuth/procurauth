@@ -109,16 +109,17 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 7.4 | pep | none |
 | 7.5 | pep | U36, U37, U39, U92 |
 | 7.6 | pep | U38 |
-| 8.3 | pep | U40 |
+| 8.3 | pep | U40, U127 |
 | 9.3 | pep | U43, U44, U46, U47, U49, U118, U120 |
 | 9.4 | pep | U03, U14, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U75, U85, U99, U118, U119, U120 |
 | 9.5 | pep | U10 |
 | 9.6 | pep | U01, U09 |
 | 9.7 | pep | U55 |
-| 10.0 | pep | U53, U56, U59 |
+| 10.0 | pep | U53, U56, U59, U84, U127 |
 | 10.1 | pep | U15, U21, U22, U57, U58, U59, U83, U84, U101, U104 |
 | 10.1a | pep | U34, U35 |
 | 10.1b | pep | none |
+| 10.1c | pep | U127 |
 | 10.2 | pep | U36, U37 |
 | 10.3 | pep | U04, U06, U23, U32, U36, U58, U60, U61, U62, U63, U64, U65, U66, U67, U74, U90, U105, U113, U126 |
 | 10.6 | pep | U68 |
@@ -127,7 +128,6 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 10.7b | pep | none |
 | 11.1 | pep | U04, U08, U61, U62, U63, U67, U105 |
 | 11.2 | pep | U60 |
-| 15 | pep | U84 |
 | 17.1 | pep | U30, U102, U103, U107 |
 | 17.2 | pep | U102 |
 | 17.3 | pep | U103, U108 |
@@ -251,6 +251,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 10.0 | pep | The PEP MUST secure the link to the PDP by adequate means, for example TLS. | The test PDP of the runner can use a plain link. A case cannot check the security of the link. |
 | 10.1 | pep | The PEP MAY keep answers for cache_ttl at most. | The runner does not know cache_ttl, and a case cannot wait for it. |
 | 10.1b | pep | The PEP bounds the number of kept answers, and it keeps no new answer when the table is full. | A case cannot see the memory of the PEP. |
+| 10.1c | pep | The service gives each health-probe route in its documentation, and such a route gives no data of the service. | A program cannot read the documentation of a service or judge the data of a route. The case U127 tests the token and the questions. |
 | 10.2 | pep | The PEP applies the ceilings as 7.3 and 7.5 say. | A case cannot see the effect of a ceiling. The cases for 7.5 test the part that is visible. |
 | 10.6 | pep | The PEP SHOULD wait for each answer longer than the longest time that the PDP publishes. | The model gives the test PDP no published time. |
 | 10.7 | pep | The PEP closes an idle connection before the PDP does, after half of the idle time or less. | The model gives the test PDP no idle time. |

@@ -128,6 +128,8 @@ A read lowers the value of `timeout_seconds` to the ceiling. A write refuses a `
 ## How the service follows the protocol
 
 - The route of the action document needs no token and asks no question (5.1).
+- The health-probe route `GET /health` gives the text `ok` and no data of the service. It needs no token and asks no question (10.1c).
+- The route `GET /static/about.txt` gives a fixed text and runs no action of the action document. The service asks the action `access` on the service for it, with no `context.usage` (10.1c).
 - Each other route checks the identity token first. A request with no valid token gets HTTP 401 with an empty body, and the service sends no question (9.4, 10.0 step 2).
 - The service reads the token only from the header of the configuration. It never reads `Authorization` or a cookie.
 - The service builds the chain of the node from its own data (4.5).

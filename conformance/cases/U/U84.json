@@ -3,7 +3,7 @@
   "title": "The PEP asks the PDP for a use of the service itself, with the resource of type service.",
   "role": "pep",
   "paragraphs": [
-    "15",
+    "10.0",
     "10.1"
   ],
   "requirement": "MUST",

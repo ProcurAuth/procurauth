@@ -218,6 +218,7 @@ A service with no MCP endpoint uses the same `Pep`. The test file `tests/plain_h
 | Keep answers for a short time (10.1). | `cache_ttl`, `cache_max_entries`, `Pep::kept_answers` |
 | Read the limits that the PDP publishes. | `Pep::metadata`, `PdpMetadata` |
 | Keep the results of the token checks (9.7). | `token_cache_max_entries`, `Pep::kept_tokens` |
+| Serve a route that runs no action of the action document, for example a static file. The PEP asks `access` on the service (10.1c). A health-probe route asks nothing and needs no token. | `Pep::decide_route_without_action` |
 
 For each request, the service does these steps.
 

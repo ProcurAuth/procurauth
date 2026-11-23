@@ -27,6 +27,12 @@ use crate::http::{Request, percent_decode};
 pub const ACTIONS_PATH: &str = "/.well-known/procurauth/actions";
 /// The path of the options route (5.6).
 pub const OPTIONS_PATH: &str = "/.well-known/procurauth/resources";
+/// The health-probe route (10.1c). It gives no data of the service.
+pub const HEALTH_PATH: &str = "/health";
+/// A route that runs no action of the action document: a static file (10.1c).
+pub const ABOUT_PATH: &str = "/static/about.txt";
+/// The text of the static file.
+const ABOUT_TEXT: &str = "The reference service of ProcurAuth.\n";
 /// The number of rows of a read that has no `limit`.
 pub const DEFAULT_LIMIT: u64 = 100;
 /// The most rows of one write.
@@ -138,6 +144,14 @@ impl App {
             // 5.1, 9.4: this route needs no token, and it asks no question.
             return Routed::plain(self.pep.actions_reply(&request.method));
         }
+        if request.path == HEALTH_PATH {
+            // 10.1c: a health probe gives no data, needs no token and asks no question.
+            return if request.method == "GET" {
+                Routed::plain(text_reply("ok\n"))
+            } else {
+                method_not_allowed("GET")
+            };
+        }
         // Step 2: refuse each other request that has no valid identity token.
         let who = match self.pep.authenticate(request.header_pairs()) {
             Ok(who) => who,
@@ -149,6 +163,16 @@ impl App {
                 self.mcp(request, &who)
             } else {
                 method_not_allowed("POST")
+            };
+        }
+        if request.path == ABOUT_PATH {
+            // 10.1c: a route with no action asks `access` on the service.
+            if request.method != "GET" {
+                return method_not_allowed("GET");
+            }
+            return match self.pep.decide_route_without_action(&who) {
+                Ok(()) => Routed::plain(text_reply(ABOUT_TEXT)),
+                Err(refusal) => Routed::refused(&refusal),
             };
         }
         if request.path == OPTIONS_PATH {
@@ -370,6 +394,13 @@ impl App {
             Err(refusal) => Routed::refused(&refusal),
         }
     }
+}
+
+/// A reply with a fixed text.
+fn text_reply(text: &str) -> HttpReply {
+    let mut reply = HttpReply::empty(200).with_header("Content-Type", "text/plain; charset=utf-8");
+    reply.body = text.as_bytes().to_vec();
+    reply
 }
 
 fn method_not_allowed(allow: &str) -> Routed {

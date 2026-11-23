@@ -723,6 +723,45 @@ impl Pep {
         Ok(answers.iter().map(|d| d.decision).collect())
     }
 
+    /// Ask the PDP for a route that runs no action of the action document, for example a route
+    /// that gives a static file (10.1c). The question is the action `access` on the resource of
+    /// type `service`, with no `context.usage` and no `context.approval`. The route runs only
+    /// after `Ok`. A health-probe route asks no question, so it does not call this function.
+    ///
+    /// The PEP keeps the answer as 10.1 says. The action `access` is never in the action
+    /// document (5.2), and `confirm` has no effect on it (17.8).
+    ///
+    /// # Errors
+    /// Returns [`Refusal::Forbidden`] for a `false` answer: HTTP 403 (10.3). Returns
+    /// [`Refusal::Unavailable`] when the PDP gives no valid answer. A reason of 17.1 is such an
+    /// answer, because a PDP never asks for an approval of `access`.
+    pub fn decide_route_without_action(&self, who: &Identity) -> Result<(), Refusal> {
+        let service = crate::operation::node(self.service_id(), &[]).map_err(|error| {
+            Refusal::Internal(format!("the service has no valid node: {error}"))
+        })?;
+        let permission = Permission::new(crate::access::ACCESS_ACTION, service);
+        let answers = self.ask_plain(who.sub(), &[&permission], MatchMode::Node, false)?;
+        let Some(decision) = answers.into_iter().next() else {
+            return Err(Refusal::Unavailable(UnavailableCause::Answer(
+                "the PDP gave no answer for the action `access`".to_owned(),
+            )));
+        };
+        if decision.decision {
+            return Ok(());
+        }
+        if decision
+            .context
+            .reason
+            .as_ref()
+            .is_some_and(Reason::is_approval)
+        {
+            return Err(Refusal::Unavailable(UnavailableCause::Answer(
+                "a reason of 17.1 for the action `access`".to_owned(),
+            )));
+        }
+        Err(denied(&decision))
+    }
+
     // ---- The metadata -----------------------------------------------------------
 
     /// The metadata of the PDP. The PEP reads it at the first question. Call this

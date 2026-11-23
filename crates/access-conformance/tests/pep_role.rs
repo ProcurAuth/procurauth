@@ -54,7 +54,7 @@ fn a_correct_service_passes_every_case_that_the_runner_can_run() {
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
     assert_eq!(out.ids_with("fail"), Vec::<String>::new());
     assert_eq!(out.ids_with("warn"), Vec::<String>::new());
-    assert_eq!(out.summary(), "126 cases: 63 passed, 0 failed, 63 skipped");
+    assert_eq!(out.summary(), "127 cases: 64 passed, 0 failed, 63 skipped");
     // The mock has no options route, no MCP endpoint and no use that needs two permissions.
     assert!(out.line("U05").contains("skip"), "{}", out.line("U05"));
     assert!(
@@ -230,7 +230,7 @@ fn p_10_7_a_service_with_a_new_connection_for_each_question_gets_a_warning_and_t
     assert_eq!(out.ids_with("warn"), vec!["U69"]);
     assert_eq!(
         out.summary(),
-        "126 cases: 62 passed, 0 failed, 63 skipped, 1 warned"
+        "127 cases: 63 passed, 0 failed, 63 skipped, 1 warned"
     );
     assert!(
         out.line("U69")
@@ -376,7 +376,7 @@ fn full(name: &str, defects: Defects, extra: &[&str]) -> Out {
 fn a_correct_service_with_the_options_route_and_mcp_skips_only_the_session_budget() {
     let out = full("pep_full", Defects::default(), &[]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "126 cases: 125 passed, 0 failed, 1 skipped");
+    assert_eq!(out.summary(), "127 cases: 126 passed, 0 failed, 1 skipped");
     // Section 17 is mandatory for a service: the cases of the approval profile run for each action.
     assert_eq!(out.ids_with("skip"), vec!["U95".to_owned()]);
     assert!(
@@ -401,7 +401,7 @@ fn a_service_whose_session_action_lists_a_budget_passes_every_case() {
         &[],
     );
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "126 cases: 126 passed, 0 failed, 0 skipped");
+    assert_eq!(out.summary(), "127 cases: 127 passed, 0 failed, 0 skipped");
 }
 
 #[test]

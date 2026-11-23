@@ -187,6 +187,11 @@ pub(crate) enum Operation {
     ReadActions,
     /// A read of the first level of the options route.
     ListOptions,
+    /// A read of a health-probe route, with no token (protocol 10.1c).
+    ReadHealth,
+    /// A request to a route that runs no action of the action document, for example a static file
+    /// (protocol 10.1c).
+    UseNoAction,
     /// A `tools/call` of a tool with no budget.
     McpCallPlain,
     /// A `tools/call` of a tool with a budget.
@@ -205,7 +210,7 @@ pub(crate) enum Operation {
 
 impl Operation {
     /// Every operation, in the order of the data model.
-    pub(crate) const ALL: [Self; 14] = [
+    pub(crate) const ALL: [Self; 16] = [
         Self::UsePlain,
         Self::UseBudget,
         Self::UseCeiling,
@@ -213,6 +218,8 @@ impl Operation {
         Self::UseMulti,
         Self::ReadActions,
         Self::ListOptions,
+        Self::ReadHealth,
+        Self::UseNoAction,
         Self::McpCallPlain,
         Self::McpCallBudget,
         Self::McpCallInput,
@@ -232,6 +239,8 @@ impl Operation {
             Self::UseMulti => "use_multi",
             Self::ReadActions => "read_actions",
             Self::ListOptions => "list_options",
+            Self::ReadHealth => "read_health",
+            Self::UseNoAction => "use_no_action",
             Self::McpCallPlain => "mcp_call_plain",
             Self::McpCallBudget => "mcp_call_budget",
             Self::McpCallInput => "mcp_call_input",

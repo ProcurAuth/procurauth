@@ -122,6 +122,8 @@ The cases use abstract operations. The profile of a PEP maps each one to a reque
 | `use_ceiling` | The same as `use_plain`, with `ceiling` and `ceiling_value`. Choose a request whose result does not go past `ceiling_value`. A PEP applies the ceiling (protocol 7.5, 10.2), and the case U37 expects a status 2xx. |
 | `use_service` | `method`, `path`, `action`. The node is the service. |
 | `read_actions`, `list_options` | Nothing. The runner uses the default routes of the protocol. `list_options` needs `options_type`. |
+| `read_health` | `path`. A health-probe route of the service (protocol 10.1c). The runner sends no token. |
+| `use_no_action` | `path`. A route that runs no action of the action document, for example a static file (protocol 10.1c). |
 | `mcp_call_plain`, `mcp_call_budget`, `mcp_call_input`, `mcp_call_multi`, `mcp_call_approval` | `tool` and `action`. The runner makes the JSON-RPC `tools/call` with the `arguments` of the operation. The operation `mcp_call_approval` is not in `operations`. The member `approval_calls` gives one call for each action of the service. For `mcp_call_approval`, the runner adds the control arguments, and each entry has the member `approval`. |
 | `mcp_approve`, `mcp_refuse` | A `body`. Use `capture` to read a value of the answer to the step before. |
 

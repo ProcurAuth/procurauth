@@ -1078,6 +1078,17 @@ impl State {
                 false,
                 &[],
             ),
+            // Protocol 10.1c: a health probe needs no token and asks no question.
+            ("GET", "/health") => Resp::json(200, &json!({"status": "ok"})),
+            // Protocol 10.1c: a route with no action asks `access` on the service.
+            ("GET", "/static") => {
+                let sub = match self.subject_of(&req) {
+                    Ok(sub) => sub,
+                    Err(response) => return response,
+                };
+                let service = json!({"type": "service", "id": "datastore"});
+                self.http_answer(self.decide(&sub, "access", &service, false, &[]))
+            }
             ("POST", "/mcp") => self.mcp(&req),
             ("POST", "/__reset") => {
                 self.cache.lock().unwrap().clear();
@@ -1240,7 +1251,9 @@ pub fn profile_with(
             },
             "use_service": {
                 "method": "GET", "path": "/service", "action": "data.write"
-            }
+            },
+            "read_health": {"method": "GET", "path": "/health"},
+            "use_no_action": {"method": "GET", "path": "/static"}
         }
     });
     if let Some(file) = credential_file {

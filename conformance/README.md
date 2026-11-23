@@ -143,6 +143,8 @@ These are the operations. The list is closed. A new operation needs a change of 
 | `use_multi` | One use of an action that lists a budget, and that needs one more permission, on another action or another node. It is an HTTP route. |
 | `read_actions` | A read of the action document. |
 | `list_options` | A read of the first level of the options route. |
+| `read_health` | A read of a health-probe route of the service, with no token (protocol 10.1c). |
+| `use_no_action` | A request to a route that runs no action of the action document, for example a static file (protocol 10.1c). |
 | `mcp_call_plain` | A `tools/call` of a tool whose action lists no budget. |
 | `mcp_call_budget` | A `tools/call` of a tool whose action lists a budget. |
 | `mcp_call_input` | A `tools/call` that ends with `InputRequiredResult`. |

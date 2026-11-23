@@ -59,6 +59,8 @@ The table gives the request of each operation. The columns after it give the var
 | `use_multi` | `POST /copy` | `{"from": {"host": "prod", "database": "test1", "table": "orders"}, "to": {"host": "prod", "database": "test2"}}` |
 | `read_actions` | `GET /.well-known/procurauth/actions` | none |
 | `list_options` | `GET /.well-known/procurauth/resources?type=host` | none |
+| `read_health` | `GET /health`, with no token | none |
+| `use_no_action` | `GET /static/about.txt` | none |
 
 | Operation | `action` | `resource_type` | `resource_id` | `ancestors` |
 | --- | --- | --- | --- | --- |
@@ -72,7 +74,7 @@ For `use_ceiling`, the variable `ceiling` is `max_rows`. The variable `ceiling_v
 
 For `use_multi`, the use is the write on the database `test2`. The other permission is the read of the table `orders` of `test1`, with `context.permission_only` and without `context.usage`.
 
-For `read_actions` and `list_options`, no variable of the operation applies.
+For `read_actions`, `list_options`, `read_health` and `use_no_action`, no variable of the operation applies. The route `/static/about.txt` runs no action of the action document, so the service asks `access` on the service for it (protocol 10.1c).
 
 ### MCP operations
 
@@ -130,6 +132,8 @@ For `mcp_call_input`, the first question has the resource of the database. The s
 | --- | --- |
 | `use_*` | HTTP 200 with a JSON body. |
 | `read_actions` | HTTP 200 with the action document. |
+| `read_health` | HTTP 200 with the text `ok`. |
+| `use_no_action` | HTTP 200 with a fixed text. |
 | `list_options` | HTTP 200 with `{"items": [...], "next": ...}`. |
 | `mcp_call_plain`, `mcp_call_budget`, `mcp_call_multi` | HTTP 200 with a JSON-RPC result that has `resultType` `complete`. |
 | `mcp_call_input` | HTTP 200 with a result that has `resultType` `input_required`. |
