@@ -1,6 +1,6 @@
 # ProcurAuth MCP Binding
 
-Version 1.0
+Version 1.1
 This document holds the rules of the ProcurAuth protocol [PROTOCOL] that only MCP needs.
 
 The changelog in `docs/` of the repository gives the changes of each version.
@@ -158,7 +158,7 @@ The tool has no action in the map of the tools (3.2), and it is not a use. The s
 - The tool error of 5.3 tells that a budget is spent, and the seconds to wait. It shows no grant and no amount (protocol 7.3, 11.2).
 
 ## 9. Conformance cases
-9.1 The conformance cases of the protocol are data in `conformance/` of the repository of this specification (protocol 15, item 2). The cases that only MCP needs are in this section, and each case cites the paragraphs that it tests. Earlier versions of the protocol gave them these ids for a later version of [CONTRACT]. [CONTRACT] does not hold them yet (section 12, item 1). These ids are in the series U, for a PEP, but the cases are in this binding. `conformance/` gives these ids to no case of its own.
+9.1 The conformance cases of the protocol are data in `conformance/` of the repository of this specification (protocol 15, item 2). The cases that only MCP needs are in this section, and each case cites the paragraphs that it tests. Earlier versions of the protocol gave them these ids for a later version of [CONTRACT]. [CONTRACT] does not hold them, and this binding is their source (section 12, item 1). These ids are in the series U, for a PEP, but the cases are in this binding. `conformance/` gives these ids to no case of its own.
 - U18 (3.4, 3.5, 3.6; protocol 6.4): a use of an action that lists a budget sends one Access Evaluation with `context.usage` equal to `{"units": 1}`. A `tools/list`, a call that ends with `InputRequiredResult` and a call of a tool whose action lists no budget send no question with `context.usage`.
 - U23 (5.1, 5.3, 5.4; protocol 10.3): the test PDP answers `false` with `budget_exceeded` and `retry_after` 12. A `tools/call` gets HTTP 200 and the tool error of 5.3, with `retryable` true and `retry_after` 12. An MCP request other than `tools/call` whose action lists a budget (3.6a) gets HTTP 429, `Retry-After: 12` and `-31429` with `data.retry_after` 12. `conformance/` tests the HTTP route of protocol 10.3 in a case with its own id.
 - U25 (1.3; [CONTRACT, 2.5]): with a valid identity token, the header `MCP-Protocol-Version: 2026-07-28` and the `_meta` version `2025-11-25` give HTTP 400 and `-32020`.
@@ -236,28 +236,52 @@ Content-Length: 0
 ```
 
 ## 11. Relation to other work (informative)
-- COAZ-MCP gives the JSON-RPC code `-32001` to each denial. It says that an implementation MUST NOT use a code outside `-32000` to `-32099` [COAZ-MCP, l.859-863]. This binding uses `-31429` (5.4), so it does not claim COAZ-MCP conformance.
+- COAZ-MCP gives the JSON-RPC code `-32001` to each denial. It says that an implementation MUST NOT use a code outside `-32000` to `-32099` [COAZ-MCP, l.859-863]. This binding claims no conformance to COAZ-MCP. It gives `-32001` only to a denial of an MCP request other than `tools/call` (5.1b). A refused `tools/call` gets `-32602`, as an unknown tool (5.1). A spent budget of an MCP request other than `tools/call` gets `-31429` (5.4). Both differ from COAZ-MCP. The table of section 12 is about [CONTRACT] and changes nothing here.
 - MCP 2026-07-28 tells new implementations not to use the codes `-32000` to `-32019` [MCP 2026-07-28]. The AuthZEN repository does not hold this text.
 - COAZ-MCP lets an implementation give a denial as a tool result with `isError` true [COAZ-MCP, l.880-883]. The tool error of 5.3 has this form, but only for `budget_exceeded`.
 - COAZ-MCP gives `-32603` when the PEP cannot reach the PDP [COAZ-MCP, l.887-888]. Section 5 gives the same code, with HTTP 503 (protocol 10.3).
 - COAZ-MCP puts the map of a tool, `x-authzen-mapping`, in the `inputSchema` of the tool in the `tools/list` response [COAZ-MCP, l.374-376]. Thus a gateway can be the PEP of the tools [COAZ-MCP, l.191-197]. In this binding, the service is the PEP of its tools (3.1), and an MCP message has no added field (1.5).
 
-## 12. Open points
-1. The contract of the MCP servers [CONTRACT] moves into this binding in a later version. Until then, this binding applies where the two texts differ. Items 2 to 10 give the differences.
-2. Its 2.7 gives the JSON-RPC codes `-32001` for 401 and `-32002` for 429. Section 5 gives a 401 with an empty body (5.2). It replaces `-32002` with `-31429`, only when the service knows the `id`. Before the service reads the `id`, each refusal has an empty body (5.6a, 7.4). An example is the 400 that its 2.7 gives to a body that is not JSON. Its 2.7 also gives status 200 to each error of a method. Section 5 gives HTTP 429 with `-31429` and HTTP 503 with `-32603`.
-3. Its 6.1 has `retry_after_ms` in place of `retry_after` in whole seconds (5.3). Its 6.2 has no code `budget_exceeded` (5.3a). Its 4.5 does not say that the `outputSchema` of a tool accepts the error object of its 6.1 and of 5.3.
-4. Its section 11 restates rules of the protocol and does not cite the protocol. Its 11.3 to 11.5 and 11.8 become references to the protocol. Then three differences end. Its 11.3 has `EdDSA` (protocol 9.2), and its 11.4 has a path of the action document other than `/.well-known/procurauth/actions` (protocol 5.1). Its 11.5 accepts a network without TLS (protocol 10.0, step 4). Its 11.1 says that AuthZEN does not apply to the MCP endpoint, but 3.3 accepts the identity token there.
-5. Its 11.5 gives `false` when the PDP fails, and its case U08 then expects 403: the protocol gives HTTP 503 (protocol 10.3). Its case D14 expects `false` with `invalid_request` for a bad `context.match` in one evaluation: the protocol gives HTTP 400 (protocol 11.1). Its 11.6 gives 403 to each `false`, also for `budget_exceeded` (protocol 10.3).
-6. Its file `IMPLEMENTATIONS.md` names products. It does not move into the repository of this specification.
-7. Its section 9 follows the model of this binding: the PDP decides, and the service learns only the verdict. Its paragraphs 9.2, 9.6, 9.7 and 9.9 are Unused. Its 9.4, 9.5 and 9.8 agree with 5.7 and 5.7b. Items 8 to 10 give the differences that remain.
-8. Neither this binding nor [CONTRACT, 6.2] has a code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (protocol 17.6, 17.12), so it gives `approval_expired`.
-9. Its 6.1 lets a retryable error have `retry_after_ms`. The code `approval_rate_limited` of 5.7a has `retry_after` in whole seconds, as 5.3 has it and as protocol 10.3 and 17.4 give it. A client reads the seconds.
-10. Its 9.4 lets a server send a task when the client declares the extension `io.modelcontextprotocol/tasks`. This binding gives no form for it. Protocol 17.4 and 5.7a use the error `no_device` for an owner with no way to receive the request.
+## 12. The MCP server contract
+This section held the open points of version 1.0. Each item now states a final rule. The table at the end of the section lists each difference from [CONTRACT].
+
+1. This binding is the source for a ProcurAuth service. Where this binding and [CONTRACT] differ, the service follows this binding. [CONTRACT] stays the source for the parts that this binding does not cover, for example the logs and the jobs [CONTRACT, 7, 10]. The table below lists each difference. A service that follows this binding and the rest of [CONTRACT] obeys both texts.
+2. A refusal before the service reads the `id` has an empty body, for each status (5.2, 5.6a, 7.4). Examples are the 401, the 429 of a standalone key and the 400 of a body that is not JSON. When the service knows the `id`, it gives HTTP 429 with `-31429` (5.4) and HTTP 503 with `-32603` (5.5). An MCP request other than `tools/call` that the PDP refuses gets HTTP 403 with `-32001` (5.1b).
+3. A tool error of a refused budget has the code `budget_exceeded` and `retry_after` in whole seconds (5.3, 5.3a). It never has `retry_after_ms`. The `outputSchema` of a tool SHOULD accept the object `error` of 5.3 and 5.7a, so that a client that checks the schema accepts a tool error.
+4. For a ProcurAuth service, the protocol gives the identity token, the action document and the link to the PDP, not [CONTRACT, 11.3 to 11.5]. The token follows protocol 9.2 to 9.4, also on the MCP endpoint (3.3). The action document is at `/.well-known/procurauth/actions` (protocol 5.1). The link to the PDP is secured (protocol 10.0, step 4).
+5. A PDP that fails gives HTTP 503 (protocol 10.3), never a refusal. A bad `context.match` in one evaluation gives HTTP 400 (protocol 11.1). A `false` answer with `budget_exceeded` gives HTTP 429 on an HTTP route, or the tool error of 5.3 (protocol 10.3). The cases U08 and D14 of [CONTRACT] do not apply to a ProcurAuth service.
+6. The file `IMPLEMENTATIONS.md` of [CONTRACT] stays in [CONTRACT]. The repository of this specification has its own file `IMPLEMENTATIONS.md`, which lists the ProcurAuth implementations.
+7. The approval follows the model of [CONTRACT, section 9]: the PDP decides, and the service learns only the verdict. [CONTRACT, 9.2, 9.6, 9.7 and 9.9] are Unused, and [CONTRACT, 9.4, 9.5 and 9.8] agree with 5.7, 5.7a and 5.7b. Items 8 to 10 and the table give the differences that remain.
+8. No tool error has the code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (protocol 17.6, 17.12), so the call gets `approval_expired` (5.7a).
+9. The tool error `approval_rate_limited` has `retry_after` in whole seconds, as 5.3 has it and as protocol 10.3 and 17.4 give it (5.7a). It never has `retry_after_ms`.
+10. A service never sends an MCP task in place of the result of 5.7, also when the client declares the extension `io.modelcontextprotocol/tasks`. The result of 5.7 and the tool `get_action_status` (5.7b) are the only form of a call that waits. An owner with no way to receive the request gives `approval_unavailable` (5.7a).
+
+**Differences from the MCP server contract.** Each row gives the rule of [CONTRACT] and the rule of this binding, which a ProcurAuth service follows.
+
+| Topic | [CONTRACT] | This binding | Item |
+| --- | --- | --- | --- |
+| Body of a 401 | JSON-RPC `-32001`, message `unauthorized` [CONTRACT, 2.7] | An empty body (5.2, 5.6a) | 2 |
+| Body of a 429 of a standalone key | JSON-RPC `-32002` [CONTRACT, 2.7] | An empty body, with `Retry-After` (7.4) | 2 |
+| Body of a 400 for a body that is not JSON | JSON-RPC `-32700` [CONTRACT, 2.7] | An empty body (5.6a) | 2 |
+| A method error | HTTP 200 for each error of a method [CONTRACT, 2.7] | HTTP 429 with `-31429` (5.4), HTTP 503 with `-32603` (5.5), HTTP 403 with `-32001` (5.1b) | 2 |
+| `retry_after` of a tool error | `retry_after_ms` [CONTRACT, 6.1] | `retry_after` in whole seconds (5.3, 5.7a) | 3, 9 |
+| Common codes of a tool error | No `budget_exceeded` [CONTRACT, 6.2] | `budget_exceeded`, retryable (5.3a) | 3 |
+| `outputSchema` and a tool error | No rule [CONTRACT, 4.5] | It SHOULD accept the object `error` | 3 |
+| Path of the action document | `/.well-known/access-actions` [CONTRACT, 11.4] | `/.well-known/procurauth/actions` (protocol 5.1) | 4 |
+| Form of `iat` and `exp`, and `nbf` | A NumericDate, no rule for `nbf` [CONTRACT, 11.3] | Integers with digits only, `nbf` checked (protocol 9.3, 9.4) | 4 |
+| `kid` with more than one key | No rule [CONTRACT, 11.3] | A token without `kid` is refused (protocol 9.4) | 4 |
+| Link to the PDP | A private network without TLS is possible [CONTRACT, 11.5] | The link is secured (protocol 10.0, step 4) | 4 |
+| A PDP that fails | The decision is `false`, HTTP 403 [CONTRACT, 11.5, case U08] | HTTP 503 (5.1, 5.5, protocol 10.3) | 5 |
+| A bad `context.match` in one evaluation | `false` with `invalid_request` [CONTRACT, 11.5, case D14] | HTTP 400 (protocol 11.1) | 5 |
+| `false` with `budget_exceeded` on an HTTP route | HTTP 403 [CONTRACT, 11.6] | HTTP 429 with `Retry-After` (protocol 10.3) | 5 |
+| A 422 `invalid_evaluation` of the approval API | No rule [CONTRACT, 9.4] | One more question with the effect, then `approval_expired` (5.7a) | 7 |
+| A 422 `explanation_required` or a 409 `cannot_supersede` | No rule [CONTRACT, 9.4] | The tool error `invalid_argument` (5.7a) | 7 |
+| A task in place of a result that waits | A server MAY send a task [CONTRACT, 9.4] | Never: the result of 5.7 only | 10 |
 
 ## References
-- [PROTOCOL] ProcurAuth Protocol, version 1.0: `spec/` in the repository of this specification.
+- [PROTOCOL] ProcurAuth Protocol, version 1.1: `protocol/` in the repository of this specification.
 - [AUTHZEN] (also cited as [AUTHZEN 1.0]) AuthZEN Authorization API 1.0, Final Specification, OpenID Foundation. A citation l.N is a line of `api/authorization-api-1_0.md` in the repository `openid/authzen` at commit `4deba63`.
 - [COAZ-MCP] COAZ Binding for the Model Context Protocol, Draft 1: `profiles/authzen-coaz-mcp-binding-1_0.md` at the same commit. A citation l.N is a line of this file.
-- [CONTRACT] The contract of the MCP servers, version 1 (draft): `SPEC.md` and `conformance/CASES.md` of the repository `mcp-server-contract`. A citation N.M is a paragraph of `SPEC.md`. It moves into this binding later (section 12, item 1).
+- [CONTRACT] The contract of the MCP servers, version 1 (draft): `SPEC.md` and `conformance/CASES.md` of the repository `mcp-server-contract`. A citation N.M is a paragraph of `SPEC.md`. This binding is the source for a ProcurAuth service where the two texts differ (section 12).
 - [MCP 2026-07-28] Model Context Protocol, revision 2026-07-28.
 - [RFC 2119] Key words for use in RFCs to Indicate Requirement Levels. [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words.
