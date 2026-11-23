@@ -41,6 +41,7 @@ use crate::operation::{Operation, Permission};
 use crate::pdp_client::PdpClient;
 use crate::refusal::{AuthFailure, DenialCause, Refusal, UnavailableCause};
 use crate::reply::HttpReply;
+use crate::token_cache::TokenCache;
 use crate::transport::PdpTransport;
 use crate::url::Url;
 
@@ -149,7 +150,10 @@ pub struct Pep {
     service_id: String,
     token_header: String,
     policy: TokenPolicy,
-    keys: KeySet,
+    /// The public keys of the edge. The tests of the token cache change them.
+    pub(crate) keys: KeySet,
+    /// The kept results of the token checks (9.7). It is off when its bound is 0.
+    tokens: TokenCache,
     document: ActionDocument,
     served: ServedDocument,
     pub(crate) client: PdpClient,
@@ -239,6 +243,7 @@ impl Pep {
                 skew_seconds: config.clock_skew_seconds,
             },
             keys: config.trusted_keys,
+            tokens: TokenCache::new(config.token_cache_max_entries, config.clock_skew_seconds),
             service_id: config.service_id,
             token_header: config.token_header,
             document,
@@ -273,6 +278,12 @@ impl Pep {
     /// The number of kept answers now (10.1b).
     pub fn kept_answers(&self) -> usize {
         self.lock_cache().len()
+    }
+
+    /// The number of kept results of token checks now (9.7). It is 0 when
+    /// `token_cache_max_entries` is 0.
+    pub fn kept_tokens(&self) -> usize {
+        self.tokens.len()
     }
 
     /// The reply for a read of the action document at `/.well-known/procurauth/actions`.
@@ -316,19 +327,24 @@ impl Pep {
 
     /// Check the text of an identity token (9.4).
     ///
+    /// With `token_cache_max_entries` above 0, the PEP first reads the kept
+    /// results (9.7). A kept result of this exact token serves until `exp` plus
+    /// the clock skew. The PEP keeps the result of a check that passes. It never
+    /// keeps a refusal.
+    ///
     /// # Errors
     /// Returns [`Refusal::Unauthenticated`] when the token fails a check.
     pub fn authenticate_token(&self, token: &str) -> Result<Identity, Refusal> {
         let now = self.clock.now_seconds();
+        if let Some(identity) = self.tokens.get(token, now) {
+            return Ok(identity);
+        }
         match verify_for_pep(token, &self.keys, &self.policy, now) {
             Ok(verified) => {
                 let claims = verified.claims;
-                Ok(Identity::new(
-                    claims.sub,
-                    claims.owner,
-                    claims.iat,
-                    claims.exp,
-                ))
+                let identity = Identity::new(claims.sub, claims.owner, claims.iat, claims.exp);
+                self.tokens.put(token, &identity, now);
+                Ok(identity)
             }
             Err(error) => Err(Refusal::Unauthenticated(AuthFailure::Token {
                 check: error.check.as_str().to_owned(),

@@ -24,6 +24,7 @@
 //! | `pdp.metadata_max_age` | 3600 seconds |
 //! | `cache_ttl` | 0 (no kept answer) |
 //! | `cache_max_entries` | 10000 |
+//! | `token_cache_max_entries` | 0 (no kept token result) |
 //! | `display_max_questions` | 50 |
 //!
 //! # Link policy (10.0, step 4)
@@ -201,6 +202,10 @@ pub struct PepConfig {
     pub cache_ttl: Duration,
     /// The most kept answers (10.1b). The bound does not depend on the clients.
     pub cache_max_entries: usize,
+    /// The most kept results of the check of an identity token (9.7). Zero keeps
+    /// no result. A kept result serves only for the same token text, until `exp`
+    /// plus `clock_skew_seconds`. When the table is full, the PEP keeps no new result.
+    pub token_cache_max_entries: usize,
     /// The most questions that one request to the options route asks (5.6).
     pub display_max_questions: usize,
 }
@@ -233,6 +238,7 @@ impl PepConfig {
             pdp,
             cache_ttl: Duration::ZERO,
             cache_max_entries: 10_000,
+            token_cache_max_entries: 0,
             display_max_questions: 50,
         }
     }
@@ -500,6 +506,11 @@ mod tests {
         assert!(!config.pdp.allow_plain_http);
         assert!(config.pdp.url.starts_with("https://"));
         assert!(config.check().is_ok());
+    }
+
+    #[test]
+    fn the_token_cache_is_off_by_default() {
+        assert_eq!(good().token_cache_max_entries, 0);
     }
 
     #[cfg(feature = "tls")]
