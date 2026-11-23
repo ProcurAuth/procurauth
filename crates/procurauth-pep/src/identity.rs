@@ -25,6 +25,19 @@ impl Identity {
         }
     }
 
+    /// An identity from the values of a token that the service checked before, for example
+    /// with [`crate::Pep::authenticate`]. A service that keeps its own bounded map from a
+    /// session to these values uses it to ask the PDP for a later request. The function checks
+    /// nothing. Never build an identity from a value that a client sends (9.4, 9.6).
+    pub fn from_checked_token(
+        sub: impl Into<String>,
+        owner: Option<String>,
+        issued_at: u64,
+        expires_at: u64,
+    ) -> Self {
+        Self::new(sub.into(), owner, issued_at, expires_at)
+    }
+
     /// The `sub` of the token: the id of the subject.
     pub fn sub(&self) -> &str {
         &self.sub

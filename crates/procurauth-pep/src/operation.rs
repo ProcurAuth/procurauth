@@ -65,11 +65,21 @@ impl Operation {
     }
 
     /// Add another permission that the operation needs (5.5a). The PEP asks it
-    /// without `context.usage`, and it applies its ceilings to the part of the
-    /// operation that it lets run.
+    /// with `context.permission_only` and without `context.usage`, and it applies
+    /// its ceilings to the part of the operation that it lets run.
     #[must_use]
     pub fn also(mut self, action: impl Into<String>, node: NodePath) -> Self {
         self.others.push(Permission::new(action, node));
+        self
+    }
+
+    /// Add a list of other permissions that the operation needs (5.5a). It is the same as
+    /// one call of [`Operation::also`] for each item, in the order of the list. [`crate::Pep::decide`]
+    /// asks them first, in one Access Evaluations request when there are two or more. Each
+    /// question has `context.permission_only`, and the PEP keeps their answers apart (10.1).
+    #[must_use]
+    pub fn also_all(mut self, permissions: impl IntoIterator<Item = Permission>) -> Self {
+        self.others.extend(permissions);
         self
     }
 

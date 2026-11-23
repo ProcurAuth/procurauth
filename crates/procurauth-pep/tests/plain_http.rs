@@ -243,3 +243,45 @@ fn p_10_1c_a_route_with_no_action_asks_access_on_the_service() {
         assert_eq!(refusal.to_http().status, status, "{answer}");
     }
 }
+
+#[test]
+fn p_5_5a_a_list_of_other_permissions_goes_in_one_request_with_permission_only() {
+    use procurauth_pep::operation::Permission;
+    let t = yes_to_all();
+    let (pep, who) = service(t.clone(), |_| {});
+    let others = vec![
+        Permission::new("data.read", table("test1", "orders")),
+        Permission::new("data.read", table("test1", "customers")),
+    ];
+    let copy = Operation::new("data.write", database("test2")).also_all(others);
+    let allowed = pep.decide(&who, &copy).into_result().unwrap();
+    assert_eq!(allowed.others().len(), 2);
+    let posts = t.posts();
+    // One Access Evaluations request with the two other permissions, then the use.
+    let batch = posts[0].body.as_ref().unwrap();
+    assert_eq!(batch["evaluations"].as_array().unwrap().len(), 2);
+    assert_eq!(batch["context"]["permission_only"], true);
+    assert!(batch.pointer("/context/usage").is_none());
+    let used = posts[1].body.as_ref().unwrap();
+    assert_eq!(used["action"]["name"], "data.write");
+    assert!(used.pointer("/context/permission_only").is_none());
+}
+
+#[test]
+fn an_identity_from_a_checked_token_asks_as_the_identity_of_authenticate() {
+    let t = yes_to_all();
+    let (pep, who) = service(t.clone(), |_| {});
+    let again = Identity::from_checked_token(
+        who.sub(),
+        who.owner().map(str::to_owned),
+        who.issued_at(),
+        who.expires_at(),
+    );
+    assert_eq!(again, who);
+    let op = Operation::new("data.write", database("test2"));
+    pep.decide(&again, &op).into_result().unwrap();
+    assert_eq!(
+        t.posts()[0].body.as_ref().unwrap()["subject"]["id"],
+        "alice"
+    );
+}

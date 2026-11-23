@@ -212,7 +212,8 @@ A service with no MCP endpoint uses the same `Pep`. The test file `tests/plain_h
 | --- | --- |
 | Build the transport for `pdp.url`. | `transport::for_pdp`, `HttpTransport`, `tls::TlsTransport` |
 | Check the identity token. The PEP reads only the header that `token_header` names. | `Pep::authenticate(headers)`, `Pep::token_header` |
-| Ask an operation with other permissions. The PEP asks them first, with `context.permission_only` and without `context.usage` (5.5a). | `Operation::new(..).also(..)`, `Pep::decide`, `Allowed::others` |
+| Ask an operation with other permissions. The PEP asks them first, in one request, with `context.permission_only` and without `context.usage` (5.5a). | `Operation::new(..).also(..)` or `.also_all(list)`, `Pep::decide`, `Allowed::others` |
+| Ask for a later request of a subject whose token the service checked and kept. | `Identity::from_checked_token` |
 | Take one unit for a use of an action that lists a budget. The question of the use has `context.usage` (6.4). | `Pep::decide`, `Allowed::units` |
 | Refuse a call that cannot wait for an approval: HTTP 403 with the body `{"error":"approval_cannot_wait"}` (17.7a). | `Pep::decide(..).into_result()`, then `Refusal::to_http` |
 | Keep answers for a short time (10.1). | `cache_ttl`, `cache_max_entries`, `Pep::kept_answers` |
