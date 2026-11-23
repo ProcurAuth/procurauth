@@ -497,6 +497,16 @@ pub(crate) enum Defect {
     UnknownKid,
 }
 
+/// The claim `nbf` of a token (protocol 9.3). Without it, the token has no `nbf`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum NbfSpec {
+    /// `nbf` is equal to `iat`. The token is good.
+    Iat,
+    /// `nbf` is later than the clock plus the skew. The token is bad.
+    Future,
+}
+
 /// The algorithm of a good token.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 pub(crate) enum TokenAlg {
@@ -539,6 +549,9 @@ pub(crate) struct TokenSpec {
     /// A named defect.
     #[serde(default)]
     pub(crate) defect: Option<Defect>,
+    /// The claim `nbf`. Without it, the token has no `nbf`.
+    #[serde(default)]
+    pub(crate) nbf: Option<NbfSpec>,
     /// The JSON form of the number of a claim: `fraction`, `exponent` or `negative` (protocol 9.3).
     /// The value of the claim stays the same.
     #[serde(default)]

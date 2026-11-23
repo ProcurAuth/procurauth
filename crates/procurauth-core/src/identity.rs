@@ -135,6 +135,8 @@ pub struct Claims {
     pub iat: u64,
     /// The end of the life of the token, in seconds since the Unix epoch.
     pub exp: u64,
+    /// The optional start of the life of the token, in seconds since the Unix epoch (9.3).
+    pub nbf: Option<u64>,
     /// The owner of a key (9.3). It is for logs and for approvals (9.5).
     pub owner: Option<String>,
 }
@@ -183,6 +185,9 @@ impl Claims {
         );
         m.insert("iat".into(), json!(self.iat));
         m.insert("exp".into(), json!(self.exp));
+        if let Some(nbf) = self.nbf {
+            m.insert("nbf".into(), json!(nbf));
+        }
         if let Some(owner) = &self.owner {
             m.insert("owner".into(), json!(owner));
         }
@@ -202,6 +207,7 @@ fn read_claims(value: &Value, ignore_bad_owner: bool, report: &mut Report) -> Op
     let aud = read_aud(&mut obj, report);
     let iat = obj.whole("iat", report);
     let exp = obj.whole("exp", report);
+    let nbf = obj.whole_opt("nbf", report);
     let owner = if ignore_bad_owner {
         obj.optional("owner")
             .and_then(Value::as_str)
@@ -225,6 +231,7 @@ fn read_claims(value: &Value, ignore_bad_owner: bool, report: &mut Report) -> Op
         aud: aud?,
         iat: iat?,
         exp: exp?,
+        nbf,
         owner: owner.map(str::to_owned),
     })
 }
@@ -354,6 +361,8 @@ pub enum CheckName {
     Iat,
     /// The clock is not later than `exp` plus the skew.
     Exp,
+    /// When the token has `nbf`, it is not later than the clock plus the skew.
+    Nbf,
     /// `exp` minus `iat` is not more than the maximum age.
     Life,
 }
@@ -374,6 +383,7 @@ impl CheckName {
             Self::Aud => "aud",
             Self::Iat => "iat",
             Self::Exp => "exp",
+            Self::Nbf => "nbf",
             Self::Life => "life",
         }
     }
@@ -538,6 +548,7 @@ impl Builder {
             CheckName::Aud,
             CheckName::Iat,
             CheckName::Exp,
+            CheckName::Nbf,
             CheckName::Life,
         ];
         Self {
@@ -844,6 +855,28 @@ fn check_claims(b: &mut Builder, map: &Map<String, Value>, policy: &TokenPolicy,
             claim_problem(map, "exp", TIME_FORM).unwrap_or_default(),
         ),
     }
+    // nbf: optional (9.3)
+    match map.get("nbf") {
+        None => b.set(CheckName::Nbf, true, "absent"),
+        Some(value) => match value.as_u64() {
+            Some(nbf) if nbf <= now.saturating_add(policy.skew_seconds) => {
+                b.set(CheckName::Nbf, true, format!("{nbf}"));
+            }
+            Some(nbf) => b.set(
+                CheckName::Nbf,
+                false,
+                format!(
+                    "Claim `nbf` is {nbf}, which is later than the clock {now} plus the skew {} s.",
+                    policy.skew_seconds
+                ),
+            ),
+            None => b.set(
+                CheckName::Nbf,
+                false,
+                claim_problem(map, "nbf", TIME_FORM).unwrap_or_default(),
+            ),
+        },
+    }
     // life
     if let (Some(iat), Some(exp)) = (iat, exp) {
         match exp.checked_sub(iat) {
@@ -988,6 +1021,7 @@ mod tests {
                 "aud",
                 "iat",
                 "exp",
+                "nbf",
                 "life"
             ]
         );
@@ -1221,6 +1255,57 @@ mod tests {
             )
             .is_ok()
         );
+    }
+
+    #[test]
+    fn p_9_4_a_token_with_nbf_after_the_clock_plus_the_skew_is_refused() {
+        let key = ed();
+        let set = set_for(&key);
+        let mut c = claims();
+        for nbf in [1_792_569_600, NOW, NOW + 30] {
+            c["nbf"] = json!(nbf);
+            let token = sign_compact(&header("Ed25519"), &c, &key);
+            let verified = verify(&token, &set, &policy(), NOW).unwrap();
+            assert_eq!(verified.claims.nbf, Some(nbf));
+            assert_eq!(verified.claims.to_value()["nbf"], json!(nbf));
+        }
+        c["nbf"] = json!(NOW + 31);
+        let token = sign_compact(&header("Ed25519"), &c, &key);
+        assert_eq!(failing(&token, &set), vec![CheckName::Nbf]);
+        // A token with no nbf passes the check, and its claims have none.
+        let token = sign_compact(&header("Ed25519"), &claims(), &key);
+        let verified = verify(&token, &set, &policy(), NOW).unwrap();
+        assert_eq!(verified.claims.nbf, None);
+        assert!(verified.claims.to_value().get("nbf").is_none());
+    }
+
+    #[test]
+    fn p_9_3_nbf_is_an_integer_with_digits_only() {
+        let key = ed();
+        let set = set_for(&key);
+        let header = r#"{"alg":"Ed25519","typ":"JWT"}"#;
+        let mut c = claims();
+        c["nbf"] = json!(1_792_569_600);
+        let Value::Object(map) = c else {
+            panic!("the claims are an object");
+        };
+        for form in [
+            NumberForm::Fraction,
+            NumberForm::Exponent,
+            NumberForm::Negative,
+        ] {
+            let text = claims_text_with_forms(&map, &forms(&[("nbf", form)])).unwrap();
+            let token = sign_compact_text(header, &text, &key);
+            let found = failing(&token, &set);
+            assert!(found.contains(&CheckName::Nbf), "{form:?}: {found:?}");
+            assert!(found.contains(&CheckName::Claims), "{form:?}: {found:?}");
+        }
+        for bad in [json!("1"), json!(null), json!(1.5)] {
+            let mut c = claims();
+            c["nbf"] = bad.clone();
+            let token = sign_compact(&json!({"alg": "Ed25519", "typ": "JWT"}), &c, &key);
+            assert!(failing(&token, &set).contains(&CheckName::Nbf), "{bad}");
+        }
     }
 
     #[test]

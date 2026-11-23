@@ -109,8 +109,8 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 7.5 | pep | U36, U37, U39, U92 |
 | 7.6 | pep | U38 |
 | 8.3 | pep | U40 |
-| 9.3 | pep | U43, U44, U46, U47, U49, U118 |
-| 9.4 | pep | U03, U14, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U75, U85, U99, U118, U119 |
+| 9.3 | pep | U43, U44, U46, U47, U49, U118, U120 |
+| 9.4 | pep | U03, U14, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U75, U85, U99, U118, U119, U120 |
 | 9.5 | pep | U10 |
 | 9.6 | pep | U01, U09 |
 | 9.7 | pep | U55 |

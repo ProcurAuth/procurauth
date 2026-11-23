@@ -217,6 +217,10 @@
             "alg_none", "alg_hs256", "alg_eddsa", "wrong_issuer", "wrong_audience", "unknown_kid"
           ]
         },
+        "nbf": {
+          "description": "The claim nbf (protocol 9.3). iat gives nbf equal to iat, and the token is good. future gives an nbf that is later than the clock plus the skew, and the token is bad. Without the member, the token has no nbf.",
+          "enum": ["iat", "future"]
+        },
         "number_forms": {
           "description": "The JSON form of the number of a claim (protocol 9.3). The member name is the claim. fraction writes the digits and .0, exponent writes the digits and e0, and negative writes a minus sign and the digits. The value of the claim stays the same, and the claim must be a whole number.",
           "type": "object",

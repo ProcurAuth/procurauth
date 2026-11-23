@@ -10,4 +10,5 @@ sub        ok   present
 aud        ok   datastore
 iat        ok   1792569600
 exp        ok   1792570000
+nbf        ok   absent
 life       fail The life of the token is 400 s, and the maximum age is 300 s. (rule 9.4)

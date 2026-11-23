@@ -10,7 +10,7 @@ use procurauth_core::json::parse_slice;
 use procurauth_core::jws::{KeySet, PublicKey, SigningKey, b64url_decode, sign_compact_text};
 use serde_json::{Map, Value, json};
 
-use crate::model::{Defect, TokenAlg, TokenSpec};
+use crate::model::{Defect, NbfSpec, TokenAlg, TokenSpec};
 use crate::profile::{TokenProfile, TrustProfile};
 
 /// The largest file that the runner reads.
@@ -203,6 +203,15 @@ impl Signer {
         claims.insert("aud".into(), json!(aud));
         claims.insert("iat".into(), json!(iat));
         claims.insert("exp".into(), json!(exp));
+        match spec.nbf {
+            None => {}
+            Some(NbfSpec::Iat) => {
+                claims.insert("nbf".into(), json!(iat));
+            }
+            Some(NbfSpec::Future) => {
+                claims.insert("nbf".into(), json!(now + self.skew + 10));
+            }
+        }
         if let Some(owner) = &spec.owner {
             claims.insert("owner".into(), json!(owner));
         }
@@ -392,6 +401,7 @@ mod tests {
             claims: Map::new(),
             header: Map::new(),
             defect,
+            nbf: None,
             number_forms: std::collections::BTreeMap::new(),
         }
     }
@@ -468,6 +478,17 @@ mod tests {
             signer(300, 30).mint(&s, NOW),
             Err(MintError::BadForm(_))
         ));
+    }
+
+    #[test]
+    fn an_nbf_equal_to_iat_is_good_and_a_future_nbf_fails_its_check() {
+        let mut s = spec(None);
+        s.nbf = Some(NbfSpec::Iat);
+        let token = signer(300, 30).mint(&s, NOW).unwrap();
+        assert_eq!(failed_check(&token), None);
+        s.nbf = Some(NbfSpec::Future);
+        let token = signer(300, 30).mint(&s, NOW).unwrap();
+        assert_eq!(failed_check(&token).as_deref(), Some("nbf"));
     }
 
     #[test]

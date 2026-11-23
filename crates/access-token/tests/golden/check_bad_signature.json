@@ -73,6 +73,12 @@
       "rule": "9.4"
     },
     {
+      "detail": "absent",
+      "name": "nbf",
+      "outcome": "pass",
+      "rule": "9.4"
+    },
+    {
       "detail": "life 300 s, max 300 s",
       "name": "life",
       "outcome": "pass",

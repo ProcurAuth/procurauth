@@ -1,6 +1,6 @@
 //! The check of a token against the configuration of a service (protocol 9.2 to 9.4).
 //!
-//! The core runs 13 checks in a fixed order. This module reads the inputs,
+//! The core runs 14 checks in a fixed order. This module reads the inputs,
 //! runs the checks and writes the result as text or as JSON.
 
 use procurauth_core::identity::{Check, Inspection, Outcome, inspect};

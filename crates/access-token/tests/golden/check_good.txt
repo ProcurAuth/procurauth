@@ -10,4 +10,5 @@ sub        ok   present
 aud        ok   datastore
 iat        ok   1792569600
 exp        ok   1792569900
+nbf        ok   absent
 life       ok   life 300 s, max 300 s

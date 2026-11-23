@@ -39,6 +39,9 @@ This file lists the places where the text of the protocol or of the MCP binding 
 15. **9.4.** The key set has one key with no `kid`, and the token has a `kid`. The text says to refuse a `kid` that the set does not hold. The code refuses the token.
 16. **9.4.** Does the service check `nbf`? The protocol does not name it. The code ignores it as an unknown claim.
 
+   Status: Closed (lot AL1, decision 205): a service refuses a token whose `nbf` is later than its clock plus the skew.
+
+
 ## Decisions and reasons
 
 17. **11.1.** An id of the chain with an empty text, more than 256 bytes or a control character has no reason in the list. The code gives `false` with no reason (11.2).

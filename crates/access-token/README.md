@@ -39,7 +39,7 @@ The tool is deterministic. It reads no clock, so the same input gives the same t
 
 ### Claims
 
-The claims are those of protocol 9.3: `iss`, `sub`, `aud`, `iat` and `exp`. A token for a key also has `owner`. Example files are `examples/claims.json` and `examples/claims-key.json`.
+The claims are those of protocol 9.3: `iss`, `sub`, `aud`, `iat` and `exp`. A token for a key also has `owner`. A token can also have `nbf`. Example files are `examples/claims.json` and `examples/claims-key.json`.
 
 By default, `make` checks the claims. It refuses a claims file that breaks protocol 9.3, and it prints the findings on the standard error. It then makes no token and exits with 1. A warning does not stop the tool.
 
@@ -53,6 +53,7 @@ Each row shows how to make one bad token. The last column shows the check that f
 | --- | --- | --- | --- |
 | `exp` in the past | Write an old `exp` in the claims file. | `exp` | 9.4 |
 | `iat` in the future | Write a late `iat` in the claims file. | `iat` | 9.4 |
+| `nbf` in the future | Write a late `nbf` in the claims file. | `nbf` | 9.4 |
 | Life longer than the maximum age | Write `exp` far after `iat`. | `life` | 9.4 |
 | `exp` before `iat` | Write `exp` before `iat`. | `life` | 9.4 |
 | Another `typ` | `--typ at+jwt` | `typ` | 9.2 |
@@ -62,9 +63,9 @@ Each row shows how to make one bad token. The last column shows the check that f
 | Bad signature | `--bad-signature` | `signature` | 9.4 |
 | Header `crit` | `--crit NAME` | `header` | 9.4 |
 | Unknown `kid` | `--kid NAME` with a name that the service does not hold. | `kid` | 9.4 |
-| `iat` or `exp` with a fraction | `--number-form iat=fraction` writes `1792569600.0`. | `claims` and the claim | 9.3 |
-| `iat` or `exp` with an exponent | `--number-form exp=exponent` writes `1792569900e0`. | `claims` and the claim | 9.3 |
-| `iat` or `exp` with a sign | `--number-form iat=negative` writes `-1792569600`. | `claims`, the claim and `life` | 9.3 |
+| `iat`, `exp` or `nbf` with a fraction | `--number-form iat=fraction` writes `1792569600.0`. | `claims` and the claim | 9.3 |
+| `iat`, `exp` or `nbf` with an exponent | `--number-form exp=exponent` writes `1792569900e0`. | `claims` and the claim | 9.3 |
+| `iat`, `exp` or `nbf` with a sign | `--number-form iat=negative` writes `-1792569600`. | `claims`, the claim and `life` | 9.3 |
 | No `kid` with two keys | Make the token with no `--kid`, and check it with a configuration of two keys. | `kid` | 9.4 |
 | Absent claim | Remove the claim and add `--allow-bad-claims`. | `claims` and the claim | 9.3 |
 | Wrong `iss` or `aud` | Write another value in the claims file. | `iss` or `aud` | 9.4 |
@@ -99,12 +100,13 @@ sub        ok   present
 aud        ok   datastore
 iat        ok   1792569600
 exp        ok   1792569900
+nbf        ok   absent
 life       ok   life 300 s, max 300 s
 $ echo $?
 0
 ```
 
-The tool prints one line for each of the 13 checks, always in the same order. A line has the name of the check, the result and a detail. The result is `ok`, `fail` or `skip`. A check is `skip` when an earlier check made it impossible. A failed line ends with the number of the rule, for example `(rule 9.2)`.
+The tool prints one line for each of the 14 checks, always in the same order. A line has the name of the check, the result and a detail. The result is `ok`, `fail` or `skip`. A check is `skip` when an earlier check made it impossible. A failed line ends with the number of the rule, for example `(rule 9.2)`.
 
 | Check | Rule | The check passes when |
 | --- | --- | --- |
@@ -120,6 +122,7 @@ The tool prints one line for each of the 13 checks, always in the same order. A 
 | `aud` | 9.4 | `aud` is the id of the service, or an array that holds it. |
 | `iat` | 9.4 | `iat` is not later than the clock plus the skew. |
 | `exp` | 9.4 | The clock is not later than `exp` plus the skew. |
+| `nbf` | 9.4 | The token has no `nbf`, or `nbf` is not later than the clock plus the skew. |
 | `life` | 9.4 | `exp` minus `iat` is not more than the maximum age. |
 
 A token with an empty third part, as `alg: none` makes it, fails the check `alg`. It does not fail `structure`.

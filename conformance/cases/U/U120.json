@@ -1,0 +1,121 @@
+{
+  "id": "U120",
+  "title": "The service accepts a token with nbf equal to iat, and refuses an nbf after its clock plus the skew or with another form.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "notes": "The claim nbf is optional (protocol 9.3), and an edge does not need to give it. A service that ignores nbf accepts the future nbf and fails the case.",
+  "given": {
+    "tokens": {
+      "good": {
+        "subject": "alice",
+        "nbf": "iat"
+      },
+      "future": {
+        "subject": "alice",
+        "nbf": "future"
+      },
+      "negative": {
+        "subject": "alice",
+        "nbf": "iat",
+        "number_forms": {
+          "nbf": "negative"
+        }
+      },
+      "fraction": {
+        "subject": "alice",
+        "nbf": "iat",
+        "number_forms": {
+          "nbf": "fraction"
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "An nbf equal to iat",
+      "request": {
+        "operation": "use_plain",
+        "token": "good"
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        }
+      }
+    },
+    {
+      "name": "An nbf after the clock plus the skew",
+      "request": {
+        "operation": "use_plain",
+        "token": "future"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "An nbf with a sign",
+      "request": {
+        "operation": "use_plain",
+        "token": "negative"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "An nbf with a fraction",
+      "request": {
+        "operation": "use_plain",
+        "token": "fraction"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

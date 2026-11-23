@@ -323,6 +323,17 @@ fn p_9_3_a_time_claim_with_a_fraction_an_exponent_or_a_sign_fails() {
 }
 
 #[test]
+fn p_9_4_a_late_nbf_fails_the_check_nbf() {
+    let mut claims = person_claims();
+    claims["nbf"] = json!(NOW + 30);
+    let out = json_check(SINGLE, &make(ED, &claims, &[]));
+    assert_eq!(out.code, 0, "{}", out.stdout);
+    claims["nbf"] = json!(NOW + 31);
+    let out = json_check(SINGLE, &make(ED, &claims, &[]));
+    assert_eq!(only_failure(&out), ("nbf".to_owned(), "9.4".to_owned()));
+}
+
+#[test]
 fn p_9_3_a_bad_number_form_option_is_a_usage_error() {
     for value in ["iat", "iat=other", "=fraction", "iss=fraction"] {
         let out = make_out(ED, &person_claims(), &["--number-form", value]);
@@ -485,7 +496,7 @@ fn p_9_4_the_kid_chooses_the_key() {
 }
 
 #[test]
-fn p_9_4_the_json_result_lists_the_13_checks_in_a_fixed_order() {
+fn p_9_4_the_json_result_lists_the_14_checks_in_a_fixed_order() {
     let out = json_check(SINGLE, &make(ED, &person_claims(), &[]));
     let document: Value = serde_json::from_str(&out.stdout).unwrap();
     let names: Vec<&str> = document["checks"]
@@ -509,6 +520,7 @@ fn p_9_4_the_json_result_lists_the_13_checks_in_a_fixed_order() {
             "aud",
             "iat",
             "exp",
+            "nbf",
             "life"
         ]
     );

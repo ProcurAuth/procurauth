@@ -88,6 +88,8 @@ The runner makes each token with the signing key of the test edge. It sets `iss`
 
 A token has a `subject`. It can have an `owner`, an `alg`, `claims`, `header` and one `defect`. The schema lists the defects. A defect makes a time relative to the clock of the run. For example, `expired` puts `exp` in the past, beyond the clock skew.
 
+A token can have `nbf`. The value `iat` gives `nbf` equal to `iat`, and the token is good. The value `future` gives an `nbf` that is later than the clock plus the skew, and the token is bad (protocol 9.4).
+
 A token can also have `number_forms`. It gives a JSON form to the number of a claim, for example `{"iat": "exponent"}`. The form `fraction` writes the digits and `.0`, `exponent` writes the digits and `e0`, and `negative` writes a minus sign and the digits. The value of the claim stays the same. Protocol 9.3 refuses each form, so the token is bad.
 
 A step sends a token with the member `token`. The variable `{{token_<name>}}` gives the text of the token that has this name. A case uses it to put a token in a place that the operation does not use, for example in the header `Authorization`. A token that a case defines is used in one of these two ways.
