@@ -63,7 +63,8 @@ impl Capabilities {
             Condition::NoMultiAction,
             !has(Operation::UseMulti) && !has(Operation::McpCallMulti),
         );
-        add(Condition::SingleKeySet, false);
+        // The service holds the public key of each signing key of the profile (protocol 9.4).
+        add(Condition::SingleKeySet, profile.token.keys.len() < 2);
         // Each service follows protocol section 17 (5.2b): the condition `no_approval_support` never holds for a PEP.
         Self { held }
     }

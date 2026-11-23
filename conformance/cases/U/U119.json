@@ -1,0 +1,55 @@
+{
+  "id": "U119",
+  "title": "When the key set of the edge holds more than one key, the service refuses a token without kid.",
+  "role": "pep",
+  "paragraphs": [
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "single_key_set"
+  ],
+  "notes": "The token is good except for the header kid. A service that tries each key of its set accepts it and fails the case.",
+  "given": {
+    "tokens": {
+      "no_kid": {
+        "subject": "alice",
+        "header": {
+          "kid": null
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "A token with no kid",
+      "request": {
+        "operation": "use_plain",
+        "token": "no_kid"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

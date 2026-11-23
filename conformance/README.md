@@ -251,7 +251,7 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 | `no_budget_session` | The action `mcp.session` lists no budget (binding 3.6a). |
 | `no_input_tool` | The service has no tool that asks the client for input. |
 | `no_multi_action` | The service has no use that needs two permissions: no HTTP route and no tool. |
-| `single_key_set` | The key set of the edge holds one key only. |
+| `single_key_set` | The key set of the edge holds one key only. For a PEP, the profile has one signing key only, because the service holds the public key of each signing key of the profile. |
 | `no_approval_support` | The PDP or the edge gives no approval (protocol section 17). |
 
 The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. A PDP MAY give no approval: it then gates no action and never answers a reason of protocol 17.1. For an edge, the runner holds it unless the profile has `edge.keys.confirm_access`. An edge asks only the action `access`, so it never asks for an approval.

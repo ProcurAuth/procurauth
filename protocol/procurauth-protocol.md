@@ -248,7 +248,7 @@ The edge MUST use its signing key only for the identity token.
 
 9.4 The configuration of the service names the token header, the value of `iss` and the public keys of the edge. It also names the id of the service, its maximum age for a token and its clock skew.
 
-The edge gives its public keys as a JWK Set [RFC 7517, 5]. When the set holds more than one key, the edge puts `kid` in the header of each token [RFC 7515, 4.1.4]. The service then checks the token with the key that has this `kid`. The service refuses a token with a `kid` that the set does not hold.
+The edge gives its public keys as a JWK Set [RFC 7517, 5]. When the set holds more than one key, the edge puts `kid` in the header of each token [RFC 7515, 4.1.4]. The service then checks the token with the key that has this `kid`. The service refuses a token with a `kid` that the set does not hold. When its set holds more than one key, the service refuses a token without `kid`. It never tries each key of the set.
 
 For each request other than a read of its action document (5.1), the service MUST check that `alg` is one of the algorithms of 9.2 [RFC 8725, 3.1]. It MUST also check the signature, `typ` (`JWT`), `iss`, `aud` and `exp`. It refuses a token without `iss`, `sub`, `aud`, `iat` or `exp` (9.3). It refuses a token whose `iat` or `exp` does not have the form of 9.3. It never rounds or converts such a value. `aud` is the id of the service, or an array that holds it [RFC 7519, 4.1.3].
 

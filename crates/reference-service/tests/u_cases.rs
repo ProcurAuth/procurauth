@@ -1304,7 +1304,7 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
     if cfg!(feature = "mcp") {
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
         // U30 and U100 to U117 are the cases of the approval profile: they run, for each action.
-        assert_eq!(ran, 117, "the number of cases that ran");
+        assert_eq!(ran, 118, "the number of cases that ran");
         skipped_ids.sort();
         assert_eq!(skipped_ids, ["U95"]);
     }
