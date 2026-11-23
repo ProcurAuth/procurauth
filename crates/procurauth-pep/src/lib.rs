@@ -38,7 +38,7 @@
 //! # The link to the PDP needs TLS
 //!
 //! The PEP must secure the link to the PDP (10.0, step 4). The configuration
-//! refuses an `http` URL, unless the flag `allow_insecure_pdp_link` is set. The
+//! refuses an `http` URL, unless the flag `allow_plain_http` is set. The
 //! client of this library, [`http_client::HttpTransport`], has no TLS. For a
 //! deployment, implement [`transport::PdpTransport`] with a TLS client.
 //!
@@ -66,7 +66,7 @@
 //!     .build()
 //!     .map_err(|findings| format!("{findings:?}"))?;
 //! let mut pdp = PdpConfig::new("https://pdp.example", Secret::new("credential"));
-//! pdp.allow_insecure_pdp_link = false;
+//! pdp.allow_plain_http = false;
 //! let keys = KeySet::from_jwks_str(r#"{"keys": []}"#).unwrap_or_default();
 //! let config = PepConfig::new("notes", "X-Identity-Token", "https://edge.example", keys, 300, 30, pdp);
 //! let transport = Arc::new(HttpTransport::new(HttpTransportConfig::from_pdp(&config.pdp)));

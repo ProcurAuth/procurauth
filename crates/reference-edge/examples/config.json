@@ -17,6 +17,6 @@
   "pdp": {
     "url": "http://127.0.0.1:8181",
     "credential_env": "PROCURAUTH_PDP_CREDENTIAL",
-    "allow_insecure_pdp_link": true
+    "allow_plain_http": true
   }
 }

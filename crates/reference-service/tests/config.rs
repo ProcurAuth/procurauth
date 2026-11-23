@@ -38,7 +38,7 @@ fn base() -> Value {
     json!({
         "issuer": "https://edge.example",
         "jwks": serde_json::from_str::<Value>(JWKS).unwrap(),
-        "pdp": {"url": "http://127.0.0.1:8181", "credential_env": "CRED", "allow_insecure_pdp_link": true}
+        "pdp": {"url": "http://127.0.0.1:8181", "credential_env": "CRED", "allow_plain_http": true}
     })
 }
 
@@ -192,11 +192,8 @@ fn the_program_never_changes_a_value_to_make_it_fit() {
         assert!(has(&e, &[key]), "{key}: {e:?}");
     }
     let mut value = base();
-    value["pdp"]["allow_insecure_pdp_link"] = json!("true");
-    assert!(has(
-        &errors(&value),
-        &["allow_insecure_pdp_link", "boolean"]
-    ));
+    value["pdp"]["allow_plain_http"] = json!("true");
+    assert!(has(&errors(&value), &["allow_plain_http", "boolean"]));
 }
 
 #[test]
@@ -452,9 +449,20 @@ fn an_http_url_without_the_flag_stops_the_program() {
     value["pdp"]
         .as_object_mut()
         .unwrap()
-        .remove("allow_insecure_pdp_link");
+        .remove("allow_plain_http");
     let e = errors(&value);
     assert!(has(&e, &["pdp.url", "https", "secured"]), "{e:?}");
+}
+
+#[test]
+fn an_https_url_with_the_flag_stops_the_program() {
+    let mut value = base();
+    value["pdp"]["url"] = json!("https://pdp.example");
+    let e = errors(&value);
+    assert!(
+        has(&e, &["pdp.allow_plain_http", "https", "contradiction"]),
+        "{e:?}"
+    );
 }
 
 #[test]

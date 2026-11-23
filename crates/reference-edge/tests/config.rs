@@ -53,7 +53,7 @@ fn base() -> Value {
         "keys": keys(),
         "upstream": {"url": "http://127.0.0.1:9000"},
         "signing": {"key_env": "KEY"},
-        "pdp": {"url": "http://127.0.0.1:8181", "credential_env": "CRED", "allow_insecure_pdp_link": true}
+        "pdp": {"url": "http://127.0.0.1:8181", "credential_env": "CRED", "allow_plain_http": true}
     })
 }
 
@@ -168,8 +168,8 @@ fn an_unknown_member_stops_the_program() {
     value["workers_env"] = json!("N");
     assert!(has(&errors(&value), &["workers_env"]));
     let mut value = base();
-    value["pdp"]["allow_insecure_pdp_link_file"] = json!("/x");
-    assert!(has(&errors(&value), &["allow_insecure_pdp_link_file"]));
+    value["pdp"]["allow_plain_http_file"] = json!("/x");
+    assert!(has(&errors(&value), &["allow_plain_http_file"]));
 }
 
 #[test]
@@ -556,14 +556,25 @@ fn an_http_link_to_the_pdp_needs_the_explicit_flag() {
     value["pdp"]
         .as_object_mut()
         .unwrap()
-        .remove("allow_insecure_pdp_link");
+        .remove("allow_plain_http");
     let e = errors(&value);
     assert!(
-        has(&e, &["pdp.url", "secured", "allow_insecure_pdp_link"]),
+        has(&e, &["pdp.url", "secured", "allow_plain_http"]),
         "{e:?}"
     );
-    value["pdp"]["allow_insecure_pdp_link"] = json!(true);
+    value["pdp"]["allow_plain_http"] = json!(true);
     assert!(load_value(&value).is_ok());
+}
+
+#[test]
+fn an_https_link_with_the_flag_is_a_contradiction() {
+    let mut value = base();
+    value["pdp"]["url"] = json!("https://pdp.example");
+    let e = errors(&value);
+    assert!(
+        has(&e, &["pdp.allow_plain_http", "https", "contradiction"]),
+        "{e:?}"
+    );
 }
 
 #[test]

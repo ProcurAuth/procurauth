@@ -122,7 +122,7 @@ The application reads the configuration. The library reads no file and no enviro
 
 | Key | Default |
 | --- | --- |
-| `pdp.allow_insecure_pdp_link` | `false` |
+| `pdp.allow_plain_http` | `false` |
 | `pdp.request_timeout` | 5 seconds |
 | `pdp.usage_wait_margin` | 1 second |
 | `pdp.idle_close_after` | 5 seconds |
@@ -140,7 +140,7 @@ The credential of the PDP is a `Secret`. Its debug text and its errors never sho
 
 ## The link to the PDP needs TLS
 
-The PEP must secure the link to the PDP (10.0, step 4). The configuration refuses an `http` URL, unless the flag `allow_insecure_pdp_link` is set. Set it only for a test on the loopback address, or for a link that another layer secures.
+The PEP must secure the link to the PDP (10.0, step 4). The configuration refuses an `http` URL, unless the flag `allow_plain_http` is set. Set it only for a test on the loopback address, or for a link that another layer secures.
 
 `HttpTransport` is a synchronous HTTP/1.1 client over `std::net`. It has no TLS. It keeps a small fixed number of connections open. For a deployment, implement the trait `PdpTransport` with a TLS client. The library has no `tls` feature, because a TLS crate adds many dependencies. See `notes/decisions-pep.md`.
 

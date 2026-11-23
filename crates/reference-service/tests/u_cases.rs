@@ -941,7 +941,7 @@ fn suite() -> Suite {
         .push(es["keys"][0].clone());
     let mut config = json!({
         "listen": "127.0.0.1:0", "issuer": "https://edge.example", "jwks": set,
-        "pdp": {"url": format!("http://{pdp_addr}"), "credential_env": "CRED", "allow_insecure_pdp_link": true,
+        "pdp": {"url": format!("http://{pdp_addr}"), "credential_env": "CRED", "allow_plain_http": true,
                 "request_timeout_ms": 1000, "usage_wait_margin_ms": 500}
     });
     if cfg!(feature = "mcp") {

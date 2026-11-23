@@ -20,7 +20,7 @@
   "pdp": {
     "url": "http://127.0.0.1:8181",
     "credential_file": "crates/fake-pdp/examples/pep-credential.txt",
-    "allow_insecure_pdp_link": true,
+    "allow_plain_http": true,
     "request_timeout_ms": 5000
   }
 }

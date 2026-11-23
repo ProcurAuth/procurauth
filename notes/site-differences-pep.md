@@ -16,7 +16,7 @@ This file lists the places where `procurauth-pep` and `reference-service` differ
 7. The site lists five programs: `access-lint`, `fake-pdp`, `access-token`, `keycheck` and `access-conformance`. The repository has a sixth, `reference-service`. It is the test subject of the series U. It is not a tool for an operator.
 8. The sentence "Build all the programs with cargo build --release" now builds six programs.
 9. The site gives no profile of the service under test. `crates/reference-service/PROFILE.md` gives the request of each operation. The profile of `access-conformance` follows it.
-10. The service has no TLS client, so it needs the flag `pdp.allow_insecure_pdp_link` and an `http` URL for the PDP.
+10. The service has no TLS client, so it needs the flag `pdp.allow_plain_http` and an `http` URL for the PDP.
 11. The configuration of the service is a JSON file with a closed schema. The forms `_env` and `_file` give a value from a variable or a file. The effective configuration shows the source of each value.
 
 ## Approvals (lot S4b)

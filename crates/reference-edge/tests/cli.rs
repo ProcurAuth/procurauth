@@ -38,7 +38,7 @@ fn config(listen: &str) -> Value {
         "keys": common::keys_file(),
         "upstream": {"url": "http://127.0.0.1:1"},
         "signing": {"key_env": "SIGNING_KEY"},
-        "pdp": {"url": "http://127.0.0.1:2", "credential_env": "PDP_CRED", "allow_insecure_pdp_link": true,
+        "pdp": {"url": "http://127.0.0.1:2", "credential_env": "PDP_CRED", "allow_plain_http": true,
                 "request_timeout_ms": 500, "plain_retries": 0}
     })
 }

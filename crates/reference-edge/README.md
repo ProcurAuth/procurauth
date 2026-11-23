@@ -86,7 +86,7 @@ A key that accepts indirection takes exactly one of three forms. The form `<name
 
 A secret takes only `_env` and `_file`. A secret in clear text in the file stops the program. The effective configuration hides each secret, and it shows the source: `file`, `default`, `env:VAR` or `file:/path`. The edge never writes a secret to a log or to an error.
 
-A variable that does not exist, an empty value, and a file that the program cannot read stop the program. Two keys that contradict each other also stop it. Examples are a `token_life_seconds` above `max_token_age_seconds`, an `upstream.url` equal to `listen`, and an `http` URL for the PDP without `pdp.allow_insecure_pdp_link`.
+A variable that does not exist, an empty value, and a file that the program cannot read stop the program. Two keys that contradict each other also stop it. Examples are a `token_life_seconds` above `max_token_age_seconds`, an `upstream.url` equal to `listen`, and an `http` URL for the PDP without `pdp.allow_plain_http`.
 
 The sections `upstream`, `signing` and `pdp` are objects. Their keys have the prefix of the section in the table.
 
@@ -114,7 +114,7 @@ The sections `upstream`, `signing` and `pdp` are objects. Their keys have the pr
 | `signing.kid` | text of 1 to 128 visible ASCII characters | none | none | The `kid` in the header of each token (9.4). Set it when the service trusts more than one key. |
 | `pdp.url` | URL with the scheme `http` (this program has no TLS client) | none, mandatory | `_env` and `_file` | The URL of the PDP. |
 | `pdp.credential` | text that is not empty, with visible ASCII characters | none, mandatory | `_env` and `_file` only | The credential of the edge for the PDP. The edge sends it in `Authorization: Bearer` (10.0). |
-| `pdp.allow_insecure_pdp_link` | boolean | false | none | Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program. |
+| `pdp.allow_plain_http` | boolean | false | none | Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program. With an `https` URL, the value `true` is a contradiction and stops the program. |
 | `pdp.request_timeout_ms` | whole number from 1 to 600000 | 5000 | none | The longest wait for an answer to the question for `access`. A longer wait gives HTTP 503. |
 | `pdp.idle_close_after_ms` | whole number from 1 to 600000 | 5000 | none | The longest idle time of a connection to the PDP. The edge also closes it after half of the time that the PDP publishes (10.7). |
 | `pdp.max_connections` | whole number from 1 to 256 | 4 | none | The most connections to the PDP at one time (10.7). |

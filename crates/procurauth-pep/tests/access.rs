@@ -75,7 +75,7 @@ fn p_10_3_a_pdp_that_gives_no_valid_answer_is_a_cause_and_not_a_denial() {
 #[test]
 fn p_10_0_the_gate_refuses_an_http_url_without_the_flag_and_a_bad_service_id() {
     let mut pdp = pdp_config("http://127.0.0.1:1");
-    pdp.allow_insecure_pdp_link = false;
+    pdp.allow_plain_http = false;
     let transport = Scripted::answering(|_| json!({"decision": true}));
     let clock = Arc::new(ManualClock::at_seconds(NOW));
     let errors = AccessGate::new(SERVICE, &pdp, transport.clone(), clock.clone()).unwrap_err();

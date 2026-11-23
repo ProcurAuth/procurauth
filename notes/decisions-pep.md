@@ -5,7 +5,7 @@ Each item gives one choice and the reason. The numbers are for this file only.
 ## Library
 
 1. The library has no TLS client and no feature `tls`. A TLS crate such as `rustls` needs `ring` or `aws-lc-rs`, which need a C compiler. It also needs a root store and many more crates. The core avoids a C compiler on purpose (decision 9 of `decisions.md`). An application gives its own TLS client through the trait `PdpTransport`.
-2. The configuration refuses an `http` URL unless the flag `allow_insecure_pdp_link` is set. Protocol 10.0 (step 4) says that the PEP MUST secure the link, so the safe value is the default.
+2. The configuration refuses an `http` URL unless the flag `allow_plain_http` is set. Protocol 10.0 (step 4) says that the PEP MUST secure the link, so the safe value is the default.
 3. `HttpTransport` is a synchronous client on `std::net`, with a small pool. It needs no runtime, no `unsafe` code and no dependency. The PDP link has few connections, so a thread for each caller is enough.
 4. The transport tells the PEP how an exchange failed: `NotSent`, `Timeout`, `Lost`, `Malformed`, `TooLarge` or `Unsupported`. Protocol 10.6 lets the PEP send a question with `context.usage` again only when the request did not leave the PEP. Thus the PEP must know the kind.
 5. A failure of the first write is `NotSent`, and a failure after the first byte is `Lost`. The client checks with a non-blocking `peek` that the PDP did not close an idle connection, before it reuses the connection. This keeps the case of a stale connection very rare.
@@ -43,7 +43,7 @@ Each item gives one choice and the reason. The numbers are for this file only.
 34. The table of keys is in the code. The README holds the same table, and a test compares them. The forms `_env` and `_file` exist for the keys that name a place: `listen`, `issuer`, `jwks`, `pdp.url` and `pdp.credential`.
 35. A secret takes only `_env` and `_file`. A secret in clear text in the file stops the program, and the error does not show it.
 36. The effective configuration shows `default`, `file`, `env:VAR` or `file:/path` as the source. The program also writes it to the standard error at start.
-37. The program has no TLS client, so `pdp.url` takes an `http` URL and the flag `pdp.allow_insecure_pdp_link` is needed. The README says that a deployment builds its own service with a transport with TLS.
+37. The program has no TLS client, so `pdp.url` takes an `http` URL and the flag `pdp.allow_plain_http` is needed. The README says that a deployment builds its own service with a transport with TLS.
 38. The default of `cache_ttl_seconds` is 0. The conformance cases use the same subject and the same resource in many cases. A kept answer from one case would change the next case.
 39. The service asks the PDP before it looks for a node. A client that has no right gets 403 and learns nothing about the existence of the node.
 40. The service builds the chain from the position of each id in the path. The type of the node comes from the route, never from the client (4.5).

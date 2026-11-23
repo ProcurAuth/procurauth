@@ -102,7 +102,7 @@ pub fn base_config(pdp: SocketAddr, upstream: SocketAddr) -> Value {
         "keys": keys_file(),
         "upstream": {"url": format!("http://{upstream}"), "connect_timeout_ms": 1000, "response_timeout_seconds": 5},
         "signing": {"key_env": "SIGNING_KEY", "kid": "edge-ed25519"},
-        "pdp": {"url": format!("http://{pdp}"), "credential_env": "PDP_CREDENTIAL", "allow_insecure_pdp_link": true, "request_timeout_ms": 2000}
+        "pdp": {"url": format!("http://{pdp}"), "credential_env": "PDP_CREDENTIAL", "allow_plain_http": true, "request_timeout_ms": 2000}
     })
 }
 
@@ -541,6 +541,6 @@ pub fn decode_token(token: &str) -> (Value, Value) {
 
 pub fn pdp_config_for(pdp: &RunningServer) -> PdpConfig {
     let mut config = PdpConfig::new(pdp.url(), procurauth_pep::config::Secret::new(CREDENTIAL));
-    config.allow_insecure_pdp_link = true;
+    config.allow_plain_http = true;
     config
 }

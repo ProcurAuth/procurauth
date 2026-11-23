@@ -5,7 +5,7 @@ This file lists the places where the reference edge, the profiles and the script
 1. The site lists five programs, and the files `notes/site-differences-pep.md` add `reference-service`. The repository has a seventh program, `reference-edge`. It is the test subject of the series E. It is not a tool for an operator.
 2. The sentence "Build all the programs with cargo build --release" now builds seven programs.
 3. The site gives no profile of an edge. The file `crates/reference-edge/examples/conformance-profile.json` is one. It has `token_cache` true and the key set of two keys, so no case of the series E is skipped.
-4. The edge has no TLS code. It needs a proxy that ends TLS, and the flag `pdp.allow_insecure_pdp_link` for an `http` link to the PDP.
+4. The edge has no TLS code. It needs a proxy that ends TLS, and the flag `pdp.allow_plain_http` for an `http` link to the PDP.
 5. The configuration of the edge is a JSON file with a closed schema. The forms `_env` and `_file` give a value from a variable or a file. The signing key and the credential of the PDP take only these two forms.
 6. The edge reads the text of a key from `Authorization: Bearer` only. It finds the key by the SHA-256 digest in a keys file. The keys file and the key format are inputs of the program. The protocol defines neither (3.8).
 7. `fake-pdp` has a new admin request, `PUT /__fake/load`. The site lists the admin requests that the tool had before. A PDP under test with the runner needs a load request, and this request is the one for `fake-pdp`.

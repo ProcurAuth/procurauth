@@ -10,7 +10,7 @@
 //!
 //! | Key | Default |
 //! | --- | --- |
-//! | `pdp.allow_insecure_pdp_link` | `false` |
+//! | `pdp.allow_plain_http` | `false` |
 //! | `pdp.request_timeout` | 5 seconds |
 //! | `pdp.usage_wait_margin` | 1 second |
 //! | `pdp.idle_close_after` | 5 seconds |
@@ -23,6 +23,15 @@
 //! | `cache_ttl` | 0 (no kept answer) |
 //! | `cache_max_entries` | 10000 |
 //! | `display_max_questions` | 50 |
+//!
+//! # Link policy (10.0, step 4)
+//!
+//! | `pdp.url` | `pdp.allow_plain_http` | Result |
+//! | --- | --- | --- |
+//! | `https` | `false` | Accepted. |
+//! | `https` | `true` | Error: the two keys contradict each other. |
+//! | `http` | `false` | Error: the link is not secured. |
+//! | `http` | `true` | Accepted, for a test or a link that another layer secures. |
 
 use std::fmt;
 use std::time::Duration;
@@ -99,8 +108,9 @@ pub struct PdpConfig {
     pub credential: Secret,
     /// True to accept an `http` URL. The default is `false`: the link must be
     /// secured, and a secured link has an `https` URL. Set it for a test on
-    /// the loopback address, or for a link that another layer secures.
-    pub allow_insecure_pdp_link: bool,
+    /// the loopback address, or for a link that another layer secures. With an
+    /// `https` URL, the value `true` is a contradiction, and the check refuses it.
+    pub allow_plain_http: bool,
     /// The longest wait for an answer to a question without `context.usage`.
     pub request_timeout: Duration,
     /// The time that the PEP adds to `procurauth_usage_max_seconds` for a
@@ -135,7 +145,7 @@ impl PdpConfig {
         Self {
             url: url.into(),
             credential,
-            allow_insecure_pdp_link: false,
+            allow_plain_http: false,
             request_timeout: Duration::from_secs(5),
             usage_wait_margin: Duration::from_secs(1),
             idle_close_after: Duration::from_secs(5),
@@ -302,22 +312,14 @@ fn check_pdp(pdp: &PdpConfig, errors: &mut Vec<ConfigError>) {
     match Url::parse(&pdp.url) {
         Err(error) => errors.push(ConfigError::new(
             "pdp.url",
-            "an absolute `https` URL, or an `http` URL with `pdp.allow_insecure_pdp_link`",
+            "an absolute `https` URL, or an `http` URL with `pdp.allow_plain_http`",
             if pdp.url.contains('@') {
                 format!("a URL with user information (the value stays hidden): {error}")
             } else {
                 format!("{:?} ({error})", pdp.url)
             },
         )),
-        Ok(url) => {
-            if url.scheme == Scheme::Http && !pdp.allow_insecure_pdp_link {
-                errors.push(ConfigError::new(
-                        "pdp.url",
-                        "an `https` URL, because the link to the PDP must be secured (10.0, step 4) and `pdp.allow_insecure_pdp_link` is false",
-                        format!("{:?}", pdp.url),
-                    ));
-            }
-        }
+        Ok(url) => check_link(pdp, url.scheme, errors),
     }
     let credential = pdp.credential.expose();
     if credential.is_empty() {
@@ -360,6 +362,23 @@ fn check_pdp(pdp: &PdpConfig, errors: &mut Vec<ConfigError>) {
     }
 }
 
+/// The link policy (10.0, step 4): the scheme of the URL and the keys of the link.
+fn check_link(pdp: &PdpConfig, scheme: Scheme, errors: &mut Vec<ConfigError>) {
+    match (scheme, pdp.allow_plain_http) {
+        (Scheme::Http, false) => errors.push(ConfigError::new(
+            "pdp.url",
+            "an `https` URL, because the link to the PDP must be secured (10.0, step 4) and `pdp.allow_plain_http` is false",
+            format!("{:?}", pdp.url),
+        )),
+        (Scheme::Https, true) => errors.push(ConfigError::new(
+            "pdp.allow_plain_http",
+            "false, because `pdp.url` is an `https` URL (contradiction)",
+            "true",
+        )),
+        (Scheme::Http, true) | (Scheme::Https, false) => {}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -395,13 +414,44 @@ mod tests {
     }
 
     #[test]
-    fn p_10_0_an_http_url_needs_the_explicit_flag() {
+    fn p_10_0_an_http_url_without_the_flag_is_an_error() {
         let mut config = good();
         config.pdp.url = "http://127.0.0.1:8181".into();
         let errors = config.check().unwrap_err();
         assert_eq!(keys_of(&errors), ["pdp.url"]);
         assert!(errors[0].to_string().contains("secured"), "{}", errors[0]);
-        config.pdp.allow_insecure_pdp_link = true;
+        assert!(
+            errors[0].to_string().contains("pdp.allow_plain_http"),
+            "{}",
+            errors[0]
+        );
+    }
+
+    #[test]
+    fn p_10_0_an_http_url_with_the_flag_is_accepted() {
+        let mut config = good();
+        config.pdp.url = "http://127.0.0.1:8181".into();
+        config.pdp.allow_plain_http = true;
+        assert!(config.check().is_ok());
+    }
+
+    #[test]
+    fn p_10_0_an_https_url_with_the_flag_is_a_contradiction() {
+        let mut config = good();
+        config.pdp.allow_plain_http = true;
+        let errors = config.check().unwrap_err();
+        assert_eq!(keys_of(&errors), ["pdp.allow_plain_http"]);
+        assert_eq!(
+            errors[0].to_string(),
+            "Key `pdp.allow_plain_http`: expected false, because `pdp.url` is an `https` URL (contradiction), found true."
+        );
+    }
+
+    #[test]
+    fn p_10_0_an_https_url_without_the_flag_is_accepted() {
+        let config = good();
+        assert!(!config.pdp.allow_plain_http);
+        assert!(config.pdp.url.starts_with("https://"));
         assert!(config.check().is_ok());
     }
 

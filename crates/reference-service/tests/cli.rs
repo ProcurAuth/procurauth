@@ -160,7 +160,7 @@ fn the_program_serves_and_stops_on_sigterm() {
     let edge = Edge::new();
     let config = json!({
         "listen": "127.0.0.1:0", "issuer": "https://edge.example", "jwks": edge.jwks(),
-        "pdp": {"url": "http://127.0.0.1:1", "credential_env": "PDP_CRED", "allow_insecure_pdp_link": true}
+        "pdp": {"url": "http://127.0.0.1:1", "credential_env": "PDP_CRED", "allow_plain_http": true}
     });
     let path = scratch("serve.json", &config.to_string());
     let mut child = program()
@@ -217,7 +217,7 @@ fn a_port_that_is_in_use_exits_with_1() {
     let edge = Edge::new();
     let config = json!({
         "listen": listener.local_addr().unwrap().to_string(), "issuer": "https://edge.example", "jwks": edge.jwks(),
-        "pdp": {"url": "http://127.0.0.1:1", "credential_env": "PDP_CRED", "allow_insecure_pdp_link": true}
+        "pdp": {"url": "http://127.0.0.1:1", "credential_env": "PDP_CRED", "allow_plain_http": true}
     });
     let path = scratch("busy.json", &config.to_string());
     let out = program().arg(&path).env("PDP_CRED", "x").output().unwrap();

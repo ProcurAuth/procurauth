@@ -284,11 +284,11 @@ pub const KEYS: [Key; 27] = [
     ),
     key!(
         "pdp",
-        "allow_insecure_pdp_link",
+        "allow_plain_http",
         plain,
         "boolean",
         "false",
-        "Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program."
+        "Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program. With an `https` URL, the value `true` is a contradiction and stops the program."
     ),
     key!(
         "pdp",
@@ -1150,9 +1150,9 @@ fn read_pdp(reader: &mut Reader<'_>, obj: &mut Obj<'_>, report: &mut Report) -> 
             source.clone(),
         );
     }
-    let allow = obj.boolean_opt("allow_insecure_pdp_link", report);
+    let allow = obj.boolean_opt("allow_plain_http", report);
     reader.line(
-        key_of("pdp.allow_insecure_pdp_link"),
+        key_of("pdp.allow_plain_http"),
         allow.unwrap_or(false).to_string(),
         if allow.is_some() {
             Source::File
@@ -1169,7 +1169,7 @@ fn read_pdp(reader: &mut Reader<'_>, obj: &mut Obj<'_>, report: &mut Report) -> 
     obj.finish(report);
     let ((url, _), (credential, _)) = (url?, credential?);
     let mut pdp = PdpConfig::new(url, Secret::new(credential));
-    pdp.allow_insecure_pdp_link = allow.unwrap_or(false);
+    pdp.allow_plain_http = allow.unwrap_or(false);
     pdp.request_timeout = Duration::from_millis(request_timeout);
     pdp.idle_close_after = Duration::from_millis(idle);
     pdp.max_connections = usize::try_from(connections).unwrap_or(1);

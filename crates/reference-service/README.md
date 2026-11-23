@@ -53,7 +53,7 @@ A key that accepts indirection takes exactly one of three forms. The form `<name
 
 A secret takes only `_env` and `_file`. A secret in clear text in the file stops the program. The effective configuration hides each secret, and it shows the source: `file`, `default`, `env:VAR` or `file:/path`.
 
-A variable that does not exist, an empty value, and a file that the program cannot read stop the program. Two keys that contradict each other also stop it. Examples are an `http` URL without `pdp.allow_insecure_pdp_link`, and a `cache_ttl_seconds` above 0 with `cache_max_entries` equal to 0.
+A variable that does not exist, an empty value, and a file that the program cannot read stop the program. Two keys that contradict each other also stop it. Examples are an `http` URL without `pdp.allow_plain_http`, an `https` URL with `pdp.allow_plain_http`, and a `cache_ttl_seconds` above 0 with `cache_max_entries` equal to 0.
 
 The section `pdp` is an object. Its keys have the prefix `pdp.` in the table.
 
@@ -79,7 +79,7 @@ The section `pdp` is an object. Its keys have the prefix `pdp.` in the table.
 | `mcp_session_budget` | boolean | false | none | List the budget `requests` on the action `mcp.session`, so that a method with no tool is one use (binding 3.6a). It needs `mcp_path`. |
 | `pdp.url` | URL with the scheme `http` (this program has no TLS client) | none, mandatory | `_env` and `_file` | The URL of the PDP. |
 | `pdp.credential` | text that is not empty, with visible ASCII characters | none, mandatory | `_env` and `_file` only | The credential of the service for the PDP. The service sends it in `Authorization: Bearer` (10.0). |
-| `pdp.allow_insecure_pdp_link` | boolean | false | none | Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program. |
+| `pdp.allow_plain_http` | boolean | false | none | Accept an `http` URL. Set it for a test on the loopback address. Without it, an `http` URL stops the program. With an `https` URL, the value `true` is a contradiction and stops the program. |
 | `pdp.request_timeout_ms` | whole number from 1 to 600000 | 5000 | none | The longest wait for an answer to a question without `context.usage`. |
 | `pdp.usage_wait_margin_ms` | whole number from 1 to 600000 | 1000 | none | The time that the service adds to the time that the PDP publishes for a question with `context.usage` (10.6). |
 | `pdp.idle_close_after_ms` | whole number from 1 to 600000 | 5000 | none | The longest idle time of a connection to the PDP. The service also closes it after half of the time that the PDP publishes (10.7). |

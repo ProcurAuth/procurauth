@@ -1571,7 +1571,7 @@ fn p_10_0_the_pep_stops_at_start_when_the_transport_has_no_tls_for_an_https_link
     }
     let edge = Edge::new();
     let mut cfg = config("https://pdp.example", &edge);
-    cfg.pdp.allow_insecure_pdp_link = false;
+    cfg.pdp.allow_plain_http = false;
     let errors = Pep::new(cfg, datastore_document(), Arc::new(Plain)).unwrap_err();
     assert_eq!(errors[0].key, "pdp.url");
 }
@@ -1589,7 +1589,7 @@ fn p_10_0_the_pep_refuses_a_document_for_another_service() {
 fn p_10_0_the_pep_refuses_an_http_link_without_the_flag() {
     let edge = Edge::new();
     let mut cfg = config(URL, &edge);
-    cfg.pdp.allow_insecure_pdp_link = false;
+    cfg.pdp.allow_plain_http = false;
     let errors = Pep::new(cfg, datastore_document(), yes_to_all()).unwrap_err();
     assert_eq!(errors[0].key, "pdp.url");
 }

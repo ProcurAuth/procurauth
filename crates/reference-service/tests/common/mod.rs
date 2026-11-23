@@ -105,7 +105,7 @@ pub fn config_value(pdp_url: &str, edge: &Edge) -> Value {
         "pdp": {
             "url": pdp_url,
             "credential_env": "TEST_PDP_CREDENTIAL",
-            "allow_insecure_pdp_link": true,
+            "allow_plain_http": true,
             "request_timeout_ms": 2000,
             "usage_wait_margin_ms": 200
         }

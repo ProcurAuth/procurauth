@@ -117,7 +117,7 @@ pub fn shape() -> Shape {
 /// A configuration for a PDP at this URL. The link is `http`, so the flag is set.
 pub fn config(pdp_url: &str, edge: &Edge) -> PepConfig {
     let mut pdp = PdpConfig::new(pdp_url, Secret::new("test-credential-of-the-service"));
-    pdp.allow_insecure_pdp_link = true;
+    pdp.allow_plain_http = true;
     pdp.request_timeout = Duration::from_secs(3);
     PepConfig::new(SERVICE, HEADER, ISSUER, edge.keys(), 300, 30, pdp)
 }
