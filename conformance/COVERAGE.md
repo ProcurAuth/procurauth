@@ -72,7 +72,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 17.1 | pdp | D76, D77, D78, D79, D80, D83, D84, D85, D86, D87, D88, D89 |
 | 17.2 | pdp | D77, D78, D81 |
 | 17.3 | pdp | none |
-| 17.4 | pdp | none |
+| 17.4 | pdp | D97 |
 | 17.4a | pdp | D91 |
 | 17.5 | pdp | none |
 | 17.6 | pdp | D80, D85, D86, D87 |
@@ -130,7 +130,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 17.2 | pep | U102 |
 | 17.3 | pep | U103, U108 |
 | 17.3a | pep | U103, U108, U111 |
-| 17.4 | pep | U100, U101, U109 |
+| 17.4 | pep | U100, U101, U109, U121 |
 | 17.7 | pep | U30, U100, U101, U102, U104, U106, U110, U115, U116, U117 |
 | 17.7a | pep | U113, U114 |
 | 17.9 | pep | U107, U108 |
@@ -163,7 +163,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | mcp:5.6 | pep | U94 |
 | mcp:5.6a | pep | U27, U86 |
 | mcp:5.7 | pep | U30, U100, U115, U116 |
-| mcp:5.7a | pep | U105, U116 |
+| mcp:5.7a | pep | U105, U116, U121 |
 | mcp:5.7b | pep | U106, U110 |
 | mcp:7.1 | pep | none |
 | mcp:7.2 | pep | none |
@@ -218,14 +218,14 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 12 | pdp | The PDP is a single point of failure, and the protocol accepts it. | The sentence is a remark. It states no rule for a case. |
 | 12 | pdp | A client that sends a request again makes a new use, and the PDP counts it again. | The PDP cannot tell a request that a client sends again from a new request. |
 | 17.3 | pdp | The PDP computes the effect as 17.3 gives. | The groups V01 and V02 of the vectors test this paragraph. A step of a case has no way to send a bad `op` to the PDP. |
-| 17.4 | pdp | The PDP serves the narrow API with three routes, and only these routes. | A case has no endpoint for the approval API in this version. The tests of a PDP that gives approvals cover the routes. |
+| 17.4 | pdp | The PDP serves the narrow API with three routes, and only these routes. Each error has its code. | The endpoint `approval_requests` sends a body that the case writes, and a step cannot use the `evaluation_id` of an earlier answer. The case D97 tests the credential. The tests of `fake-pdp` cover the routes and the codes. |
 | 17.5 | pdp | The lease, the abandon, the end of a request and the revival of a request. | A case cannot make time pass during a request, and it has no step that answers or renews a request. |
 | 17.6 | pdp | The PDP sets consume_before and the deny time from its own settings. The consume window is not shorter than lease_s. | The settings of the PDP give both times. The cases D80 and D85 test the end of each window. |
-| 17.9 | pdp | The PDP checks each submission before it keeps it. A `view` has optional members, and `{}` is valid. | A case has no endpoint for the approval API in this version. The tests of `fake-pdp` cover a `view` with a title only and the object `{}`. |
+| 17.9 | pdp | The PDP checks each submission before it keeps it. A `view` has optional members, and `{}` is valid. | A step cannot use the `evaluation_id` of an earlier answer in a submission. The tests of `fake-pdp` cover a `view` with a title only and the object `{}`. |
 | 17.9a | pdp | The explanation never enters the effect, and the PEP never sees it. | The agent gives the explanation to the PDP by a channel outside this protocol. A case has no step on that channel. |
 | 17.10 | pdp | A PDP SHOULD encrypt the body at rest, delete it after a published time, and never write it in a log. | A case cannot see the storage or the logs of the PDP. The level of the rule is SHOULD. |
 | 17.11 | pdp | The PDP accepts an answer only from the owner, with shown_effect equal to the effect. A refusal can have a text. | The answer of a person is outside the protocol. A case has no step that answers an approval. |
-| 17.12 | pdp | The PDP gives the PEP the verdict, the id and the code only, through the approval API. | A case has no endpoint for the approval API in this version. The case D89 tests the evaluation API. |
+| 17.12 | pdp | The PDP gives the PEP the verdict, the id and the code only, through the approval API. | A step cannot use the `evaluation_id` of an earlier answer in a submission. The case D89 tests the evaluation API. |
 | 4.1 | pep | The PEP does not encode an id. | The runner cannot choose the id of a node. The service decides its nodes. |
 | 4.5 | pep | The PEP builds the chain from its own data and never takes it from a client. | A case cannot know where a service could read a chain from a client. The case U02 shows that the chain is equal to the data of the service. |
 | 5.2 | pep | The service percent-encodes each id of a path. | The core reader checks this rule in the cases that give valid_as. The rule needs a node with a special character in its id. |

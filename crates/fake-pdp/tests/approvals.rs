@@ -669,9 +669,18 @@ fn p_17_4_a_service_with_no_action_gets_403_and_each_service_sees_its_own_reques
         .unwrap()
         .to_owned();
     let sub = submission(&id, &op(), json!({"lease_s": 60}));
-    assert_eq!(Client::connect(addr).post_json(REQUESTS, &sub).status, 401);
+    // 17.4: no credential, or an unknown one, gets 401 as on the evaluation endpoints.
+    let reply = Client::connect(addr).post_json(REQUESTS, &sub);
+    assert_eq!(reply.status, 401);
+    assert_eq!(reply.json(), json!({"error": "unauthorized"}));
+    assert_eq!(reply.header("www-authenticate"), Some("Bearer"));
+    let unknown = [("Authorization", "Bearer token-unknown")];
+    let reply = Client::connect(addr).post_json_with(REQUESTS, &unknown, &sub);
+    assert_eq!(reply.status, 401);
+    // A known credential of a service with no approval gets 403 `forbidden`.
     let reply = Client::connect(addr).post_json_with(REQUESTS, &other, &sub);
     assert_eq!(reply.status, 403);
+    assert_eq!(reply.json(), json!({"error": "forbidden"}));
     let created = Client::connect(addr).post_json_with(REQUESTS, &ds, &sub);
     assert_eq!(created.status, 201, "{}", created.text());
     let request_id = created.json()["request_id"].as_str().unwrap().to_owned();

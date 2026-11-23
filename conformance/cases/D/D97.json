@@ -1,0 +1,49 @@
+{
+  "id": "D97",
+  "title": "The approval API answers a request with an unknown credential, or with no Bearer credential, with HTTP 401.",
+  "role": "pdp",
+  "paragraphs": [
+    "17.4"
+  ],
+  "requirement": "MUST",
+  "skip_if": [
+    "no_approval_support",
+    "no_pdp_credential"
+  ],
+  "notes": "A PDP gives 403 forbidden only when it knows the credential and gives no approval. The evaluation endpoints give 401 in the same way (AuthZEN 1.0).",
+  "given": {
+    "directory": "approvals.json"
+  },
+  "steps": [
+    {
+      "name": "A submission with an unknown credential",
+      "request": {
+        "endpoint": "approval_requests",
+        "headers": {
+          "Authorization": "Bearer unknown-credential-conformance-0001"
+        },
+        "body": {}
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        }
+      }
+    },
+    {
+      "name": "A submission with another scheme",
+      "request": {
+        "endpoint": "approval_requests",
+        "headers": {
+          "Authorization": "Basic Y29uZm9ybWFuY2U6MDAwMQ=="
+        },
+        "body": {}
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        }
+      }
+    }
+  ]
+}

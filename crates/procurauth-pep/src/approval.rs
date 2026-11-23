@@ -264,6 +264,9 @@ impl PdpClient {
                 Refusal::Approval(ApprovalRefusal::InvalidArgument)
             }
             (404, _) if unknown_request => Refusal::Approval(ApprovalRefusal::InvalidArgument),
+            // 401: the PDP does not know the credential of the service. 403 `forbidden`: the PDP
+            // gives no approval. Both are faults of the PDP or of its configuration (17.4): HTTP 503.
+            (401 | 403, _) => Refusal::Unavailable(UnavailableCause::Status(status)),
             // Any other answer is a failure of the approval API: HTTP 503 (binding 5.7a).
             _ => Refusal::Unavailable(UnavailableCause::Status(status)),
         }

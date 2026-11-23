@@ -79,7 +79,8 @@
           "no_input_tool",
           "no_multi_action",
           "single_key_set",
-          "no_approval_support"
+          "no_approval_support",
+          "no_pdp_credential"
         ]
       }
     },
@@ -310,8 +311,8 @@
           ]
         },
         "endpoint": {
-          "description": "For a PDP. The endpoint of the AuthZEN API: the runner reads its path in the metadata of the PDP, or it uses the default path.",
-          "enum": ["evaluation", "evaluations", "metadata"]
+          "description": "For a PDP. The endpoint of the AuthZEN API: the runner reads its path in the metadata of the PDP, or it uses the default path. The value approval_requests is POST /approval/v1/requests of the approval API (protocol 17.4).",
+          "enum": ["evaluation", "evaluations", "metadata", "approval_requests"]
         },
         "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
         "path": {

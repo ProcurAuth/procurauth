@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use common::*;
 use procurauth_core::json::parse_str;
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 
 fn conformance_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../conformance")
@@ -84,7 +85,21 @@ fn data_of(given: &Value) -> Value {
 fn run_case(path: &std::path::Path) -> usize {
     let case = parse_str(&fs::read_to_string(path).unwrap()).unwrap();
     let id = case["id"].as_str().unwrap().to_owned();
-    let server = start(&data_of(&case["given"]));
+    let mut data = data_of(&case["given"]);
+    let needs_credential = case["skip_if"]
+        .as_array()
+        .is_some_and(|list| list.iter().any(|c| c == "no_pdp_credential"));
+    if needs_credential {
+        // The case needs a PDP that asks for a credential: give one to each service.
+        let digest: String = Sha256::digest(b"credential-of-the-test")
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        for service in data["services"].as_array_mut().unwrap() {
+            service["credential_sha256"] = json!(digest);
+        }
+    }
+    let server = start(&data);
     let mut client = Client::connect(server.local_addr());
     let mut steps = 0;
     for step in case["steps"].as_array().unwrap() {
@@ -97,6 +112,7 @@ fn run_case(path: &std::path::Path) -> usize {
                 "GET".to_owned(),
                 "/.well-known/authzen-configuration".to_owned(),
             ),
+            Some("approval_requests") => ("POST".to_owned(), "/approval/v1/requests".to_owned()),
             Some(other) => panic!("{id}: unknown endpoint {other}"),
             None => (
                 request["method"].as_str().unwrap().to_owned(),

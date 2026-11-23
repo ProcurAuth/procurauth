@@ -89,6 +89,8 @@ pub(crate) enum Condition {
     /// The PDP or the edge gives no approval (protocol section 17). It never holds for a PEP:
     /// each service follows section 17 (protocol 5.2b).
     NoApprovalSupport,
+    /// The profile of a PDP gives no credential, so the PDP can accept a request with none.
+    NoPdpCredential,
 }
 
 impl Condition {
@@ -108,6 +110,7 @@ impl Condition {
             Self::NoApprovalSupport => {
                 "the target does not give approvals yet (protocol section 17)"
             }
+            Self::NoPdpCredential => "the profile gives no credential of the service for the PDP",
         }
     }
 }
@@ -269,6 +272,8 @@ pub(crate) enum Endpoint {
     Evaluations,
     /// The metadata of the PDP.
     Metadata,
+    /// The route `POST /approval/v1/requests` of the approval API (protocol 17.4).
+    ApprovalRequests,
 }
 
 /// A change of the base call of the operation `mcp_call_approval`.

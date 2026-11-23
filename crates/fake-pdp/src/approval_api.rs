@@ -6,8 +6,9 @@
 //! | `GET /approval/v1/requests/{id}?subject=&wait=&renew=` | Read the verdict. |
 //! | `POST /approval/v1/requests/{id}/keepalive` | Renew the lease and read the verdict. |
 //!
-//! The routes share the listener and the credential of the PDP endpoints. A credential that
-//! belongs to a service that has no action in its document gets HTTP 403.
+//! The routes share the listener and the credential of the PDP endpoints. No credential, or an
+//! unknown one, gets HTTP 401 with `unauthorized` (17.4). A credential that belongs to a service
+//! that has no action in its document gets HTTP 403 with `forbidden`. Each error has a code of 17.4.
 //! No answer has more than the verdict (17.12).
 
 use std::time::{Duration, Instant};
@@ -28,6 +29,24 @@ pub(crate) const APPROVAL_PREFIX: &str = "/approval/v1/requests";
 
 fn error_response(error: &ApiError) -> Action {
     Action::Respond(Response::json(error.status, &error.to_value()))
+}
+
+/// An answer of the API with the code of 17.4 for an HTTP status that the route gives.
+fn api_status(status: u16) -> Response {
+    let code = match status {
+        401 => "unauthorized",
+        403 => "forbidden",
+        404 => "not_found",
+        405 => "method_not_allowed",
+        415 => "unsupported_media_type",
+        _ => "unavailable",
+    };
+    let response = Response::json(status, &json!({ "error": code }));
+    if status == 401 {
+        response.with_header("WWW-Authenticate", "Bearer")
+    } else {
+        response
+    }
 }
 
 fn bad(code: &'static str) -> Action {
@@ -162,9 +181,10 @@ fn read_submission(body: &[u8]) -> Result<Submission, &'static str> {
 impl Shared {
     /// Handle a request below `/approval/v1/requests`.
     pub(crate) fn approval_route(&self, request: &Request) -> Action {
+        // 17.4: no credential, or an unknown one, gets 401 as on the evaluation endpoints.
         let caller = match self.authenticate(request) {
             Ok(caller) => caller,
-            Err(response) => return Action::Respond(response),
+            Err(response) => return Action::Respond(api_status(response.status)),
         };
         let own_service = match &caller {
             Caller::Any => None,
@@ -173,38 +193,38 @@ impl Shared {
         if let Some(service) = own_service
             && !self.state().pdp.serves_approvals(service)
         {
-            return Action::Respond(Response::error(403));
+            return Action::Respond(api_status(403));
         }
         let Some(rest) = request.path.strip_prefix(APPROVAL_PREFIX) else {
-            return Action::Respond(Response::error(404));
+            return Action::Respond(api_status(404));
         };
         let segments: Vec<&str> = match rest {
             "" => Vec::new(),
             _ => match rest.strip_prefix('/') {
                 Some(tail) => tail.split('/').collect(),
-                None => return Action::Respond(Response::error(404)),
+                None => return Action::Respond(api_status(404)),
             },
         };
         let allowed = match segments.as_slice() {
             [] => "POST",
             [id] if !id.is_empty() => "GET",
             [id, "keepalive"] if !id.is_empty() => "POST",
-            _ => return Action::Respond(Response::error(404)),
+            _ => return Action::Respond(api_status(404)),
         };
         if request.method != allowed {
-            return Action::Respond(Response::error(405).with_header("Allow", allowed));
+            return Action::Respond(api_status(405).with_header("Allow", allowed));
         }
         match segments.as_slice() {
             [] => self.approval_submit(request, own_service),
             [id] => self.approval_read(request, own_service, id),
             [id, _] => self.approval_keepalive(request, own_service, id),
-            _ => Action::Respond(Response::error(404)),
+            _ => Action::Respond(api_status(404)),
         }
     }
 
     fn approval_submit(&self, request: &Request, service: Option<&str>) -> Action {
         if !is_json_content(request) {
-            return Action::Respond(Response::error(415));
+            return Action::Respond(api_status(415));
         }
         let submission = match read_submission(&request.body) {
             Ok(submission) => submission,
@@ -227,7 +247,7 @@ impl Shared {
 
     fn approval_read(&self, request: &Request, service: Option<&str>, id: &str) -> Action {
         let Some(id) = percent_decode(id) else {
-            return Action::Respond(Response::error(404));
+            return Action::Respond(api_status(404));
         };
         let Some(params) = query_params(&request.query) else {
             return bad("invalid_argument");
@@ -289,10 +309,10 @@ impl Shared {
 
     fn approval_keepalive(&self, request: &Request, service: Option<&str>, id: &str) -> Action {
         if !is_json_content(request) {
-            return Action::Respond(Response::error(415));
+            return Action::Respond(api_status(415));
         }
         let Some(id) = percent_decode(id) else {
-            return Action::Respond(Response::error(404));
+            return Action::Respond(api_status(404));
         };
         let subject = match parse_slice(&request.body) {
             Ok(Value::Object(map)) => subject_of(&map),

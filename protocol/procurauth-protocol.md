@@ -515,7 +515,7 @@ The size of `op` and `view` together is the size of their JSON texts. It MUST NO
 
 The file `conformance/vectors/effect.json` has vectors for a read and for an empty `op`.
 
-17.4 A PDP that gives approvals serves a narrow API to the PEP. It has the three routes below, and no other route for a PEP. The PEP sends the credential of the service (10.0, step 4). A PDP that gives no approval answers 403. The approval is enabled for the whole PDP, not for each service. Each body is a JSON object, and the schemas `approval-submission` and `approval-verdict` define them.
+17.4 A PDP that gives approvals serves a narrow API to the PEP. It has the three routes below, and no other route for a PEP. The PEP sends the credential of the service (10.0, step 4). The PDP answers a request with no credential, or with a credential that it does not know, with HTTP 401. It does this as for its evaluation endpoints [AUTHZEN 1.0, l.1425-1432]. A PDP that gives no approval answers a request with a known credential with 403 `forbidden`. The approval is enabled for the whole PDP, not for each service. Each body is a JSON object, and the schemas `approval-submission` and `approval-verdict` define them.
 - `POST /approval/v1/requests` submits a request. The body has `evaluation_id` (17.1), `effect`, `op` and `view` (17.3, 17.9). It also has exactly one of `approval_ref`, `lease_s` and `until` (17.5). It can have `supersedes`, the id of a request of the same subject that this request replaces.
 - `GET /approval/v1/requests/{request_id}?subject={subject}&wait={seconds}&renew=true` reads the verdict. The query parameter `subject` is mandatory. The query parameters `wait` and `renew` are optional. The PDP waits at most `wait` seconds for a verdict other than `pending`. It bounds `wait` and publishes the bound.
 - `POST /approval/v1/requests/{request_id}/keepalive` has the body `{"subject": "<subject>"}`. It renews the lease (17.5) and gives the verdict.
@@ -528,11 +528,12 @@ A read renews the lease only with `renew=true`, and only when `subject` is the s
 - 409 `no_device`: the owner has no way to receive the request. 409 `cannot_supersede`: the request in `supersedes` is consumed;
 - 429 `rate_limited`, with `retry_after` as in 11.1;
 - 422 `explanation_required`: the PDP needs the explanation of the agent, which comes with `approval_ref` (17.9a);
-- 403 `forbidden`: the PDP gives no approval, or it does not know the credential;
+- 401 `unauthorized`: the request has no credential, or the PDP does not know the credential. The answer also has `WWW-Authenticate: Bearer`;
+- 403 `forbidden`: the PDP knows the credential and gives no approval;
 - 405 `method_not_allowed` and 415 `unsupported_media_type`: the method or the content type of the request is wrong;
 - 503 `storage_degraded` and `unavailable`: the PDP cannot keep the request now.
 
-A PDP MAY return other codes. A PEP MUST treat a code that it does not know as an error of the PDP. Its caller then gets HTTP 503 (10.3).
+A PDP MAY return other codes. A PEP MUST treat a code that it does not know as an error of the PDP. Its caller then gets HTTP 503 (10.3). A 401 and a 403 are errors of the PDP or of its configuration for the PEP, so its caller also gets HTTP 503.
 
 An `approval_ref` is an opaque text that the agent gets from the PDP by a channel outside this protocol. It is for one use, for one key, and for a time that the PDP publishes. The PDP attaches the intent of the agent to the request. It refuses a reference that is unknown, used, late or from another subject.
 

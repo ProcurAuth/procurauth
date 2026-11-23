@@ -125,7 +125,7 @@ A request names its target in one way.
 | Member | Role | Meaning |
 | --- | --- | --- |
 | `operation` | PEP | A kind of use of the service under test. The runner maps it to a request with its profile. |
-| `endpoint` | PDP | `evaluation`, `evaluations` or `metadata`. |
+| `endpoint` | PDP | `evaluation`, `evaluations`, `metadata` or `approval_requests`. The last one is `POST /approval/v1/requests` of the approval API (protocol 17.4). |
 | `method` and `path` | Any | An HTTP request that the case writes in full. The path starts with a slash, or it is a variable. |
 
 A request can also have `headers`, `body` or `body_text`, and `token`. For an operation, the runner adds the `headers` of the step to the request that it builds. The member `token` names a token of `given.tokens`. The runner sends it to a PEP in the header of the identity token.
@@ -255,10 +255,11 @@ The member `skip_if` lists conditions. The runner skips the case, or the step, w
 | `no_multi_action` | The service has no use that needs two permissions: no HTTP route and no tool. |
 | `single_key_set` | The key set of the edge holds one key only. For a PEP, the profile has one signing key only, because the service holds the public key of each signing key of the profile. |
 | `no_approval_support` | The PDP or the edge gives no approval (protocol section 17). |
+| `no_pdp_credential` | The profile of a PDP gives no credential of the service. The PDP can then accept a request with no credential. |
 
 The condition `no_approval_support` depends on the target. For a PDP, the runner holds it unless the profile has `pdp.approvals` or starts fake-pdp. A PDP MAY give no approval: it then gates no action and never answers a reason of protocol 17.1. For an edge, the runner holds it unless the profile has `edge.keys.confirm_access`. An edge asks only the action `access`, so it never asks for an approval.
 
-The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89, D91 to D93, D95, D96 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
+The condition never holds for a PEP. Section 17 is mandatory for a service (protocol 1.3), and a PEP cannot skip it. A PDP or an edge for which the condition holds skips the cases D76 to D89, D91 to D93, D95 to D97 and E19. A PEP runs the cases U30, U100 to U117 and the cases that cite section 17.
 
 The profile of a PEP with an MCP endpoint has the member `approval_calls`: one entry for each action of the action document, except `mcp.session`. The runner runs each case that uses `mcp_call_approval` once for each entry. The case U111 fails when the document has an action with no entry.
 

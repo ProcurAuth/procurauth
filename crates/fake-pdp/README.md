@@ -149,7 +149,7 @@ A question for such an action needs an approval. The PDP first decides as for a 
 - An approval that can be used gives `true`. With usage, the PDP takes the units and consumes the approval in one step (17.2). When a budget refuses, nothing is consumed.
 - A question with `context.match` equal to `subtree`, a question for `access` and a question for `mcp.session` never need an approval (17.8). A question of a person never needs one.
 
-The API for a PEP is in the endpoints table. The credential of a service decides the access. A service with no action in its document gets HTTP 403. A request of another service or of another subject gets HTTP 404.
+The API for a PEP is in the endpoints table. The credential of a service decides the access. A request with no credential, or with an unknown credential, gets HTTP 401 with `unauthorized` (17.4). A service with no action in its document gets HTTP 403 with `forbidden`. A request of another service or of another subject gets HTTP 404 with `not_found`. Each error of this API has the body `{"error": "<code>"}` with a code of 17.4.
 
 The values that the PDP publishes are fixed. The metadata members `procurauth_approval_*` give them.
 

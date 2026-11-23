@@ -35,16 +35,18 @@
       }
     },
     "error": {
-      "description": "The body of an error of the narrow API (protocol 17.4). The code rate_limited has retry_after.",
+      "description": "The body of an error of the narrow API (protocol 17.4). The code rate_limited has retry_after. The code unauthorized comes with HTTP 401 and the header WWW-Authenticate: Bearer.",
       "type": "object",
       "additionalProperties": false,
       "required": ["error"],
       "properties": {
         "error": {
+          "description": "The codes of protocol 17.4. A PDP MAY return other codes, and a PEP treats a code that it does not know as an error of the PDP. This schema lists only the codes of the protocol.",
           "enum": [
-            "command_too_large", "effect_mismatch", "invalid_view", "invalid_op", "invalid_evaluation",
-            "invalid_argument", "lease_required", "invalid_lease", "no_device", "cannot_supersede",
-            "rate_limited", "not_found"
+            "unauthorized", "forbidden", "not_found", "command_too_large", "effect_mismatch", "invalid_view",
+            "invalid_op", "invalid_evaluation", "invalid_argument", "lease_required", "invalid_lease",
+            "explanation_required", "no_device", "cannot_supersede", "rate_limited", "method_not_allowed",
+            "unsupported_media_type", "storage_degraded", "unavailable"
           ]
         },
         "retry_after": { "type": "integer", "minimum": 1 }

@@ -31,6 +31,8 @@ pub(crate) const METADATA_PATH: &str = "/.well-known/authzen-configuration";
 pub(crate) const EVALUATION_PATH: &str = "/access/v1/evaluation";
 /// The path of the Access Evaluations API.
 pub(crate) const EVALUATIONS_PATH: &str = "/access/v1/evaluations";
+/// The path of the submissions of the approval API (protocol 17.4).
+pub(crate) const APPROVAL_REQUESTS_PATH: &str = "/approval/v1/requests";
 
 /// The conditions that hold for the target.
 #[derive(Clone, Debug, Default)]
@@ -107,6 +109,9 @@ impl Capabilities {
         if !(profile.spawn_fake_pdp || profile.approvals) {
             held.insert(Condition::NoApprovalSupport);
         }
+        if profile.credential_file.is_none() {
+            held.insert(Condition::NoPdpCredential);
+        }
         Self { held }
     }
 
@@ -152,6 +157,8 @@ pub(crate) struct Endpoints {
     pub(crate) evaluations: HttpUrl,
     /// The metadata.
     pub(crate) metadata: HttpUrl,
+    /// The submissions of the approval API.
+    pub(crate) approval_requests: HttpUrl,
 }
 
 impl Endpoints {
@@ -165,6 +172,7 @@ impl Endpoints {
             evaluation: url(EVALUATION_PATH),
             evaluations: url(EVALUATIONS_PATH),
             metadata: url(METADATA_PATH),
+            approval_requests: url(APPROVAL_REQUESTS_PATH),
         }
     }
 }
@@ -515,6 +523,7 @@ impl Runner<'_> {
                     Endpoint::Evaluation => ("POST", &endpoints.evaluation),
                     Endpoint::Evaluations => ("POST", &endpoints.evaluations),
                     Endpoint::Metadata => ("GET", &endpoints.metadata),
+                    Endpoint::ApprovalRequests => ("POST", &endpoints.approval_requests),
                 };
                 authority = Some(url.authority.clone());
                 (method.to_owned(), url.target.clone())

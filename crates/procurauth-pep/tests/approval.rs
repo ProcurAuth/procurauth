@@ -507,7 +507,7 @@ fn p_17_4_a_status_read_renews_with_the_subject_and_a_keepalive_posts_the_subjec
 
 #[test]
 fn p_17_4_each_error_of_the_approval_api_has_its_refusal() {
-    let cases: [(u16, Value, Refusal); 9] = [
+    let cases: [(u16, Value, Refusal); 11] = [
         (
             429,
             json!({"error": "rate_limited", "retry_after": 60}),
@@ -553,6 +553,17 @@ fn p_17_4_each_error_of_the_approval_api_has_its_refusal() {
             500,
             json!({}),
             Refusal::Unavailable(UnavailableCause::Status(500)),
+        ),
+        // An unknown credential and a PDP with no approval are faults of the PDP (17.4).
+        (
+            401,
+            json!({"error": "unauthorized"}),
+            Refusal::Unavailable(UnavailableCause::Status(401)),
+        ),
+        (
+            403,
+            json!({"error": "forbidden"}),
+            Refusal::Unavailable(UnavailableCause::Status(403)),
         ),
     ];
     for (status, body, expected) in cases {
