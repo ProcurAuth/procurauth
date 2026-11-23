@@ -20,8 +20,9 @@ use serde_json::Value;
 
 use crate::clock::Clock;
 use crate::config::{
-    ConfigLine, DEFAULT_EVALUATIONS_MAX_BYTES, DEFAULT_EVALUATIONS_MAX_ITEMS,
-    DEFAULT_IDLE_MAX_SECONDS, DEFAULT_USAGE_MAX_SECONDS, MAX_WORKERS, Options, Settings,
+    ConfigLine, DEFAULT_DIRECTORY_MAX_AGE_SECONDS, DEFAULT_EVALUATIONS_MAX_BYTES,
+    DEFAULT_EVALUATIONS_MAX_ITEMS, DEFAULT_IDLE_MAX_SECONDS, DEFAULT_USAGE_MAX_SECONDS,
+    MAX_WORKERS, Options, Settings,
 };
 use crate::counters::CounterView;
 use crate::error::StartError;
@@ -122,6 +123,9 @@ impl Server {
             evaluations_max_items: meta
                 .evaluations_max_items
                 .unwrap_or(DEFAULT_EVALUATIONS_MAX_ITEMS),
+            directory_max_age_seconds: meta
+                .directory_max_age_seconds
+                .unwrap_or(DEFAULT_DIRECTORY_MAX_AGE_SECONDS),
             admin: options.admin,
             workers: options.workers,
             clock_start: start,
@@ -219,6 +223,11 @@ impl Server {
             "metadata.evaluations_max_items",
             s.evaluations_max_items,
             source(meta.evaluations_max_items.is_some()),
+        ));
+        out.push(ConfigLine::new(
+            "metadata.directory_max_age_seconds",
+            s.directory_max_age_seconds,
+            source(meta.directory_max_age_seconds.is_some()),
         ));
         match &self.options.credential {
             Some(credential) => out.push(ConfigLine::new(

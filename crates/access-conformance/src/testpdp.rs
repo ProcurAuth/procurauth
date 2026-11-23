@@ -441,6 +441,7 @@ impl Core {
                 "procurauth_idle_max_seconds": 30,
                 "procurauth_evaluations_max_bytes": 1_048_576,
                 "procurauth_evaluations_max_items": 100,
+                "procurauth_directory_max_age_seconds": 1,
             }),
         )
     }

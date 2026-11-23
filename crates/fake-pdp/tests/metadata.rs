@@ -25,6 +25,7 @@ fn p_10_7a_the_metadata_gives_the_endpoints_and_the_defaults() {
             "procurauth_idle_max_seconds": 30,
             "procurauth_evaluations_max_bytes": 1_048_576,
             "procurauth_evaluations_max_items": 100,
+            "procurauth_directory_max_age_seconds": 1,
             "procurauth_approval_lease_min_seconds": 30,
             "procurauth_approval_lease_max_seconds": 604_800,
             "procurauth_approval_grace_seconds": 120,
@@ -46,7 +47,8 @@ fn p_6_9_the_metadata_takes_its_values_from_the_data_file() {
     let mut data = datastore();
     data["metadata"] = json!({
         "usage_max_seconds": 2, "idle_max_seconds": 7,
-        "evaluations_max_bytes": 4096, "evaluations_max_items": 10
+        "evaluations_max_bytes": 4096, "evaluations_max_items": 10,
+        "directory_max_age_seconds": 60
     });
     let server = start(&data);
     let body = Client::connect(server.local_addr()).get(PATH).json();
@@ -54,6 +56,7 @@ fn p_6_9_the_metadata_takes_its_values_from_the_data_file() {
     assert_eq!(body["procurauth_idle_max_seconds"], 7);
     assert_eq!(body["procurauth_evaluations_max_bytes"], 4096);
     assert_eq!(body["procurauth_evaluations_max_items"], 10);
+    assert_eq!(body["procurauth_directory_max_age_seconds"], 60);
     assert_eq!(server.settings().evaluations_max_items, 10);
 }
 

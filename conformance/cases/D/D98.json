@@ -1,0 +1,32 @@
+{
+  "id": "D98",
+  "title": "The PDP publishes the age bound of its directory, procurauth_directory_max_age_seconds, as a whole number from 1.",
+  "role": "pdp",
+  "paragraphs": [
+    "3.9",
+    "10.7b"
+  ],
+  "requirement": "MUST",
+  "notes": "A PDP that decides from its directory itself, with no copy, publishes 1 (protocol 3.9).",
+  "given": {
+    "directory": "datastore.json"
+  },
+  "steps": [
+    {
+      "name": "A read of the metadata",
+      "request": {
+        "endpoint": "metadata"
+      },
+      "expect": {
+        "status": {
+          "equals": 200
+        },
+        "json": {
+          "/procurauth_directory_max_age_seconds": {
+            "regex": "^[1-9][0-9]*$"
+          }
+        }
+      }
+    }
+  ]
+}

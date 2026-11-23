@@ -21,14 +21,15 @@
       }
     },
     "metadata": {
-      "description": "The values of the metadata members of the PDP (protocol 6.9, 10.7, 10.7a). A member that the file does not give is not in the metadata.",
+      "description": "The values of the metadata members of the PDP (protocol 6.9, 10.7, 10.7a, 10.7b). A member that the file does not give is not in the metadata.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "usage_max_seconds": { "description": "The member procurauth_usage_max_seconds.", "type": "integer", "minimum": 1 },
         "idle_max_seconds": { "description": "The member procurauth_idle_max_seconds.", "type": "integer", "minimum": 1 },
         "evaluations_max_bytes": { "description": "The member procurauth_evaluations_max_bytes.", "type": "integer", "minimum": 1 },
-        "evaluations_max_items": { "description": "The member procurauth_evaluations_max_items.", "type": "integer", "minimum": 1 }
+        "evaluations_max_items": { "description": "The member procurauth_evaluations_max_items.", "type": "integer", "minimum": 1 },
+        "directory_max_age_seconds": { "description": "The member procurauth_directory_max_age_seconds: the largest age of the copy of the directory, in seconds (protocol 3.9, 10.7b).", "type": "integer", "minimum": 1 }
       }
     },
     "services": {

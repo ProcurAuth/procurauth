@@ -147,7 +147,7 @@ impl ReferencePdp {
             .position(|s| s.credential_sha256.as_deref() == Some(digest.as_str()))
     }
 
-    /// The metadata of the PDP: the four members of 6.9, 10.7 and 10.7a, and the members of 17.4a.
+    /// The metadata of the PDP: the five members of 6.9, 10.7, 10.7a and 10.7b, and the members of 17.4a.
     fn metadata() -> Response {
         Response {
             status: 200,
@@ -159,6 +159,7 @@ impl ReferencePdp {
                 "procurauth_evaluations_max_bytes": 1_048_576,
                 "procurauth_evaluations_max_items": 100,
                 "procurauth_usage_max_seconds": 5,
+                "procurauth_directory_max_age_seconds": 1,
                 "procurauth_approval_lease_min_seconds": 30,
                 "procurauth_approval_lease_max_seconds": 604_800,
                 "procurauth_approval_grace_seconds": 120,

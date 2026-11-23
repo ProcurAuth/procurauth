@@ -190,6 +190,7 @@ impl Shared {
             || differs(meta.idle_max_seconds, s.idle_max_seconds)
             || differs(meta.evaluations_max_bytes, s.evaluations_max_bytes)
             || differs(meta.evaluations_max_items, s.evaluations_max_items)
+            || differs(meta.directory_max_age_seconds, s.directory_max_age_seconds)
         {
             return message_response(
                 400,

@@ -283,6 +283,7 @@ impl Shared {
                 "procurauth_idle_max_seconds": s.idle_max_seconds,
                 "procurauth_evaluations_max_bytes": s.evaluations_max_bytes,
                 "procurauth_evaluations_max_items": s.evaluations_max_items,
+                "procurauth_directory_max_age_seconds": s.directory_max_age_seconds,
                 "procurauth_approval_lease_min_seconds": approvals::LEASE_MIN_SECONDS,
                 "procurauth_approval_lease_max_seconds": approvals::LEASE_MAX_SECONDS,
                 "procurauth_approval_grace_seconds": approvals::GRACE_SECONDS,

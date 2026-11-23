@@ -30,6 +30,9 @@ pub const DEFAULT_IDLE_MAX_SECONDS: u64 = 30;
 pub const DEFAULT_EVALUATIONS_MAX_BYTES: u64 = 1_048_576;
 /// The default value of `procurauth_evaluations_max_items` (10.7a).
 pub const DEFAULT_EVALUATIONS_MAX_ITEMS: u64 = 100;
+/// The default value of `procurauth_directory_max_age_seconds` (3.9, 10.7b). The PDP holds its
+/// directory in memory, so a change applies at the next decision.
+pub const DEFAULT_DIRECTORY_MAX_AGE_SECONDS: u64 = 1;
 /// The path of the metadata document.
 pub const METADATA_PATH: &str = "/.well-known/authzen-configuration";
 /// The path of the Access Evaluation API.
@@ -55,7 +58,7 @@ pub struct Key {
 }
 
 /// The table of keys. The README holds the same table, and a test compares them.
-pub const KEYS: [Key; 14] = [
+pub const KEYS: [Key; 15] = [
     Key {
         name: "data-file",
         source: "argument",
@@ -146,6 +149,13 @@ pub const KEYS: [Key; 14] = [
         value: "whole number from 1",
         default: "100",
         meaning: "The member `procurauth_evaluations_max_items`. More items get HTTP 400 (10.7a).",
+    },
+    Key {
+        name: "metadata.directory_max_age_seconds",
+        source: "data file",
+        value: "whole number from 1",
+        default: "1",
+        meaning: "The member `procurauth_directory_max_age_seconds`, the age bound of the directory (3.9, 10.7b). The PDP holds its directory in memory, so the default is 1.",
     },
     Key {
         name: "counters, failures, services, subjects, approvals",
@@ -265,6 +275,8 @@ pub struct Settings {
     pub evaluations_max_bytes: u64,
     /// `procurauth_evaluations_max_items`.
     pub evaluations_max_items: u64,
+    /// `procurauth_directory_max_age_seconds`.
+    pub directory_max_age_seconds: u64,
     /// True when the admin endpoints are on.
     pub admin: bool,
     /// The number of worker threads.
@@ -347,6 +359,10 @@ mod tests {
         assert_eq!(
             default_of("metadata.evaluations_max_items"),
             DEFAULT_EVALUATIONS_MAX_ITEMS.to_string()
+        );
+        assert_eq!(
+            default_of("metadata.directory_max_age_seconds"),
+            DEFAULT_DIRECTORY_MAX_AGE_SECONDS.to_string()
         );
     }
 }

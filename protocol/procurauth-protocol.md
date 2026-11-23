@@ -23,7 +23,7 @@ A receiver of AuthZEN 1.0 ignores a member that it does not know [AUTHZEN 1.0, l
 A PEP of this protocol MUST understand each member that this protocol marks as mandatory.
 This protocol is the only normative text for the subject, chain, coverage, action document, list of the options, identity token, limits and reasons. Other documents refer to its paragraphs and do not restate them.
 
-1.3 A PDP conforms to this protocol when it follows sections 3 and 4, 5.1 to 5.5, sections 6 to 8, 10.7, 10.7a, 11 and 12.
+1.3 A PDP conforms to this protocol when it follows sections 3 and 4, 5.1 to 5.5, sections 6 to 8, 10.7, 10.7a, 10.7b, 11 and 12.
 A service (its PEP) conforms when it follows these paragraphs:
 - 3.3, 3.4, 4.1, 4.4 and 4.5;
 - 5.1, 5.2, 5.2a, the last sentence of 5.3c, 5.4, 5.5 and 5.5a, and 5.6 to 5.8 when it publishes the list of the options;
@@ -92,7 +92,7 @@ A PDP MAY need other conditions of the owner. Examples are the right to have key
 3.7 An id with a colon and an unknown prefix, or a bad local part, is an unknown subject (11.1).
 3.8 Each key is one subject. The grants and the limit values of a key are its own.
 The system that makes a key chooses the local part of its subject id (3.2) and the format of its text. This protocol defines no format for the text of a key. When the system revokes or deletes a key, or when a key expires, the key is an unknown subject (11.1). A condition of 3.5 that can change later never makes a key unknown.
-3.9 A PDP that decides from a copy of its directory MUST bound the age of that copy. It MUST answer `false` for each key when the copy is older than the bound. The PDP publishes the bound.
+3.9 A PDP that decides from a copy of its directory MUST bound the age of that copy. It MUST answer `false` for each key when the copy is older than the bound. The PDP publishes the bound in whole seconds, in the metadata member `procurauth_directory_max_age_seconds` (10.7b). A PDP that decides from its directory itself, with no copy, publishes 1.
 
 ## 4. Resources and coverage
 4.1 A resource has a type and an id. The PEP sends the most specific node that the operation uses. The service itself is the resource of type `service`, with the id of the service. It has no `ancestors`, or an empty array.
@@ -306,6 +306,7 @@ The value `max_rows` 1000 applies to the read: thus the copy reads 1000 rows at 
 The units of a lost answer stay counted. The PEP refuses that use as for a PDP that does not answer (10.3). The PEP SHOULD wait for each answer longer than the longest time that the PDP publishes (6.9).
 10.7 The PEP SHOULD keep its connections to the PDP open between questions [RFC 9112, 9.3]. It SHOULD keep a small fixed number of connections. The PDP publishes the longest time that it keeps an idle connection open. The PEP closes an idle connection before the PDP does: after half of this time, or less. The PDP gives this time, in whole seconds, in the metadata member `procurauth_idle_max_seconds` (section 14).
 10.7a A PDP publishes the largest body and the largest number of items of one Access Evaluations request that it reads. A PEP sends its questions in requests within these maxima. When necessary, it splits them into several requests. The PDP gives these maxima in the metadata members `procurauth_evaluations_max_bytes` and `procurauth_evaluations_max_items` (section 14). A request above a maximum gets HTTP 400 or 413, and the PDP evaluates nothing.
+10.7b A PDP publishes the age bound of its directory (3.9) in the metadata member `procurauth_directory_max_age_seconds` (section 14). The value is a whole number of seconds, from 1. A PEP MAY read it, for example for its logs, and it takes no decision from it. A PEP that does not know the member ignores it.
 10.8 Unused. The MCP binding holds the tool error of a refused budget [MCP-BINDING].
 
 ## 11. Answers and reasons
@@ -326,7 +327,7 @@ The units of a lost answer stay counted. The PEP refuses that use as for a PDP t
 - A client never chooses the owner, the chain or the counter.
 - A PEP that ignores a ceiling widens the access. This is why 7.5 makes it mandatory.
 - The PDP is a single point of failure. The protocol accepts it: fail closed (6.9, 10.3).
-- An old copy of the directory is not safe. This is why 3.9 bounds its age.
+- An old copy of the directory is not safe. This is why 3.9 bounds its age, and 10.7b publishes the bound.
 - A client that reaches a service without the edge can use an identity token that it gets until its `exp`. It then skips the checks of the edge, for example the decision for `access` (8.3). This is why 9.4 makes a service accept requests only through the edge.
 - An edge that sends the text of a key to a service lets that service use the key on each other service of the owner. This is why 9.1 makes the edge remove it.
 - A client that sends a request again makes a new use. The PDP counts it again. This over-count is safe.
@@ -435,7 +436,7 @@ The PEP keeps this answer and asks `data.read` with `context.usage`. The next ru
 - `owner` is a private claim [RFC 7519, 4.3]. It is not in the IANA JWT Claims registry. In OAuth token exchange [RFC 8693], `sub` is the person and `act` is the actor. In this protocol, `sub` is the key. A service that reads only `sub` thus decides for the key, never for the person.
 - The relation of the MCP refusals to the COAZ binding for MCP is in the MCP binding [MCP-BINDING, section 11].
 - Section 17 uses the idea of the denial that a person can approve, with `evaluation_id`, from ARAP [ARAP]. It differs in four points. An approval has one use. A request has a lease, and the states `abandoned` and `superseded`. The PDP keeps the body that the PEP sends. The API gives the PEP only a verdict.
-- The metadata members of 6.9, 10.7, 10.7a and 17.4a are not in the IANA registry "AuthZEN Policy Decision Point Metadata" [AUTHZEN 1.0, l.1821-1823]. A PEP that does not know them MUST ignore them [AUTHZEN 1.0, l.1342]. Register them before a publication outside the network of the author.
+- The metadata members of 6.9, 10.7, 10.7a, 10.7b and 17.4a are not in the IANA registry "AuthZEN Policy Decision Point Metadata" [AUTHZEN 1.0, l.1821-1823]. A PEP that does not know them MUST ignore them [AUTHZEN 1.0, l.1342]. Register them before a publication outside the network of the author.
 
 ## 15. Open points
 1. If AuthZEN adopts the extensibility model of pull request #697 as written, the adoption by the action document (7.5) is not adoption on the wire. A PEP then sends `supported_mandatory_extensions`, and the three members of section 14 get names that resist collision.

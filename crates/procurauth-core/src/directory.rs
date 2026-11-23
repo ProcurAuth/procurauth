@@ -128,7 +128,7 @@ pub struct FailureRule {
     pub times: Option<u64>,
 }
 
-/// The values of the metadata members of the PDP (6.9, 10.7, 10.7a, section 14).
+/// The values of the metadata members of the PDP (6.9, 10.7, 10.7a, 10.7b, section 14).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct MetadataValues {
     /// `procurauth_usage_max_seconds`.
@@ -139,6 +139,8 @@ pub struct MetadataValues {
     pub evaluations_max_bytes: Option<u64>,
     /// `procurauth_evaluations_max_items`.
     pub evaluations_max_items: Option<u64>,
+    /// `procurauth_directory_max_age_seconds` (3.9, 10.7b).
+    pub directory_max_age_seconds: Option<u64>,
 }
 
 /// The whole data of the test PDP.
@@ -279,6 +281,7 @@ fn read_metadata(obj: &mut Obj<'_>, report: &mut Report) -> MetadataValues {
         idle_max_seconds: positive("idle_max_seconds"),
         evaluations_max_bytes: positive("evaluations_max_bytes"),
         evaluations_max_items: positive("evaluations_max_items"),
+        directory_max_age_seconds: positive("directory_max_age_seconds"),
     }
 }
 

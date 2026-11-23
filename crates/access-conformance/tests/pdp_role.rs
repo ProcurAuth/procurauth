@@ -66,9 +66,9 @@ fn the_cases_of_the_series_d_pass_against_fake_pdp_in_the_process() {
     let out = run_cli(&["--role", "pdp", "--profile", &profile]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
     // D97 needs a credential, and this profile gives none.
-    assert_eq!(out.summary(), "97 cases: 96 passed, 0 failed, 1 skipped");
+    assert_eq!(out.summary(), "98 cases: 97 passed, 0 failed, 1 skipped");
     assert_eq!(out.ids_with("skip"), vec!["D97"]);
-    assert_eq!(out.stdout.lines().count(), 98);
+    assert_eq!(out.stdout.lines().count(), 99);
     assert!(
         out.line("D01").starts_with("D01  pass  4.3,7.3"),
         "{}",
@@ -85,9 +85,9 @@ fn the_json_form_has_the_passed_cases_and_no_target() {
     let report = out.json();
     assert_eq!(report["role"], "pdp");
     assert_eq!(report["target"], Value::Null);
-    assert_eq!(report["summary"]["passed"], 96);
+    assert_eq!(report["summary"]["passed"], 97);
     assert_eq!(report["summary"]["skipped"], 1);
-    assert_eq!(report["cases"].as_array().unwrap().len(), 97);
+    assert_eq!(report["cases"].as_array().unwrap().len(), 98);
 }
 
 #[test]
@@ -437,10 +437,10 @@ fn a_pdp_with_a_load_request_skips_the_cases_of_the_approval_profile() {
     );
     let out = run_cli(&["--role", "pdp", "--profile", &profile, "--url", &base]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "97 cases: 77 passed, 0 failed, 20 skipped");
+    assert_eq!(out.summary(), "98 cases: 78 passed, 0 failed, 20 skipped");
     // Each case loaded its own data, with the counters and the clock of the case.
     let loads = pdp.loads.lock().unwrap();
-    assert_eq!(loads.len(), 77);
+    assert_eq!(loads.len(), 78);
     assert!(loads.iter().any(|data| data["counters"].is_array()));
 }
 
@@ -458,8 +458,8 @@ fn p_17_a_pdp_that_says_it_gives_approvals_runs_the_cases_of_section_17() {
     );
     let out = run_cli(&["--role", "pdp", "--profile", &profile, "--url", &base]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "97 cases: 96 passed, 0 failed, 1 skipped");
-    assert_eq!(pdp.loads.lock().unwrap().len(), 96);
+    assert_eq!(out.summary(), "98 cases: 97 passed, 0 failed, 1 skipped");
+    assert_eq!(pdp.loads.lock().unwrap().len(), 97);
 }
 
 #[test]

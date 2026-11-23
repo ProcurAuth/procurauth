@@ -69,6 +69,7 @@ The command `--print-config` checks all the files, prints each key with its valu
 | `metadata.idle_max_seconds` | data file | whole number from 1 | 30 | The member `procurauth_idle_max_seconds`. The PDP closes an idle connection after this time (10.7). |
 | `metadata.evaluations_max_bytes` | data file | whole number from 1 | 1048576 | The member `procurauth_evaluations_max_bytes`. A larger body gets HTTP 413 (10.7a). |
 | `metadata.evaluations_max_items` | data file | whole number from 1 | 100 | The member `procurauth_evaluations_max_items`. More items get HTTP 400 (10.7a). |
+| `metadata.directory_max_age_seconds` | data file | whole number from 1 | 1 | The member `procurauth_directory_max_age_seconds`, the age bound of the directory (3.9, 10.7b). The PDP holds its directory in memory, so the default is 1. |
 | `counters, failures, services, subjects, approvals` | data file | see the schema `fake-pdp-data` | none | The directory, the first counter values, the failures and the approvals. |
 
 A test checks that this table is the table of the code. The function `fake_pdp::config::reference_table()` makes it.
@@ -100,7 +101,7 @@ The failure file of the flag `--failures` has the member `failures` only. It use
 | `GET /approval/v1/requests/{id}?subject=&wait=&renew=` | The verdict of a request (17.4). |
 | `POST /approval/v1/requests/{id}/keepalive` | Renew the lease and read the verdict (17.5). |
 
-The metadata has `policy_decision_point`, `access_evaluation_endpoint` and `access_evaluations_endpoint`. It also has the four members `procurauth_usage_max_seconds`, `procurauth_idle_max_seconds`, `procurauth_evaluations_max_bytes` and `procurauth_evaluations_max_items`. The program always publishes all four, with the defaults of the table. It also publishes the twelve members `procurauth_approval_*` that give the values of the approval API. See "Approvals".
+The metadata has `policy_decision_point`, `access_evaluation_endpoint` and `access_evaluations_endpoint`. It also has the five members `procurauth_usage_max_seconds`, `procurauth_idle_max_seconds`, `procurauth_evaluations_max_bytes`, `procurauth_evaluations_max_items` and `procurauth_directory_max_age_seconds`. The program always publishes all five, with the defaults of the table. It also publishes the twelve members `procurauth_approval_*` that give the values of the approval API. See "Approvals".
 
 The server keeps connections open. It sends `Content-Type: application/json` and a `Content-Length`. It copies the request header `X-Request-ID` to the response. The header `Keep-Alive` gives the idle time of the metadata.
 

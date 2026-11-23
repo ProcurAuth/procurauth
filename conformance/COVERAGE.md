@@ -26,7 +26,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 3.5 | pdp | D03, D14, D15, D32, D33, D74, D84 |
 | 3.7 | pdp | D08, D09 |
 | 3.8 | pdp | D11, D55, D70 |
-| 3.9 | pdp | none |
+| 3.9 | pdp | D98 |
 | 4.1 | pdp | D17, D18, D19, D21, D22, D23, D24, D36, D75 |
 | 4.2 | pdp | D25 |
 | 4.3 | pdp | D01, D02, D14, D25, D26, D27, D28, D29, D30 |
@@ -66,6 +66,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 8.4 | pdp | D05, D53, D55, D70, D71 |
 | 10.7 | pdp | D90 |
 | 10.7a | pdp | D90 |
+| 10.7b | pdp | D98 |
 | 11.1 | pdp | D06, D07, D08, D09, D11, D12, D13, D17, D18, D19, D20, D21, D23, D35, D36, D37, D39, D40, D41, D42, D43, D44, D45, D46, D48, D56, D75, D76, D84, D88 |
 | 11.2 | pdp | D02, D30, D73 |
 | 12 | pdp | D16, D40, D53, D55 |
@@ -123,6 +124,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 10.6 | pep | U68 |
 | 10.7 | pep | U69 |
 | 10.7a | pep | none |
+| 10.7b | pep | none |
 | 11.1 | pep | U04, U08, U61, U62, U63, U67, U105 |
 | 11.2 | pep | U60 |
 | 15 | pep | U84 |
@@ -197,7 +199,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | --- | --- | --- | --- |
 | 3.5 | pdp | The key loses a right at the first decision after its owner loses the right. | A case has no step that changes the directory between two questions. |
 | 3.8 | pdp | The system that makes keys chooses the local part and the format of the text of a key. | The rule is for the system that makes keys. This version has no series for it (protocol 15, item 2). |
-| 3.9 | pdp | A PDP that decides from a copy of its directory bounds the age of the copy, and it answers false for each key when the copy is older. | The runner cannot make a copy old, and a PDP can read its directory with no copy. |
+| 3.9 | pdp | A PDP that decides from a copy of its directory bounds the age of the copy, and it answers false for each key when the copy is older. | The runner cannot make a copy old, and a PDP can read its directory with no copy. The case D98 tests the published bound. |
 | 4.5 | pdp | The PEP builds the chain from its own data. | The paragraph states a rule for the PEP only. |
 | 5.1 | pdp | A service publishes its document at /.well-known/procurauth/actions, with no authentication. | The rule is for the service. A case cannot see the read of the document by the PDP. |
 | 5.2 | pdp | The document has the members and the checks of 5.2. | The directory of a case holds good documents only. A case cannot send a bad document to the PDP. |
@@ -253,6 +255,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | 10.6 | pep | The PEP SHOULD wait for each answer longer than the longest time that the PDP publishes. | The model gives the test PDP no published time. |
 | 10.7 | pep | The PEP closes an idle connection before the PDP does, after half of the idle time or less. | The model gives the test PDP no idle time. |
 | 10.7a | pep | The PEP sends its questions in requests within the maxima of the PDP, and it splits them when necessary. | A case needs a service with more actions than the maximum of the test PDP. |
+| 10.7b | pep | A PEP MAY read the age bound of the directory, and it takes no decision from it. | The sentence gives a permission. A decision that the PEP does not take has no visible result. |
 | 11.1 | pep | The PEP reads the reason invalid_request only in an item of an Access Evaluations answer. | The service decides when it sends a request with items. A case cannot make it send one. |
 | 17.1 | pep | The PEP never reads the evaluation_id. | A case cannot see what the PEP reads. |
 | 17.4 | pep | The PEP sends the credential of the service to the approval API. | The test PDP of the runner accepts any credential on its approval API. |
