@@ -478,6 +478,32 @@
             "list_options": {
               "$ref": "#/$defs/operation"
             },
+            "read_health": {
+              "description": "A health-probe route (protocol 10.1c). The runner sends no token.",
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "path"
+                  ]
+                }
+              ]
+            },
+            "use_no_action": {
+              "description": "A route that runs no action of the action document, for example a static file (protocol 10.1c).",
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "path"
+                  ]
+                }
+              ]
+            },
             "mcp_call_plain": {
               "allOf": [
                 {

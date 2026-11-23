@@ -1,6 +1,30 @@
 # Changelog
 
-## Unreleased
+## 1.1 (2026-11-23)
+
+Lot AL1, the alignment of the protocol, the portal, ClickHouse Dash and Stowr.
+
+- Protocol 9.3 and 9.4. The claims `iat`, `exp` and `nbf` are JSON integers with digits only: no fraction, no exponent and no sign. A service refuses another form with HTTP 401, and it never rounds the value. This closes GitHub issue 1.
+- Protocol 9.3 and 9.4. A token MAY have `nbf`. A service refuses a token whose `nbf` is later than its clock plus the skew. The edge does not need to give it.
+- Protocol 9.4. When its key set holds more than one key, a service refuses a token without `kid`.
+- Protocol 17.4. The approval API answers a request with no credential, or with an unknown credential, with HTTP 401 and `unauthorized`. A PDP answers 403 `forbidden` only when it knows the credential and gives no approval. The schema `approval-verdict` lists each code of 17.4.
+- Protocol 6.1. The `unit` of a ceiling is a plural noun, for example `rows`. The `unit` of a budget is a singular noun, for example `request`. `access-lint` gives the warnings `ceiling_unit_plural` and `budget_unit_singular`. The examples and the data of the cases use `rows` and `seconds`.
+- Protocol 3.9 and the new 10.7b. A PDP publishes the age bound of its directory in the metadata member `procurauth_directory_max_age_seconds`. A PDP with no copy of its directory publishes 1.
+- Protocol 10.0, 10.1, the new 10.1c, 8.3, 9.4 and 1.3. A health-probe route needs no token and no question. Each other route that runs no action, also a static file, asks the action `access` on the service. The open point 6 of section 15 is Unused.
+- MCP binding 5.7a. A 422 `explanation_required` and a 409 `cannot_supersede` give the tool error `invalid_argument`. A 422 `invalid_evaluation` makes the PEP ask one more time, and a second one gives `approval_expired`. Any other code stays HTTP 503.
+- MCP binding section 12. The binding is the source for a ProcurAuth service. The ten open points are final rules, and a table lists each difference from the contract of the MCP servers. Section 11 says what the binding claims about COAZ-MCP.
+- The protocol and the binding have the version 1.1. The workspace has the version 1.1.0.
+- The conformance data has 245 cases: 127 for a PEP, 98 for a PDP and 20 for an edge. The new cases are U118 to U127, D97, D98 and E20.
+- `IMPLEMENTATIONS.md` lists ClickHouse Dash and the portal. Neither links a library of this repository. The text that said that spec question 53 was still open is gone.
+- Conformance runner. A token of a case has the members `number_forms` and `nbf`. A rule of a script has the member `times`. The runner has the endpoint `approval_requests`, the operations `read_health` and `use_no_action`, and the condition `no_pdp_credential`. The condition `single_key_set` holds for a PEP profile with one signing key.
+- `procurauth-core` gives the number forms of a time claim, and it checks `nbf`. `access-token check` prints 14 checks, and `access-token make` has the option `--number-form`.
+- `fake-pdp` publishes `procurauth_directory_max_age_seconds`. It gives a code of 17.4 for each error of the approval API, and it has the failure kinds `submit_*`.
+- `procurauth-pep` has the optional feature `tls`, with rustls, aws-lc-rs, the system trust store and an optional CA file. It reads no environment variable. The flag `allow_plain_http` replaces `allow_insecure_pdp_link`. An `https` URL with this flag is a configuration error.
+- `procurauth-pep` has an optional bounded cache of verified identity tokens, `token_cache_max_entries`, which is off by default. It reads `procurauth_directory_max_age_seconds`. It has `Pep::decide_route_without_action` for a route that runs no action, `Operation::also_all` and `Identity::from_checked_token`. The README shows the use from a plain HTTP service.
+- `reference-service` has the routes `/health` and `/static/about.txt`. `reference-service` and `reference-edge` use the key `pdp.allow_plain_http`.
+- `notes/design-libraries.md` describes a PDP library for the portal and a C interface of the PEP library for ClickHouse Dash. This lot does not build them.
+
+### Earlier changes of 1.1
 
 - Lot PS1, alignment with the portal and with ClickHouse Dash. Protocol 17.8: the `confirm` of a grant of a person has no effect on the questions of that person, and `confirm` has no effect on the action `mcp.session`. A tool never uses `mcp.session` (binding 3.6a).
 - Protocol 6.1 and 7.1. The largest whole number of a limit is 2^53-1. A label and a description have 1 character or more. An action of a `resources` item lists the type of the node. A ceiling name starts with `max_`, or the document is bad. The schemas, the reader of the core and `access-lint` follow. The rule `ceiling_name` is now an error, and `empty_text`, `action_not_on_type` and `number_too_large` are new.

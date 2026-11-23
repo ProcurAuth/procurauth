@@ -5,9 +5,9 @@
 <p align="center">
   <a href="https://github.com/SCcagg5/procurauth/actions/workflows/ci.yml"><img src="https://github.com/SCcagg5/procurauth/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/SCcagg5/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/SCcagg5/procurauth?color=4338ca&label=release" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/protocol-1.0-4338ca" alt="Protocol 1.0">
+  <img src="https://img.shields.io/badge/protocol-1.1-4338ca" alt="Protocol 1.1">
   <img src="https://img.shields.io/badge/profile%20of-AuthZEN%201.0-0ea5e9" alt="Profile of AuthZEN 1.0">
-  <img src="https://img.shields.io/badge/conformance-232%20cases-34d399" alt="232 conformance cases">
+  <img src="https://img.shields.io/badge/conformance-245%20cases-34d399" alt="245 conformance cases">
   <img src="https://img.shields.io/badge/code-Apache--2.0-lightgrey" alt="Code: Apache-2.0">
 </p>
 
@@ -26,7 +26,7 @@ ProcurAuth is an open specification for services that let AI agents act for peop
 
 A backend holds the users, their rights and the keys of their agents. A person makes a key for an agent. **A key never has more rights than the person who owns it.** A service does not know the backend. It speaks only [AuthZEN](https://openid.net/specs/authorization-api-1_0.html).
 
-This repository holds the protocol, the MCP binding, the JSON schemas, 232 conformance cases and the programs to test a service.
+This repository holds the protocol, the MCP binding, the JSON schemas, 245 conformance cases and the programs to test a service.
 
 <p align="center">
   <img src="docs/assets/rights.svg" alt="The rights of a key are the rights that its owner has and that the key also holds" width="90%">
@@ -115,18 +115,18 @@ Seven programs help you to build and to test a service. They are Rust programs. 
 | `reference-service` | A small service that uses the library `procurauth-pep`. It passes the series U. |
 | `reference-edge` | A small edge: a reverse proxy that swaps a key for a token. It passes the series E. |
 
-The library `procurauth-pep` in `crates/procurauth-pep` has the checks that a PEP must do.
+The library `procurauth-pep` in `crates/procurauth-pep` has the checks that a PEP must do. Its optional feature `tls` gives a link to the PDP over TLS.
 
 ### Get the programs
 
 Each [release](https://github.com/SCcagg5/procurauth/releases/latest) has archives for Linux (x86-64 and aarch64), macOS (Apple silicon and Intel) and Windows (x86-64). The Linux programs are static.
 
 ```sh
-curl -LO https://github.com/SCcagg5/procurauth/releases/download/v1.0/procurauth-tools-1.0-x86_64-linux.tar.gz
-curl -LO https://github.com/SCcagg5/procurauth/releases/download/v1.0/SHA256SUMS
+curl -LO https://github.com/SCcagg5/procurauth/releases/download/v1.1/procurauth-tools-1.1-x86_64-linux.tar.gz
+curl -LO https://github.com/SCcagg5/procurauth/releases/download/v1.1/SHA256SUMS
 sha256sum -c SHA256SUMS --ignore-missing
-tar xzf procurauth-tools-1.0-x86_64-linux.tar.gz
-./procurauth-tools-1.0-x86_64-linux/access-token --help
+tar xzf procurauth-tools-1.1-x86_64-linux.tar.gz
+./procurauth-tools-1.1-x86_64-linux/access-token --help
 ```
 
 ### Check an identity token
@@ -148,7 +148,7 @@ life       ok   life 300 s, max 300 s
 ## Conformance
 
 <p align="center">
-  <img src="docs/assets/conformance.svg" alt="232 conformance cases: 117 for a PEP, 96 for a PDP and 19 for an edge" width="90%">
+  <img src="docs/assets/conformance.svg" alt="245 conformance cases: 127 for a PEP, 98 for a PDP and 20 for an edge" width="90%">
 </p>
 
 The cases are data, in `conformance/`. Each case cites a paragraph of the protocol. `conformance/COVERAGE.md` shows which paragraph has a case. To test your own service, write a profile and run the cases:
@@ -159,7 +159,7 @@ access-conformance --role pdp  --profile my-pdp.json     --url http://127.0.0.1:
 access-conformance --role edge --profile my-edge.json    --url http://127.0.0.1:8002
 ```
 
-The runner prints one line for each case and a summary line, for example `117 cases: 116 passed, 0 failed, 1 skipped`. Section 17 of the protocol is mandatory for a service, so the runner never skips its cases for a PEP. It runs each case that uses `mcp_call_approval` once for each action of the service. It skips D76 to D89 and D91 to D93 for a PDP that gives no approval, and E19 for an edge that does not know the key with `confirm`. In this version, `fake-pdp` and `reference-edge` give them.
+The runner prints one line for each case and a summary line, for example `127 cases: 126 passed, 0 failed, 1 skipped`. Section 17 of the protocol is mandatory for a service, so the runner never skips its cases for a PEP. It runs each case that uses `mcp_call_approval` once for each action of the service. It skips D76 to D89, D91 to D93 and D95 to D97 for a PDP that gives no approval, and E19 for an edge that does not know the key with `confirm`. It also skips D97 when the profile gives no credential of the service. In this version, `fake-pdp` and `reference-edge` give them.
 
 ## JSON schemas
 

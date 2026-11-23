@@ -100,6 +100,14 @@
         "path": "/service",
         "action": "data.write"
       },
+      "read_health": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "use_no_action": {
+        "method": "GET",
+        "path": "/static"
+      },
       "use_multi": {
         "method": "GET",
         "path": "/copy/orders",

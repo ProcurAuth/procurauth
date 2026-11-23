@@ -1,6 +1,6 @@
 # ProcurAuth Protocol
 
-Version 1.0
+Version 1.1
 
 The changelog in `docs/` of the repository gives the changes of each version.
 

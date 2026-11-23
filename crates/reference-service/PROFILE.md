@@ -11,7 +11,7 @@ The profiles of the runner are in `examples/`. They name the keys of the test ed
 | File | Content |
 | --- | --- |
 | `conformance-profile.json` | The profile for the default configuration. The case U95 is skipped. |
-| `conformance-profile-session-budget.json` | The profile for `conformance-session-budget.json`. All 117 cases run. |
+| `conformance-profile-session-budget.json` | The profile for `conformance-session-budget.json`. All 127 cases run. |
 | `conformance-session-budget.json` | The configuration of `conformance.json`, with `mcp_session_budget` set to true. |
 
 The script `scripts/conformance.sh pep` runs both profiles against the service.
@@ -154,8 +154,8 @@ The form of the request for input follows the draft of the MCP revision 2026-07-
 | `no_input_tool` | false |
 | `no_multi_action` | false |
 | `no_token_cache` | Not for a service. This condition is for an edge. |
-| `single_key_set` | false. The configuration trusts two keys. |
-| `no_approval_support` | Never holds for a PEP. The runner runs U30 and U100 to U117 for each action. |
+| `single_key_set` | false. The configuration trusts two keys, so U119 runs. |
+| `no_approval_support` | Never holds for a PEP. The runner runs U30, U100 to U117 and U121 to U125 for each action. |
 
 ## Other requests that the cases write in full
 

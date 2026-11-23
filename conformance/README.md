@@ -26,6 +26,8 @@ The cases of the approval profile (protocol section 17) have these ids. The case
 
 The cases D90 to D94 test the metadata members, the person and `mcp.session` with `confirm`, and the largest number of a limit. The cases D95 and D96 test the member `permission_only` of the question of an other permission. The case D23 also checks the reason of a bad id. Each one cites a paragraph of section 17, or a paragraph that only this profile adds. Section 17 is mandatory for a service (protocol 1.3, 5.2b), so a case of the series U never has the condition `no_approval_support`. A case of the series D or E has it: a PDP or an edge that gives no approval skips it.
 
+The lot AL1 of version 1.1 adds U118 to U127, D97, D98 and E20. They test the form of the time claims, `nbf` and `kid` (protocol 9.3, 9.4) and the 401 of the approval API (17.4). They also test the age bound of the directory (3.9, 10.7b), the routes with no action (10.1c) and the codes of binding 5.7a.
+
 The ids V01 and V02 are not case ids. They name two groups of vectors in `vectors/effect.json`. The schema `schemas/effect-vectors.schema.json` defines the format of this file. `COVERAGE.md` lists the groups.
 
 ## A case

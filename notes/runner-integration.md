@@ -22,8 +22,8 @@ Start the service before the runner. The service must call the test PDP of the r
 2. Set the issuer to the value of `pep.token.iss`, the maximum age to `pep.token.max_age_seconds`, and the clock skew to `pep.token.skew_seconds`. Set the header of the token to `pep.token.header`. Set the id of the service to `pep.service`.
 3. Set the address of the PDP to `pep.pdp.listen`, for example `127.0.0.1:8181`. The runner binds this address. Set the credential of the service to the content of `pep.pdp.credential_file`. The test PDP asks for it only when the profile names the file.
 4. Make the action document declare each action that the profile names, and the action `mcp.session` when the service has an MCP endpoint (binding 3.6a).
-5. Write the operations of the profile. Each operation needs a method, a path and the variables. The example `examples/pep.json` shows a service with each operation.
-6. Declare each part that the service has. The key `options_type` says that the service has the options route. The key `mcp` says that it has an MCP endpoint. The key `answer_cache` says that it keeps answers.
+5. Write the operations of the profile. Each operation needs a method, a path and the variables. The example `examples/pep.json` shows a service with each operation. The operations `read_health` and `use_no_action` need a path only (protocol 10.1c).
+6. Declare each part that the service has. The key `options_type` says that the service has the options route. The key `mcp` says that it has an MCP endpoint. The key `answer_cache` says that it keeps answers. With one key in `pep.token.keys`, the runner skips the case U119.
 7. When the service keeps state between requests, for example an answer cache, give a request in `pep.reset`. The runner sends it before each case. A cache that lasts from one case to the next gives false failures, because the cases share subjects.
 
 8. Each action follows protocol section 17, so a profile with `mcp` has the member `approval_calls`: one entry for each action of the document, except `mcp.session`. Each entry has the member `approval` with the `op` of the base call and of the variants `effect_2` and `effect_3`. The runner computes the effects from them, and it runs the cases of section 17 once for each entry. It adds the control arguments `lease_s` 900, `approval_ref` and `wait_s` to the calls. The test PDP also serves the approval API of 17.4 at the same address.
@@ -50,7 +50,7 @@ Start the edge before the runner. The runner binds the listen addresses of the p
 
 ## Role pdp
 
-The role pdp needs no service. `pdp-fake.json` starts `fake-pdp` in the process, and the 75 cases that do not need approvals pass. The runner skips the 14 cases of the approval profile. To test another PDP, use `pdp-external.json` and the key `--url`. The PDP must offer a load request, or the runner skips the cases that need a clock or counters.
+The role pdp needs no service. `pdp-fake.json` starts `fake-pdp` in the process. It gives approvals, so 97 of the 98 cases run and pass. The runner skips D97, because this profile gives no credential (condition `no_pdp_credential`). To test another PDP, use `pdp-external.json` and the key `--url`. The PDP must offer a load request, or the runner skips the cases that need a clock or counters.
 
 ## Open points for the integration
 

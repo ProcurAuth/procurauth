@@ -6,13 +6,15 @@ This file records the work of the integration. The runner `access-conformance` r
 
 The script `scripts/conformance.sh all` gives these results. The runs start every process in one container, on the loopback address.
 
+The last run is of the lot AL1, version 1.1 (2026-11-23). The items below record the first runs, with the counts of that time.
+
 | Run | Target | Cases passed | Failed | Skipped |
 | --- | --- | --- | --- | --- |
-| U, action `mcp.session` with a budget | `reference-service` | 99 | 0 | 0 |
-| U, action `mcp.session` with no budget | `reference-service` | 98 | 0 | 1 (U95, `no_budget_session`) |
-| D, `fake-pdp` in the process of the runner | `fake-pdp` | 75 | 0 | 0 |
-| D, `fake-pdp` as a separate process | `fake-pdp` with `--admin` | 75 | 0 | 0 |
-| E | `reference-edge` | 18 | 0 | 0 |
+| U, action `mcp.session` with a budget | `reference-service` | 127 | 0 | 0 |
+| U, action `mcp.session` with no budget | `reference-service` | 126 | 0 | 1 (U95, `no_budget_session`) |
+| D, `fake-pdp` in the process of the runner | `fake-pdp` | 97 | 0 | 1 (D97, `no_pdp_credential`) |
+| D, `fake-pdp` as a separate process | `fake-pdp` with `--admin` | 98 | 0 | 0 |
+| E | `reference-edge` | 20 | 0 | 0 |
 
 ## Part A: the runner against the reference service
 

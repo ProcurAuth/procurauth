@@ -2,7 +2,7 @@
 
 This file tells which function of `procurauth-pep` each case of the series U needs. The reference service uses these functions.
 
-The test `crates/reference-service/tests/u_cases.rs` is a small local runner. It reads the cases, makes the tokens, starts a test PDP with the script of the case, and sends the operations as `crates/reference-service/PROFILE.md` says. It runs 116 of the 117 cases against the reference service, and all of them pass. Each case that uses `mcp_call_approval` runs once for each action. The runner `access-conformance` does the same work for any service.
+The test `crates/reference-service/tests/u_cases.rs` is a small local runner. It reads the cases, makes the tokens, starts a test PDP with the script of the case, and sends the operations as `crates/reference-service/PROFILE.md` says. It runs 126 of the 127 cases against the reference service, and all of them pass. Each case that uses `mcp_call_approval` runs once for each action. The runner `access-conformance` does the same work for any service.
 
 The case U95 is skipped. It needs a budget on the action `mcp.session`, and the action of the service lists none (condition `no_budget_session`). The library test `mcp_3_6a_a_method_with_no_tool_asks_mcp_session_and_gets_a_result` covers the use of this action with no budget. The library follows 6.4 for each action. Thus a budget on this action gives a question with `context.usage`, as for another action.
 
@@ -117,6 +117,11 @@ The column Service tells how the service covers the case. The conditions to skip
 | U114 | mcp:3.6a, mcp:5.1, 17.7a | `McpGate::session`, `refusal_reply` | Passes |
 | U115, U116 | mcp:5.7, mcp:5.7a, 17.7 | `split_approval_arguments`, `Pep::decide_approval` | Pass, for each action |
 | U117 | mcp:3.5, 17.7 | `McpGate::call`, `Stage::Ask` | Passes |
+| U118, U120 | 9.3, 9.4 | `Pep::authenticate` (the core reads the time claims and checks `nbf`) | Pass |
+| U119 | 9.4 | `Pep::authenticate` (`SelectError::KidRequired` of the core) | Passes |
+| U121 to U125 | 17.4, 17.7, mcp:5.7a | `Pep::decide_approval` (the map of the approval API and one more question after `invalid_evaluation`) | Pass, for each action |
+| U126 | 5.5a, 10.3, mcp:3.7 | `Pep::decide` (a reason of 17.1 for an other permission gives HTTP 503) | Passes |
+| U127 | 10.0, 10.1c, 8.3 | `Pep::decide_route_without_action`, the routes `/health` and `/static/about.txt` | Passes |
 
 ## Library tests of the same rules
 
