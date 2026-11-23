@@ -1,15 +1,24 @@
 //! The link to the PDP: the trait that an application can implement.
 //!
-//! The PEP talks to the PDP through a [`PdpTransport`]. The library gives
-//! [`crate::http_client::HttpTransport`], a synchronous HTTP/1.1 client for `http`
-//! URLs. A deployment needs TLS (10.0, step 4). This library has no TLS code.
-//! An application that needs TLS implements this trait with its own TLS client.
+//! The PEP talks to the PDP through a [`PdpTransport`]. The library gives two
+//! transports. [`crate::http_client::HttpTransport`] is a synchronous HTTP/1.1
+//! client for `http` URLs. `TlsTransport` of the module `tls` is the same client
+//! over TLS, for `https` URLs. It needs the feature `tls`.
+//!
+//! A deployment needs a secured link (10.0, step 4). An application can also
+//! implement this trait with its own client. [`for_pdp`] gives the transport of
+//! the library for the URL of the configuration.
 //!
 //! The transport tells the PEP how an exchange failed. The kind of failure
 //! decides if the PEP may send a question with `context.usage` again (10.6).
 
 use std::fmt;
+use std::sync::Arc;
 use std::time::Duration;
+
+use crate::config::{ConfigError, PdpConfig};
+use crate::http_client::{HttpTransport, HttpTransportConfig};
+use crate::url::{Scheme, Url};
 
 /// An answer of the PDP at the level of HTTP.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -110,9 +119,73 @@ pub trait PdpTransport: Send + Sync {
     fn set_idle_close(&self, _idle_close_after: Duration) {}
 }
 
+/// The transport of the library for the URL of the PDP. An `http` URL gets
+/// [`HttpTransport`] with the bounds of the configuration. An `https` URL gets
+/// `TlsTransport` (feature `tls`). The function does not apply the link policy:
+/// [`crate::Pep::new`] does.
+///
+/// # Errors
+/// Returns an error for `pdp.url` when the URL is not valid. Returns an error
+/// for `pdp.url` when the URL is `https` and the library has no feature `tls`.
+/// Returns the errors of `TlsTransport::new` for an `https` URL.
+pub fn for_pdp(pdp: &PdpConfig) -> Result<Arc<dyn PdpTransport>, Vec<ConfigError>> {
+    let url = Url::parse(&pdp.url).map_err(|error| {
+        vec![ConfigError::new(
+            "pdp.url",
+            "an absolute `http` or `https` URL",
+            if pdp.url.contains('@') {
+                format!("a URL with user information (the value stays hidden): {error}")
+            } else {
+                format!("{:?} ({error})", pdp.url)
+            },
+        )]
+    })?;
+    match url.scheme {
+        Scheme::Http => Ok(Arc::new(HttpTransport::new(HttpTransportConfig::from_pdp(
+            pdp,
+        )))),
+        #[cfg(feature = "tls")]
+        Scheme::Https => Ok(Arc::new(crate::tls::TlsTransport::new(pdp)?)),
+        #[cfg(not(feature = "tls"))]
+        Scheme::Https => Err(vec![ConfigError::new(
+            "pdp.url",
+            "an `http` URL, because the library has no feature `tls`",
+            format!("{:?}", pdp.url),
+        )]),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::Secret;
+
+    #[test]
+    fn an_http_url_gets_the_plain_client() {
+        let pdp = PdpConfig::new("http://127.0.0.1:1", Secret::new("credential"));
+        let transport = for_pdp(&pdp).unwrap();
+        assert!(transport.supports_scheme("http"));
+        assert!(!transport.supports_scheme("https"));
+    }
+
+    #[test]
+    fn a_bad_url_is_an_error_of_the_key_pdp_url() {
+        for url in ["ftp://pdp", "https://user:secret@pdp.example"] {
+            let pdp = PdpConfig::new(url, Secret::new("credential"));
+            let errors = for_pdp(&pdp).err().unwrap();
+            assert_eq!(errors[0].key, "pdp.url");
+            assert!(!errors[0].found.contains("secret"), "{}", errors[0]);
+        }
+    }
+
+    #[cfg(not(feature = "tls"))]
+    #[test]
+    fn an_https_url_needs_the_feature_tls() {
+        let pdp = PdpConfig::new("https://pdp.example", Secret::new("credential"));
+        let errors = for_pdp(&pdp).err().unwrap();
+        assert_eq!(errors[0].key, "pdp.url");
+        assert!(errors[0].expected.contains("feature `tls`"));
+    }
 
     #[test]
     fn p_10_6_only_an_unsent_request_can_go_again_with_usage() {

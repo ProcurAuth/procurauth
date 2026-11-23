@@ -13,6 +13,9 @@ echo "== cargo test"
 "$here/cargo.sh" test --workspace
 echo "== cargo test without the feature mcp"
 "$here/cargo.sh" test -p procurauth-pep -p reference-service --no-default-features
+echo "== cargo clippy and cargo test with the feature tls"
+"$here/cargo.sh" clippy -p procurauth-pep --all-targets --features tls -- -D warnings
+"$here/cargo.sh" test -p procurauth-pep --features tls
 echo "== conformance runs: series U, D and E"
 # The script has its own time limits inside its container. This limit covers the build too.
 timeout 1800 "$here/conformance.sh" all

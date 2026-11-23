@@ -19,11 +19,16 @@ path = "src/lib.rs"
 default = ["mcp"]
 # The helpers for the MCP binding.
 mcp = []
+# A transport over TLS 1.2 or 1.3 for the link to the PDP, with rustls and aws-lc-rs.
+# The feature is off by default: aws-lc-sys needs a C compiler.
+tls = ["dep:rustls", "dep:rustls-pki-types"]
 
 [dependencies]
 procurauth-core = { path = "../procurauth-core" }
 serde_json.workspace = true
 thiserror.workspace = true
+rustls = { workspace = true, optional = true }
+rustls-pki-types = { workspace = true, optional = true }
 
 [dev-dependencies]
 access-token = { path = "../access-token" }

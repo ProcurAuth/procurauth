@@ -31,33 +31,50 @@
 //! | [`refusal`] | The refusals and their HTTP form (10.3). |
 //! | [`options`] | The options route (5.6 to 5.8). |
 //! | [`transport`], [`http_client`] | The link to the PDP, and a client for `http`. |
-//! | [`metadata`] | The metadata of the PDP and the four members of this protocol. |
+//! | `tls` | A client for `https`, over TLS 1.2 or 1.3. It needs the feature `tls`, which is off by default. |
+//! | [`metadata`] | The metadata of the PDP and the members of this protocol. |
 //! | [`clock`], [`reply`], [`url`] | Small parts: the clock, the HTTP reply and the URL. |
 //! | `mcp` | The MCP binding. It needs the feature `mcp`, which is on by default. |
+//!
+//! # Features
+//!
+//! | Feature | Default | Content |
+//! | --- | --- | --- |
+//! | `mcp` | on | The module `mcp`. |
+//! | `tls` | off | The module `tls`: `TlsTransport` with rustls and aws-lc-rs. aws-lc-sys needs a C compiler. |
 //!
 //! # The link to the PDP needs TLS
 //!
 //! The PEP must secure the link to the PDP (10.0, step 4). The configuration
-//! refuses an `http` URL, unless the flag `allow_plain_http` is set. The
-//! client of this library, [`http_client::HttpTransport`], has no TLS. For a
-//! deployment, implement [`transport::PdpTransport`] with a TLS client.
+//! refuses an `http` URL, unless the flag `allow_plain_http` is set. It also
+//! refuses this flag with an `https` URL, because the two keys contradict each
+//! other. [`http_client::HttpTransport`] has no TLS. With the feature `tls`,
+//! `TlsTransport` gives the link over TLS. Without it, implement
+//! [`transport::PdpTransport`] with a TLS client.
 //!
 //! # Rules of the code
 //!
-//! The library reads no environment variable, no file except the action
-//! document that the caller names, and it never writes to a log. It reads the
-//! system clock only in [`clock::SystemClock`]. It has no `unsafe` code.
+//! The library reads no environment variable, and it never writes to a log. It
+//! reads the system clock only in [`clock::SystemClock`]. It has no `unsafe` code.
+//!
+//! The library reads only these files:
+//!
+//! - The action document that the caller names to [`document::load_file`].
+//! - With the feature `tls`: the CA file that `pdp.tls_ca_file` names.
+//! - With the feature `tls` and `pdp.tls_system_roots` true: the first CA bundle
+//!   of the system that holds a certificate, in the fixed list
+//!   `tls::SYSTEM_CA_BUNDLES`.
+//!
+//! The TLS transport reads its files one time, when the caller builds it.
 //!
 //! # Example
 //!
 //! ```no_run
-//! use std::sync::Arc;
 //! use procurauth_core::jws::KeySet;
 //! use procurauth_pep::config::{PdpConfig, PepConfig, Secret};
 //! use procurauth_pep::document::ActionDocumentBuilder;
-//! use procurauth_pep::http_client::{HttpTransport, HttpTransportConfig};
 //! use procurauth_pep::operation::{Operation, node};
-//! use procurauth_pep::Pep;
+//! use procurauth_pep::{Pep, transport};
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let document = ActionDocumentBuilder::new("notes")
@@ -69,7 +86,8 @@
 //! pdp.allow_plain_http = false;
 //! let keys = KeySet::from_jwks_str(r#"{"keys": []}"#).unwrap_or_default();
 //! let config = PepConfig::new("notes", "X-Identity-Token", "https://edge.example", keys, 300, 30, pdp);
-//! let transport = Arc::new(HttpTransport::new(HttpTransportConfig::from_pdp(&config.pdp)));
+//! // An `https` URL needs the feature `tls`. An `http` URL needs `allow_plain_http`.
+//! let transport = transport::for_pdp(&config.pdp).map_err(|e| format!("{e:?}"))?;
 //! let pep = Pep::new(config, document, transport).map_err(|e| format!("{e:?}"))?;
 //!
 //! // For each request: check the token, ask the PDP, apply the ceilings.
@@ -108,6 +126,8 @@ mod pdp_client;
 pub mod pep;
 pub mod refusal;
 pub mod reply;
+#[cfg(feature = "tls")]
+pub mod tls;
 pub mod transport;
 pub mod url;
 

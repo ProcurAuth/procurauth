@@ -1,9 +1,9 @@
 //! The typed configuration of the PEP.
 //!
 //! The application reads its own configuration file, one time at start, and
-//! builds a [`PepConfig`]. The library reads no file and no environment
-//! variable. [`PepConfig::check`] finds every error, and it never changes a
-//! value to make it fit. Each error names the key, the expected value and the
+//! builds a [`PepConfig`]. The library reads no configuration file and no
+//! environment variable. [`PepConfig::check`] finds every error, and it never
+//! changes a value to make it fit. Each error names the key, the expected value and the
 //! value found. No error holds the credential of the PDP.
 //!
 //! # Defaults
@@ -11,6 +11,8 @@
 //! | Key | Default |
 //! | --- | --- |
 //! | `pdp.allow_plain_http` | `false` |
+//! | `pdp.tls_ca_file` | none (feature `tls`) |
+//! | `pdp.tls_system_roots` | `true` (feature `tls`) |
 //! | `pdp.request_timeout` | 5 seconds |
 //! | `pdp.usage_wait_margin` | 1 second |
 //! | `pdp.idle_close_after` | 5 seconds |
@@ -34,6 +36,8 @@
 //! | `http` | `true` | Accepted, for a test or a link that another layer secures. |
 
 use std::fmt;
+#[cfg(feature = "tls")]
+use std::path::PathBuf;
 use std::time::Duration;
 
 use procurauth_core::jws::KeySet;
@@ -76,7 +80,7 @@ pub struct ConfigError {
 }
 
 impl ConfigError {
-    fn new(key: &str, expected: &str, found: impl Into<String>) -> Self {
+    pub(crate) fn new(key: &str, expected: &str, found: impl Into<String>) -> Self {
         Self {
             key: key.to_owned(),
             expected: expected.to_owned(),
@@ -111,6 +115,17 @@ pub struct PdpConfig {
     /// the loopback address, or for a link that another layer secures. With an
     /// `https` URL, the value `true` is a contradiction, and the check refuses it.
     pub allow_plain_http: bool,
+    /// A PEM file with more CA certificates for the TLS link (feature `tls`).
+    /// The transport trusts them in addition to the bundle of the system. The
+    /// default is none.
+    #[cfg(feature = "tls")]
+    pub tls_ca_file: Option<PathBuf>,
+    /// True to trust the CA bundle of the system for the TLS link (feature
+    /// `tls`). The transport reads the first file of
+    /// [`crate::tls::SYSTEM_CA_BUNDLES`] that holds a certificate. The default
+    /// is `true`. Set `false` to trust `tls_ca_file` only.
+    #[cfg(feature = "tls")]
+    pub tls_system_roots: bool,
     /// The longest wait for an answer to a question without `context.usage`.
     pub request_timeout: Duration,
     /// The time that the PEP adds to `procurauth_usage_max_seconds` for a
@@ -146,6 +161,10 @@ impl PdpConfig {
             url: url.into(),
             credential,
             allow_plain_http: false,
+            #[cfg(feature = "tls")]
+            tls_ca_file: None,
+            #[cfg(feature = "tls")]
+            tls_system_roots: true,
             request_timeout: Duration::from_secs(5),
             usage_wait_margin: Duration::from_secs(1),
             idle_close_after: Duration::from_secs(5),
@@ -377,6 +396,34 @@ fn check_link(pdp: &PdpConfig, scheme: Scheme, errors: &mut Vec<ConfigError>) {
         )),
         (Scheme::Http, true) | (Scheme::Https, false) => {}
     }
+    #[cfg(feature = "tls")]
+    match scheme {
+        Scheme::Http => {
+            if let Some(path) = &pdp.tls_ca_file {
+                errors.push(ConfigError::new(
+                    "pdp.tls_ca_file",
+                    "no value, because `pdp.url` is an `http` URL with no TLS (contradiction)",
+                    format!("{path:?}"),
+                ));
+            }
+            if !pdp.tls_system_roots {
+                errors.push(ConfigError::new(
+                    "pdp.tls_system_roots",
+                    "true (the default), because `pdp.url` is an `http` URL with no TLS (contradiction)",
+                    "false",
+                ));
+            }
+        }
+        Scheme::Https => {
+            if !pdp.tls_system_roots && pdp.tls_ca_file.is_none() {
+                errors.push(ConfigError::new(
+                    "pdp.tls_ca_file",
+                    "a PEM file with CA certificates, because `pdp.tls_system_roots` is false and the TLS link needs 1 or more trusted roots",
+                    "no value",
+                ));
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -452,6 +499,33 @@ mod tests {
         let config = good();
         assert!(!config.pdp.allow_plain_http);
         assert!(config.pdp.url.starts_with("https://"));
+        assert!(config.check().is_ok());
+    }
+
+    #[cfg(feature = "tls")]
+    #[test]
+    fn the_tls_keys_contradict_an_http_url() {
+        let mut config = good();
+        config.pdp.url = "http://127.0.0.1:8181".into();
+        config.pdp.allow_plain_http = true;
+        config.pdp.tls_ca_file = Some(PathBuf::from("/x/ca.pem"));
+        config.pdp.tls_system_roots = false;
+        let errors = config.check().unwrap_err();
+        assert_eq!(
+            keys_of(&errors),
+            ["pdp.tls_ca_file", "pdp.tls_system_roots"]
+        );
+        assert!(errors[0].found.contains("/x/ca.pem"), "{}", errors[0]);
+    }
+
+    #[cfg(feature = "tls")]
+    #[test]
+    fn a_tls_link_with_no_root_is_an_error() {
+        let mut config = good();
+        config.pdp.tls_system_roots = false;
+        let errors = config.check().unwrap_err();
+        assert_eq!(keys_of(&errors), ["pdp.tls_ca_file"]);
+        config.pdp.tls_ca_file = Some(PathBuf::from("/x/ca.pem"));
         assert!(config.check().is_ok());
     }
 
