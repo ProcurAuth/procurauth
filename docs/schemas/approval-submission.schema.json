@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/approval-submission.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/approval-submission.schema.json",
   "title": "Approval submission",
   "description": "The body of POST /approval/v1/requests (protocol 17.4). The PEP sends op, view and effect only here (protocol 17.9). It sends exactly one of approval_ref, lease_s and until. It sends no explanation, no allow_custom, no allow_ask_back and no hint (protocol 17.9a). A schema cannot check that effect is the hash of op, or that a pointer of view names a value of op. The PDP checks both.",
   "type": "object",
@@ -15,13 +15,13 @@
     },
     "effect": {
       "description": "The effect of the operation (protocol 17.3).",
-      "$ref": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect"
+      "$ref": "https://procurauth.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect"
     },
     "op": {
       "description": "The values that decide what the operation does (protocol 17.3). The numbers are integers from -(2^53-1) to 2^53-1. The size of op and view together is at most the published member procurauth_approval_max_command_bytes (protocol 17.4a).",
       "type": "object"
     },
-    "view": { "$ref": "https://sccagg5.github.io/procurauth/schemas/approval-view.schema.json" },
+    "view": { "$ref": "https://procurauth.github.io/procurauth/schemas/approval-view.schema.json" },
     "approval_ref": {
       "description": "An opaque text that the agent gave to the service. The PEP never reads it (protocol 17.7).",
       "type": "string",

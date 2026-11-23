@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/options-file.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/options-file.schema.json",
   "title": "File of the options route",
   "description": "The input of the option --options of the tool access-lint. It is an answer of the options route (protocol 5.8), or an envelope with the member answer and the query of the request. The query lets the tool check the answer against the action document.",
   "oneOf": [
-    { "$ref": "https://sccagg5.github.io/procurauth/schemas/options-route-answer.schema.json" },
+    { "$ref": "https://procurauth.github.io/procurauth/schemas/options-route-answer.schema.json" },
     { "$ref": "#/$defs/envelope" }
   ],
   "$defs": {
@@ -20,7 +20,7 @@
         },
         "answer": {
           "description": "The body of the answer of the service.",
-          "$ref": "https://sccagg5.github.io/procurauth/schemas/options-route-answer.schema.json"
+          "$ref": "https://procurauth.github.io/procurauth/schemas/options-route-answer.schema.json"
         }
       }
     }

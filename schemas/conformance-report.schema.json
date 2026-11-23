@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/conformance-report.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/conformance-report.schema.json",
   "title": "Report of access-conformance",
   "description": "The JSON result of a run of access-conformance. It has the role, the target, the counts and one entry for each case. The members and their order are stable.",
   "type": "object",

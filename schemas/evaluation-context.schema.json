@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/evaluation-context.schema.json",
   "title": "Evaluation context",
   "description": "The members that the protocol adds to the member context of an AuthZEN 1.0 evaluation. Merge them into the context of a request and into the context of a response. A receiver ignores each member that it does not know. The root schema accepts the context of a request and of a response. The members $defs.request_context and $defs.answer_context are stricter. A schema cannot check that a ceiling is declared.",
   "type": "object",

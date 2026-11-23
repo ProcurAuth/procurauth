@@ -6,7 +6,7 @@
     "9.4"
   ],
   "requirement": "MUST",
-  "notes": "The runner has an ES256 test key. Question 12 in notes/spec-questions-cases.md asks if each service must trust it.",
+  "notes": "The runner has an ES256 test key. Question 12 in docs/design/spec-questions-cases.md asks if each service must trust it.",
   "given": {
     "tokens": {
       "es": {

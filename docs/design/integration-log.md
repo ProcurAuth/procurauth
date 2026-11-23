@@ -6,7 +6,7 @@ This file records the work of the integration. The runner `access-conformance` r
 
 The script `scripts/conformance.sh all` gives these results. The runs start every process in one container, on the loopback address.
 
-The last run is of the lot AL1, version 1.1 (2026-11-23). The items below record the first runs, with the counts of that time.
+The last run is of version 1.1, version 1.1 (2026-11-23). The items below record the first runs, with the counts of that time.
 
 | Run | Target | Cases passed | Failed | Skipped |
 | --- | --- | --- | --- | --- |

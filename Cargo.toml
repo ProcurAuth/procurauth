@@ -7,7 +7,7 @@ version = "1.1.0"
 edition = "2024"
 rust-version = "1.89"
 license = "Apache-2.0"
-repository = "https://github.com/SCcagg5/procurauth"
+repository = "https://github.com/ProcurAuth/procurauth"
 publish = false
 
 [workspace.dependencies]

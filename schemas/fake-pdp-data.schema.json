@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/fake-pdp-data.schema.json",
   "title": "Data of the test PDP",
   "description": "The data file of the tool fake-pdp. It holds the directory: subjects, owners, grants and limit values. It also holds the action document of each service. Some settings make a test repeatable: a fixed clock, the first values of the counters, the metadata of the PDP and the failures to make. The conformance cases use the same data, and the schema is closed. A schema cannot check the rules between members, but the Rust reader checks them, for example that a grant names a declared action.",
   "type": "object",
@@ -82,7 +82,7 @@
         },
         "document": {
           "description": "The last good action document. Without it, the PDP has no good document of the service (protocol 11.1).",
-          "$ref": "https://sccagg5.github.io/procurauth/schemas/action-document.schema.json"
+          "$ref": "https://procurauth.github.io/procurauth/schemas/action-document.schema.json"
         },
         "credential_sha256": {
           "description": "The SHA-256 digest of the credential of the service, in 64 lower-case hexadecimal digits (protocol 12). Without it, the test PDP accepts any credential.",
@@ -142,7 +142,7 @@
           "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"
         },
         "resource": { "$ref": "#/$defs/node_path" },
-        "limits": { "$ref": "https://sccagg5.github.io/procurauth/schemas/limit-values.schema.json" },
+        "limits": { "$ref": "https://procurauth.github.io/procurauth/schemas/limit-values.schema.json" },
         "confirm": {
           "description": "The default is false. When it is true, the action needs the approval of the owner (protocol 17.8). It has no effect on the action access.",
           "type": "boolean",
@@ -164,7 +164,7 @@
           "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"
         },
         "resource": { "$ref": "#/$defs/node_path" },
-        "effect": { "$ref": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect" },
+        "effect": { "$ref": "https://procurauth.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect" },
         "status": { "enum": ["pending", "replied", "answered", "abandoned", "expired", "cancelled", "superseded"] },
         "decision": {
           "description": "The answer of the owner. It is present when the status is answered, and only then.",

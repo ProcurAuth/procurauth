@@ -1,0 +1,25 @@
+name: Conformance case that is wrong or missing
+description: A case fails a correct program, passes a faulty program, or is missing for a rule.
+labels: ["conformance"]
+body:
+  - type: input
+    id: case
+    attributes:
+      label: Case
+      description: The id of the case, for example U37. Leave it empty for a missing case.
+    validations:
+      required: false
+  - type: input
+    id: paragraph
+    attributes:
+      label: Paragraph
+      description: The paragraph of the protocol that the case tests, or that has no case.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong
+      description: Say which program fails or passes, and why the result is wrong. Add the output of access-conformance.
+    validations:
+      required: true

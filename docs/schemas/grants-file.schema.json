@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/grants-file.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/grants-file.schema.json",
   "title": "File of grants",
   "description": "The input of the option --grants of the tool access-lint. It holds the grants of one subject, as a list. Each grant has the shape of a grant in fake-pdp-data. The schema is closed. A schema cannot check a grant against the action document, but access-lint does.",
   "type": "object",
@@ -10,7 +10,7 @@
     "grants": {
       "description": "The grants of one subject. A grant gives an action on a node, with limit values (protocol 3.5, 6.1). The grant of the action access on the service gives the budgets (protocol 8.3).",
       "type": "array",
-      "items": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/grant" }
+      "items": { "$ref": "https://procurauth.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/grant" }
     }
   },
   "examples": [

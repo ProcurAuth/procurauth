@@ -1,0 +1,50 @@
+name: Add an implementation
+description: Ask us to list your PEP, PDP or edge in IMPLEMENTATIONS.md.
+labels: ["implementation"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Name
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role
+      options:
+        - PEP (a service)
+        - PDP
+        - Edge
+        - More than one role
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link
+      description: The address of the source or of the documents.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version of the program and version of ProcurAuth
+      description: For example "2.0.1, ProcurAuth 1.1".
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit of this repository that you tested
+      description: The full commit or the tag, for example v1.1.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result of access-conformance
+      description: Paste the summary line, for example "127 cases, 126 passed, 0 failed, 1 skipped". List the skipped cases and the reason.
+      render: text
+    validations:
+      required: true

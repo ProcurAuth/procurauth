@@ -61,7 +61,7 @@ Each item gives one choice and the reason. The numbers are for this file only.
 ## Configuration
 
 42. The program has the flags `--admin`, `--credential-file` and `--failures`. It has no new member of the data file. The data schema is closed and belongs to the core.
-43. The credential comes only from a file. The owner forbids a secret in an argument and in the environment.
+43. The credential comes only from a file. The configuration rules of ProcurAuth programs forbid a secret in an argument and in the environment.
 44. The program checks the data file, the credential file and the failure file before it opens the port. It reports every problem. A configuration error must stop the program before it serves.
 45. The program writes the effective configuration to the standard error at start. With `--print-config` it writes it to the standard output. The configuration rules ask for both.
 46. The table of keys is in the code. A test checks that the README has the same table. The reference must agree with the code.

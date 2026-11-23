@@ -251,3 +251,7 @@ A test checks that this table is the table of the code. The function `access_con
 The tests start the runner in the process. The role pdp runs 78 of the 98 cases of the series D against a PDP that gives no approval, and all pass. It skips the 20 cases of the approval profile. A copy of a case with a changed expectation fails.
 
 The roles pep and edge run against scripted mock servers in `tests/common/`. A mock that behaves like a correct implementation passes. A mock with one defect fails the cases of that defect, and only those. The tests also check the goldens of the output, the schemas and the rules of the source.
+
+## Test keys
+
+The two files `test-edge-ed25519.pem` and `test-edge-es256.pem` in the folder `examples` are public test keys. They sign nothing real and protect nothing. Never use them for a real service.

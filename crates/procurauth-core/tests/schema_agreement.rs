@@ -1077,7 +1077,7 @@ fn directory_rows() -> Vec<Row> {
                 d["approvals"] = json!([approval(json!({
                     "status": "answered", "decision": "approve",
                     "consume_before": 1792569948_u64, "consumed": true,
-                    "answered_by": "eliot", "device": "d:1", "answered_at": 1792569628_u64
+                    "answered_by": "answerer-1", "device": "d:1", "answered_at": 1792569628_u64
                 }))]);
             }),
             true,

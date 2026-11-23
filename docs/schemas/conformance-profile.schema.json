@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/conformance-profile.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/conformance-profile.schema.json",
   "title": "Profile of a target for access-conformance",
   "description": "The file that tells the runner access-conformance how to reach and wire the target. It has one section for each role: pep, pdp and edge. The run needs only the section of its role. A path in a file member starts at the directory of the profile. A secret comes only from a file. The tool checks the rules that a schema cannot state.",
   "type": "object",

@@ -11,6 +11,7 @@
   --muted: #4a5064;
   --border: #dadde8;
   --border-strong: #b9bed0;
+  --border-ui: #777d96;
   --accent: #4338ca;
   --accent-hover: #372fa8;
   --accent-ink: #ffffff;
@@ -40,6 +41,7 @@
     --muted: #a6adc2;
     --border: #2a3045;
     --border-strong: #404866;
+    --border-ui: #6b7596;
     --accent: #a5b4fc;
     --accent-hover: #c0cbff;
     --accent-ink: #0c0e15;
@@ -66,6 +68,7 @@
   --muted: #a6adc2;
   --border: #2a3045;
   --border-strong: #404866;
+  --border-ui: #6b7596;
   --accent: #a5b4fc;
   --accent-hover: #c0cbff;
   --accent-ink: #0c0e15;
@@ -141,7 +144,7 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
 #site-nav a:hover { color: var(--text); background: var(--surface-2); }
 #site-nav a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
 .icon-btn, .menu-btn {
-  appearance: none; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  appearance: none; border: 1px solid var(--border-ui); background: var(--surface); color: var(--text);
   border-radius: 10px; cursor: pointer; font: inherit; font-weight: 550; font-size: .92rem;
 }
 .icon-btn { width: 40px; height: 40px; display: inline-grid; place-items: center; padding: 0; }
@@ -149,7 +152,7 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
 .icon-btn svg { width: 20px; height: 20px; }
 .menu-btn { display: none; padding: 8px 14px; height: 40px; }
 
-@media (max-width: 1019px) {
+@media (max-width: 1099px) {
   .js .menu-btn { display: inline-block; }
   .js #site-nav { display: none; flex-basis: 100%; order: 5; padding-bottom: 10px; }
   .js #site-nav.open { display: block; }
@@ -179,7 +182,7 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 12px; font-weight: 650; text-decoration: none;
-  border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 1rem; cursor: pointer;
+  border: 1.5px solid var(--border-ui); background: var(--surface); color: var(--text); font-size: 1rem; cursor: pointer;
 }
 .btn:hover { background: var(--surface-2); color: var(--text); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -304,7 +307,7 @@ pre code { font: inherit; background: none; border: 0; padding: 0; }
 .code-wrap pre { margin: 0; padding-right: 64px; }
 .code-wrap .label { position: absolute; left: 12px; top: -10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 0 8px; font-size: .72rem; font-weight: 650; color: var(--muted); font-family: var(--font); letter-spacing: .04em; text-transform: uppercase; }
 .copy-btn {
-  position: absolute; top: 8px; right: 8px; appearance: none; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+  position: absolute; top: 8px; right: 8px; appearance: none; border: 1px solid var(--border-ui); background: var(--surface); color: var(--text);
   border-radius: 7px; padding: 3px 10px; font: 600 .76rem var(--font); cursor: pointer;
 }
 .copy-btn:hover { background: var(--surface-2); }
@@ -468,12 +471,12 @@ td.no { background: var(--no-soft); }
 .e { color: var(--no); }
 
 /* GitHub link in the header */
-.gh-link { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); text-decoration: none; font-weight: 550; font-size: .92rem; background: var(--surface); }
+.gh-link { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--border-ui); border-radius: 10px; color: var(--text); text-decoration: none; font-weight: 550; font-size: .92rem; background: var(--surface); }
 .gh-link:hover { background: var(--surface-2); color: var(--text); }
 .gh-link svg { width: 20px; height: 20px; }
 @media (max-width: 700px) { .gh-link { width: 40px; padding: 0; justify-content: center; } .gh-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 .nav-gh { display: none; }
-@media (max-width: 1019px) { .nav-gh { display: list-item; } }
+@media (max-width: 1099px) { .nav-gh { display: list-item; } }
 @media (max-width: 700px) { .bar { gap: 6px 8px; } .menu-btn { padding: 8px 12px; } .brand { font-size: 1.08rem; gap: 8px; } }
 
 /* Collapsible blocks */
@@ -502,3 +505,30 @@ main td p, main td li, main th p, main pre, main code, .chips li { text-align: l
   main p, main li, main dd { text-align: left; hyphens: manual; }
 }
 .page-head .lede { max-width: none; hyphens: manual; }
+
+/* Pictures that are files (SVG with its own colours) */
+.panel img { display: block; width: 100%; height: auto; border-radius: var(--r-sm); }
+
+/* A row of facts about one program */
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 1rem; font-size: .94rem; }
+.facts dt { font-weight: 650; color: var(--muted); }
+.facts dd { margin: 0; text-align: left; hyphens: manual; }
+@media (max-width: 420px) { .facts { grid-template-columns: 1fr; gap: 0; } .facts dd { margin-bottom: 8px; } }
+.impl-card h3 { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.impl-card .badge { font-size: .74rem; padding: 1px 10px; }
+.card .btn-row { margin-top: 12px; }
+.page-404 { text-align: center; padding: clamp(48px, 10vw, 120px) 0; }
+.page-404 .btn-row, .page-404 .eyebrow { justify-content: center; }
+.page-404 .lede { margin: 14px auto 26px; text-align: center; hyphens: manual; }
+
+/* Eight pages in the navigation: keep the bar on one row on a wide screen */
+.bar { column-gap: 12px; }
+#site-nav a { padding: 8px 9px; font-size: .92rem; }
+#site-nav ul { gap: 2px 2px; }
+@media (min-width: 1100px) {
+  .gh-link { width: 40px; padding: 0; justify-content: center; }
+  .gh-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+.impl-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 800px) { .impl-grid { grid-template-columns: 1fr 1fr; } }
+.impl-card p { text-align: left; hyphens: manual; }

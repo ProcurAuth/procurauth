@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/approval-view.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/approval-view.schema.json",
   "title": "View of an approval",
   "description": "The member view of a submission (protocol 17.9). It is a template over op, and it is not part of the effect. Each value that it shows is a JSON Pointer to a value of op. A schema cannot check that a pointer names a value of op. The PDP checks it and answers invalid_view when it does not.",
   "type": "object",

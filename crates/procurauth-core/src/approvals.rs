@@ -456,7 +456,7 @@ mod tests {
                 ("status", json!("answered")),
                 ("decision", json!("decline")),
                 ("deny_until", json!(2000)),
-                ("answered_by", json!("eliot")),
+                ("answered_by", json!("answerer-1")),
                 ("comment", json!({"text": "no", "intent": "comment"})),
             ],
         );

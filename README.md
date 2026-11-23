@@ -3,21 +3,23 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/SCcagg5/procurauth/actions/workflows/ci.yml"><img src="https://github.com/SCcagg5/procurauth/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/SCcagg5/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/SCcagg5/procurauth?color=4338ca&label=release" alt="Latest release"></a>
+  <a href="https://github.com/ProcurAuth/procurauth/actions/workflows/ci.yml"><img src="https://github.com/ProcurAuth/procurauth/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/ProcurAuth/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/ProcurAuth/procurauth?color=4338ca&label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/protocol-1.1-4338ca" alt="Protocol 1.1">
   <img src="https://img.shields.io/badge/profile%20of-AuthZEN%201.0-0ea5e9" alt="Profile of AuthZEN 1.0">
   <img src="https://img.shields.io/badge/conformance-245%20cases-34d399" alt="245 conformance cases">
   <img src="https://img.shields.io/badge/code-Apache--2.0-lightgrey" alt="Code: Apache-2.0">
+  <img src="https://img.shields.io/badge/texts-CC%20BY%204.0-lightgrey" alt="Texts: CC BY 4.0">
 </p>
 
 <p align="center">
-  <a href="https://sccagg5.github.io/procurauth/"><b>Website</b></a> ·
-  <a href="https://sccagg5.github.io/procurauth/specification.html">Protocol</a> ·
-  <a href="https://sccagg5.github.io/procurauth/mcp-binding.html">MCP binding</a> ·
-  <a href="https://sccagg5.github.io/procurauth/tools.html">Tools</a> ·
-  <a href="https://sccagg5.github.io/procurauth/conformance.html">Conformance</a> ·
-  <a href="https://github.com/SCcagg5/procurauth/releases/latest">Downloads</a>
+  <a href="https://procurauth.github.io/procurauth/"><b>Website</b></a> ·
+  <a href="https://procurauth.github.io/procurauth/specification.html">Protocol</a> ·
+  <a href="https://procurauth.github.io/procurauth/mcp-binding.html">MCP binding</a> ·
+  <a href="https://procurauth.github.io/procurauth/tools.html">Tools</a> ·
+  <a href="https://procurauth.github.io/procurauth/implementations.html">Implementations</a> ·
+  <a href="SECURITY.md">Security</a> ·
+  <a href="https://github.com/ProcurAuth/procurauth/releases/latest">Downloads</a>
 </p>
 
 # ProcurAuth
@@ -26,7 +28,7 @@ ProcurAuth is an open specification for services that let AI agents act for peop
 
 A backend holds the users, their rights and the keys of their agents. A person makes a key for an agent. **A key never has more rights than the person who owns it.** A service does not know the backend. It speaks only [AuthZEN](https://openid.net/specs/authorization-api-1_0.html).
 
-This repository holds the protocol, the MCP binding, the JSON schemas, 245 conformance cases and the programs to test a service.
+It is for the teams that build a service that agents call, and for the teams that build the backend that decides. This repository holds the protocol, the MCP binding, the JSON schemas, 245 conformance cases and the programs to test a service.
 
 <p align="center">
   <img src="docs/assets/rights.svg" alt="The rights of a key are the rights that its owner has and that the key also holds" width="90%">
@@ -60,8 +62,6 @@ sequenceDiagram
     D-->>S: decision true, limits max_rows 5000
     S-->>A: The answer, cut to the ceilings
 ```
-
-The protocol has these main parts:
 
 | Part | What it gives |
 | --- | --- |
@@ -103,7 +103,7 @@ Section 13 of the protocol has the full example, with the key of an agent.
 
 ## Tools
 
-Seven programs help you to build and to test a service. They are Rust programs. Each one is a static file with no dependency.
+Seven programs help you to build and to test a service. They are Rust programs. The Linux builds are static files with no dependency.
 
 | Program | What it does |
 | --- | --- |
@@ -117,32 +117,41 @@ Seven programs help you to build and to test a service. They are Rust programs. 
 
 The library `procurauth-pep` in `crates/procurauth-pep` has the checks that a PEP must do. Its optional feature `tls` gives a link to the PDP over TLS.
 
-### Get the programs
+## Quick start
 
-Each [release](https://github.com/SCcagg5/procurauth/releases/latest) has archives for Linux (x86-64 and aarch64), macOS (Apple silicon and Intel) and Windows (x86-64). The Linux programs are static.
+This start takes five minutes on Linux x86-64. Each [release](https://github.com/ProcurAuth/procurauth/releases/latest) also has archives for Linux aarch64, macOS (Apple silicon and Intel) and Windows (x86-64). Docker is not necessary.
 
 ```sh
-curl -LO https://github.com/SCcagg5/procurauth/releases/download/v1.1/procurauth-tools-1.1-x86_64-linux.tar.gz
-curl -LO https://github.com/SCcagg5/procurauth/releases/download/v1.1/SHA256SUMS
+curl -LO https://github.com/ProcurAuth/procurauth/releases/download/v1.1/procurauth-tools-1.1-x86_64-linux.tar.gz
+curl -LO https://github.com/ProcurAuth/procurauth/releases/download/v1.1/SHA256SUMS
 sha256sum -c SHA256SUMS --ignore-missing
 tar xzf procurauth-tools-1.1-x86_64-linux.tar.gz
-./procurauth-tools-1.1-x86_64-linux/access-token --help
+git clone --depth 1 --branch v1.1 https://github.com/ProcurAuth/procurauth
+cd procurauth
+export PATH="$PWD/../procurauth-tools-1.1-x86_64-linux:$PATH"
 ```
 
-### Check an identity token
+Make an identity token with the test key, and check it. The tool prints one line for each check. This is a short extract.
 
-The tool prints one line for each check. This is a short extract.
+```sh
+access-token make --key crates/access-token/examples/test-edge-ed25519.pem --alg Ed25519 \
+    crates/access-token/examples/claims.json > token.jwt
+access-token check --config crates/access-token/examples/service.json --now 1792569700 token.jwt
+```
 
 ```text
-$ access-token check --config service.json token.jwt
 structure  ok   3 parts
-header     ok   no `crit`
 alg        ok   Ed25519
 typ        ok   JWT
 signature  ok   good
 claims     ok   iss, sub, aud, iat, exp
-aud        ok   datastore
 life       ok   life 300 s, max 300 s
+```
+
+Run the 98 conformance cases of the series D against the test PDP. The last line is `98 cases: 97 passed, 0 failed, 1 skipped`.
+
+```sh
+access-conformance --role pdp --profile crates/access-conformance/examples/pdp-fake.json
 ```
 
 ## Conformance
@@ -159,58 +168,60 @@ access-conformance --role pdp  --profile my-pdp.json     --url http://127.0.0.1:
 access-conformance --role edge --profile my-edge.json    --url http://127.0.0.1:8002
 ```
 
-The runner prints one line for each case and a summary line, for example `127 cases: 126 passed, 0 failed, 1 skipped`. Section 17 of the protocol is mandatory for a service, so the runner never skips its cases for a PEP. It runs each case that uses `mcp_call_approval` once for each action of the service. It skips D76 to D89, D91 to D93 and D95 to D97 for a PDP that gives no approval, and E19 for an edge that does not know the key with `confirm`. It also skips D97 when the profile gives no credential of the service. In this version, `fake-pdp` and `reference-edge` give them.
+The runner prints one line for each case and a summary line, for example `127 cases: 126 passed, 0 failed, 1 skipped`. Section 17 of the protocol is mandatory for a service, so the runner never skips its cases for a PEP.
 
-## JSON schemas
+The runner skips a case that needs a feature that the target does not have. A PDP that gives no approval skips D76 to D89, D91 to D93 and D95 to D97. An edge that does not know the key with `confirm` skips E19. A profile with no credential of the service skips D97. In this version, `fake-pdp` and `reference-edge` give these features.
 
-The directory `schemas/` has a JSON Schema for each document and each file of the tools. The site serves a copy of each schema at the address in its `$id`.
+## The ProcurAuth family
 
-| Schema | Describes |
+This repository is the specification. The organisation [ProcurAuth](https://github.com/ProcurAuth) also holds programs that follow it. The [implementations page](https://procurauth.github.io/procurauth/implementations.html) and [IMPLEMENTATIONS.md](IMPLEMENTATIONS.md) list them, with the results of the conformance runs and the pinned commits. To add your program, open an issue.
+
+<p align="center">
+  <img src="docs/assets/family.svg" alt="The specification defines the protocol, the schemas and the conformance cases. The reference tools read them and test the programs. The portal is a backend, an edge and a PDP. Stowr, Hune and ClickHouse Dash are services that ask the portal." width="90%">
+</p>
+
+## Documentation
+
+| Document | Content |
 | --- | --- |
-| [`action-document`](schemas/action-document.schema.json) | The document of a service at `/.well-known/procurauth/actions`. |
-| [`options-route-answer`](schemas/options-route-answer.schema.json) | The answer of the options route `/.well-known/procurauth/resources`. |
-| [`evaluation-context`](schemas/evaluation-context.schema.json) | The members that the protocol adds to `context` of an AuthZEN question. |
-| [`identity-token-claims`](schemas/identity-token-claims.schema.json) | The claims of the identity token. |
-| [`limit-values`](schemas/limit-values.schema.json) | The limit values that one grant gives. |
-| [`key-format`](schemas/key-format.schema.json) | The format of the text of a key. |
-| [`conformance-case`](schemas/conformance-case.schema.json) | One conformance case. |
-| [`approval-submission`](schemas/approval-submission.schema.json), [`approval-view`](schemas/approval-view.schema.json), [`approval-verdict`](schemas/approval-verdict.schema.json) | The narrow API of a PDP for approvals (protocol 17.4). |
-| [`effect-vectors`](schemas/effect-vectors.schema.json) | The test vectors for the effect hash of protocol 17.3. |
-| [`conformance-profile`](schemas/conformance-profile.schema.json) | How the runner reaches a target. |
-| [`conformance-report`](schemas/conformance-report.schema.json) | The result of a run. |
-| [`fake-pdp-data`](schemas/fake-pdp-data.schema.json) | The data of the test PDP. |
-| [`grants-file`](schemas/grants-file.schema.json), [`options-file`](schemas/options-file.schema.json) | The inputs of `access-lint`. |
-| [`access-token-config`](schemas/access-token-config.schema.json) | The configuration of `access-token`. |
-| [`keycheck-output`](schemas/keycheck-output.schema.json), [`access-lint-output`](schemas/access-lint-output.schema.json) | The JSON output of two tools. |
+| [Protocol](protocol/procurauth-protocol.md) and [MCP binding](bindings/mcp/procurauth-mcp-binding.md) | The normative texts. The [site](https://procurauth.github.io/procurauth/) shows them as HTML. |
+| [JSON schemas](schemas/) | One schema for each document and each file of the tools, 19 in all. The site serves each at the address in its `$id`. |
+| [Conformance](conformance/README.md) | The data model of a case, the profile, and the [coverage table](conformance/COVERAGE.md). |
+| [Tools](https://procurauth.github.io/procurauth/tools.html) | The page of each program. Each crate in `crates/` also has a README. |
+| [Implementations](IMPLEMENTATIONS.md) | The known implementations, with their results. |
+| [Changelog](docs/CHANGELOG.md) | The changes of each version. |
+| [Design records](docs/design/README.md) and [architecture](devdocs/architecture.md) | The decisions and the structure of the code, for a developer. |
 
 ## Repository
 
 | Path | Content |
 | --- | --- |
-| `protocol/` | The protocol, in Markdown. It is neutral and does not name a product. |
-| `bindings/mcp/` | The binding for services with an MCP endpoint. |
-| `schemas/` | The JSON schemas. |
-| `conformance/` | The cases, the model and the coverage table. |
+| `protocol/`, `bindings/mcp/` | The protocol and the binding, in Markdown. They are neutral and do not name a product. |
+| `schemas/`, `conformance/` | The JSON schemas, and the cases with the coverage table. |
 | `crates/` | The Rust programs and the library. |
-| `docs/` | The source of the [website](https://sccagg5.github.io/procurauth/). GitHub Pages serves this directory. |
-| `devdocs/` | The notes for a developer of this repository. |
-| `IMPLEMENTATIONS.md` | The known implementations. Add yours with an issue. |
+| `docs/` | The source of the [website](https://procurauth.github.io/procurauth/). GitHub Pages serves this directory. |
+| `scripts/` | The scripts that run the checks in Docker, and `check-docs.py`. |
 
 ### Build and test
 
 Use Docker. Do not install Rust on your machine.
 
 ```sh
-scripts/ci.sh                 # format, lint, tests and the conformance runs
+scripts/ci.sh                    # format, lint, tests and the conformance runs
 scripts/cargo.sh build --release
-scripts/static.sh --check     # static Linux programs (musl)
+scripts/static.sh --check        # static Linux programs (musl)
+python3 -I scripts/check-docs.py # links, site, ASD-STE100 and hygiene of the files
 ```
 
-## Licences
+## Security
 
-- The texts are under CC BY 4.0. See `LICENSE-TEXTS.txt`.
-- The code is under Apache-2.0. See `LICENSE`.
+Report a vulnerability with the private reports of GitHub. Do not open a public issue. [SECURITY.md](SECURITY.md) gives the scope and the response times. The repository holds public test keys that protect nothing.
 
 ## Contribute
 
-Open an issue to ask a question or to report an error in the texts. Cite the number of the paragraph. To add an implementation, give its name, its role (PEP, PDP or edge), a link and the result of `access-conformance`.
+Open an issue to ask a question or to report an error in the texts. Cite the number of the paragraph. [CONTRIBUTING.md](CONTRIBUTING.md) tells how to change a text, a case or the code. This project follows the [code of conduct](CODE_OF_CONDUCT.md).
+
+## Licence
+
+- The texts are under CC BY 4.0. See `LICENSE-TEXTS.txt`.
+- The code is under Apache-2.0. See `LICENSE`.

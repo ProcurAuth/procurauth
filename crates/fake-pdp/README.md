@@ -309,7 +309,3 @@ scripts/cargo.sh test -p fake-pdp
 ```
 
 The unit tests check the decisions and the counters. The integration tests start the server on port 0 and send real HTTP requests. A test also runs the cases of the series D of `conformance/D/` against the server. The names of the tests follow the paragraphs of the protocol, for example `p_6_7_...`.
-
-## Differences from the published page
-
-The file `notes/site-differences-fake-pdp.md` lists the differences between this tool and `docs/tools.html`.

@@ -1,0 +1,49 @@
+name: Bug in a tool or in a reference program
+description: A program of this repository does not do what its README says.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: program
+    attributes:
+      label: Program
+      options:
+        - keycheck
+        - access-token
+        - access-lint
+        - fake-pdp
+        - access-conformance
+        - reference-service
+        - reference-edge
+        - procurauth-pep (library)
+        - procurauth-core (library)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of the option --version, or the commit.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and input
+      description: The exact command and the content of the input files. Remove each secret.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+      description: Add the output. Cite the paragraph of the protocol if there is one.
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: For example "Linux x86-64" or "macOS, Apple silicon".
+    validations:
+      required: false

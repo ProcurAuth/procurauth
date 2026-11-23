@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/access-lint-output.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/access-lint-output.schema.json",
   "title": "Output of access-lint",
   "description": "The JSON output of the tool access-lint with the option --format json. It has one entry in inputs for the document, and one for each of the options --grants and --options. The schema is closed.",
   "type": "object",

@@ -117,7 +117,15 @@ fn files_with(dir: &Path, extension: &str, out: &mut Vec<PathBuf>) {
 fn markdown_files(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     files_with(&root.join("devdocs"), "md", &mut out);
-    files_with(&root.join("notes"), "md", &mut out);
+    files_with(&root.join("docs/design"), "md", &mut out);
+    for name in [
+        "IMPLEMENTATIONS.md",
+        "SECURITY.md",
+        "CONTRIBUTING.md",
+        "docs/CHANGELOG.md",
+    ] {
+        out.push(root.join(name));
+    }
     out.push(root.join("conformance/README.md"));
     out.push(root.join("conformance/COVERAGE.md"));
     out.push(root.join("conformance/schema-check/README.md"));

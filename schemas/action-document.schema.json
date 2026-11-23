@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/action-document.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/action-document.schema.json",
   "title": "Action document",
   "description": "The document that a service publishes at /.well-known/procurauth/actions (protocol 5.1, 5.2). It declares the types, the actions and the limits of the service. A schema cannot check the rules between members. For example, a type name occurs one time, a parent exists, and the depth is 4 at most. The tool access-lint checks them.",
   "type": "object",

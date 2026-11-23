@@ -1,11 +1,11 @@
 # Design of two libraries: a PDP library and a C ABI of the PEP
 
-The owner asked for two libraries. This lot does not build them. This file gives the design only, and it changes no code.
+This design record proposes two libraries. It builds nothing and it changes no code.
 
-- Part 1: a PDP library from `procurauth-core`, for the portal. The portal is a Rust homelab server. It is its own AuthZEN PDP, its own edge and an approval inbox.
+- Part 1: a PDP library from `procurauth-core`, for the portal. The portal is a Rust server. It is its own AuthZEN PDP, its own edge and an approval inbox.
 - Part 2: a C ABI of `procurauth-pep`, for ClickHouse Dash. Dash is a C++ program with a static binary.
 
-Each item gives one choice and the reason. The numbers are for this file only. The paths of this repository are relative. The paths of the portal and of Dash are absolute. The last section lists the points that the owner must decide.
+Each item gives one choice and the reason. The numbers are for this file only. The paths of this repository are relative. A path with the prefix `portal:` is in [the portal repository](https://github.com/ProcurAuth/portal). A path with the prefix `dash:` is in [the ClickHouse Dash repository](https://github.com/Circular-fi/Clickhouse-dash). The last section lists the open points.
 
 ## Part 1. A PDP library for the portal
 
@@ -29,19 +29,19 @@ The steps of a decision exist two times in this repository: `Pdp::decide` in `cr
 
 Each item names a file of the portal that does a part of the work of ProcurAuth again, and the differences that the code shows.
 
-10. `/home/eliot/Documents/Work/portal/crates/inbox-core/src/effect.rs` copies `effect`. The JCS writer is the same: the UTF-16 order of names, the short escapes, `\u00xx` in lower case. The number rule is the same: integers from -(2^53-1) to 2^53-1. The portal also embeds a copy of the vectors in `/home/eliot/Documents/Work/portal/crates/inbox-core/tests/fixtures/effect-vectors.json`.
+10. `portal:crates/inbox-core/src/effect.rs` copies `effect`. The JCS writer is the same: the UTF-16 order of names, the short escapes, `\u00xx` in lower case. The number rule is the same: integers from -(2^53-1) to 2^53-1. The portal also embeds a copy of the vectors in `portal:crates/inbox-core/tests/fixtures/effect-vectors.json`.
 11. The effect code has four differences. The portal refuses an `op` deeper than 64 levels in the writer. `check_op` of the core has no depth bound for a `Value` from `serde_json` (up to 128 levels). The portal error is a code with a fixed text, and the core error gives the JSON Pointer. The portal bounds a `view` (12 fields, 128 and 48 characters, pointers of 256 bytes), and the core does not.
-12. `/home/eliot/Documents/Work/portal/src/decision.rs` copies `coverage` and `Pdp::decide`. The prefix rule, the lowest ceiling, the two sides of a key and the rule of `subtree` are the same. The portal adds an owner whose side is always `true`, with no limit: the superadmin (portal 9.1a).
+12. `portal:src/decision.rs` copies `coverage` and `Pdp::decide`. The prefix rule, the lowest ceiling, the two sides of a key and the rule of `subtree` are the same. The portal adds an owner whose side is always `true`, with no limit: the superadmin (portal 9.1a).
 13. The portal checks each grant against the last known document at each question. With no document, no grant below the service applies. The core checks the grants one time, when the data loads.
 14. For a budget, the portal reads every grant `access` on the service, and takes the lower amount for each window. `fake-pdp` reads the first grant `access` on the service only. The protocol does not say which rule applies to two such grants.
-15. `/home/eliot/Documents/Work/portal/src/grants.rs` and `/home/eliot/Documents/Work/portal/src/limits.rs` copy `path`, `names` and `limits`. The percent-encoding and the largest number (`MAX_NUMBER`, 2^53-1) are the same. The portal refuses a grant with more than 8 limit values (a MAY of the protocol). The core has no bound.
-16. `/home/eliot/Documents/Work/portal/src/counting.rs` and `Store::count_use` in `/home/eliot/Documents/Work/portal/src/store.rs` copy `counters`. The portal counts in SQLite or PostgreSQL in one statement, by the clock of the database (6.3, 6.5, 6.8). It computes `retry_after` from seconds as `f64`. The core uses whole milliseconds. The portal adds a memo of refusals (10 000 entries) and three causes of HTTP 503.
-17. `/home/eliot/Documents/Work/portal/src/http/pdp/approval.rs` copies the gate of 17.1. The portal counts first, then consumes the approval with one compare-and-set. It returns the units when the compare-and-set fails (decision 171). `fake-pdp` does both steps under one lock.
+15. `portal:src/grants.rs` and `portal:src/limits.rs` copy `path`, `names` and `limits`. The percent-encoding and the largest number (`MAX_NUMBER`, 2^53-1) are the same. The portal refuses a grant with more than 8 limit values (a MAY of the protocol). The core has no bound.
+16. `portal:src/counting.rs` and `Store::count_use` in `portal:src/store.rs` copy `counters`. The portal counts in SQLite or PostgreSQL in one statement, by the clock of the database (6.3, 6.5, 6.8). It computes `retry_after` from seconds as `f64`. The core uses whole milliseconds. The portal adds a memo of refusals (10 000 entries) and three causes of HTTP 503.
+17. `portal:src/http/pdp/approval.rs` copies the gate of 17.1. The portal counts first, then consumes the approval with one compare-and-set. It returns the units when the compare-and-set fails (decision 171). `fake-pdp` does both steps under one lock.
 18. The `evaluation_id` has two forms. The portal form has no state: base64url of a key id, the time, an HMAC-SHA256 tag and the sealed facts. The portal checks the bound of 1024 bytes when it makes an id. `fake-pdp` gives `ev_` and 24 hexadecimal digits, and keeps it in memory for 300 seconds, at most 100 000 ids.
-19. `/home/eliot/Documents/Work/portal/src/http/pdp.rs` reads the body with `serde_json`, so a duplicate member keeps the last value. The core reader refuses it. The portal refuses a `usage` object with a member other than `units`. The core ignores such a member.
-20. `/home/eliot/Documents/Work/portal/src/actions.rs` reads the action document with `serde_json`, with its own bounds (16 types, 1024 actions, 256 KiB). `/home/eliot/Documents/Work/portal/src/subject_id.rs` copies `subject`. An empty id is a person in the portal and `Unknown` in the core.
-21. The requests and their statuses are in `/home/eliot/Documents/Work/portal/src/inbox/items_ops.rs` (`consume`, `Consumed`), with SQL in the same directory. The API of 17.4 is in `/home/eliot/Documents/Work/portal/src/http/approval_api.rs` and `/home/eliot/Documents/Work/portal/src/inbox/approvals.rs`.
-22. `/home/eliot/Documents/Work/portal/src/identity.rs` signs the identity token with `aws-lc-rs`. This is the work of the edge, not of the PDP. The library does not include it.
+19. `portal:src/http/pdp.rs` reads the body with `serde_json`, so a duplicate member keeps the last value. The core reader refuses it. The portal refuses a `usage` object with a member other than `units`. The core ignores such a member.
+20. `portal:src/actions.rs` reads the action document with `serde_json`, with its own bounds (16 types, 1024 actions, 256 KiB). `portal:src/subject_id.rs` copies `subject`. An empty id is a person in the portal and `Unknown` in the core.
+21. The requests and their statuses are in `portal:src/inbox/items_ops.rs` (`consume`, `Consumed`), with SQL in the same directory. The API of 17.4 is in `portal:src/http/approval_api.rs` and `portal:src/inbox/approvals.rs`.
+22. `portal:src/identity.rs` signs the identity token with `aws-lc-rs`. This is the work of the edge, not of the PDP. The library does not include it.
 
 ### 1.3 What a PDP library still needs
 
@@ -114,7 +114,7 @@ Do one step at a time. After each step, run the tests of the portal and `access-
 
 - A. Add `procurauth-core` and `procurauth-pdp` as git dependencies with a fixed `rev`.
 - B. Raise the `rust-version` of the portal from 1.88 to 1.89. The ProcurAuth crates need 1.89 and the edition 2024.
-- C. Replace the body of `/home/eliot/Documents/Work/portal/crates/inbox-core/src/effect.rs` with calls to `procurauth_core::effect`. Keep the bounds of the view of the portal in a wrapper. Keep the codes `invalid_op` and `invalid_view`.
+- C. Replace the body of `portal:crates/inbox-core/src/effect.rs` with calls to `procurauth_core::effect`. Keep the bounds of the view of the portal in a wrapper. Keep the codes `invalid_op` and `invalid_view`.
 - D. Build the Android crate `inbox-android` again. The core needs no C compiler, but it adds `ed25519-dalek` and `p256` to the phone.
 - E. Convert the grants of the portal to `procurauth_core::grants::Grant` when the directory loads. Replace `decision::person` and `decision::key` with `procurauth_pdp::decide`.
 - F. Implement `CounterStore` for `Store` (SQLite and PostgreSQL) with the current statements. Keep the memo of refusals outside the trait.
@@ -128,18 +128,18 @@ Do one step at a time. After each step, run the tests of the portal and `access-
 36. Asynchronous and synchronous code: the portal runs on `tokio`. Its counters use clients that block (`rusqlite`, `postgres`), and its inbox uses `tokio-postgres`. A synchronous trait does not fit the inbox, so the pure layer must be complete without the traits.
 37. Storage: the library has no SQL. The tests of the traits use the memory layer and the cases D. The portal keeps its own tests of SQLite and PostgreSQL, because only the portal knows its schema.
 38. No `unsafe`: the library keeps `unsafe_code = "forbid"`, as the whole workspace does.
-39. Versions: the ProcurAuth crates have `publish = false` and the version 1.0.0. The portal must pin a commit, and a new lot can change the API. The portal pins its other crates with `=`. The caret ranges of ProcurAuth accept these pins.
-40. Size: the core holds the code of tokens and keys, which a PDP does not need. A feature of the core can remove these modules. The owner decides whether the gain is worth a feature.
+39. Versions: the ProcurAuth crates have `publish = false` and the version 1.0.0. The portal must pin a commit, and a new version can change the API. The portal pins its other crates with `=`. The caret ranges of ProcurAuth accept these pins.
+40. Size: the core holds the code of tokens and keys, which a PDP does not need. A feature of the core can remove these modules. It is open whether the gain is worth a feature.
 41. Behaviour: items 11, 14, 19 and 20 are real differences. Each one needs a choice before the portal moves, or a spec question when the protocol is silent.
-42. Licence: ProcurAuth is Apache-2.0. The root package of the portal says `MIT OR Apache-2.0`, and the shared crates say `LicenseRef-Proprietary`. The README of the portal says that the owner has not decided. The portal must depend on the crates, and it must not copy their code. A binary of the portal then carries the Apache-2.0 text.
+42. Licence: ProcurAuth code is Apache-2.0. The workspace of the portal is `MIT OR Apache-2.0` since portal 5.6.0, so the two fit. The portal must depend on the crates, and it must not copy their code. A binary of the portal then carries the Apache-2.0 text.
 
 ## Part 2. A C ABI of procurauth-pep for ClickHouse Dash
 
 ### 2.1 What Dash does today
 
-43. Dash is C++17 with CMake and Ninja. The Linux release uses `zig cc -target x86_64-linux-musl -static` (and `aarch64`) with `-static-pie`. The release also builds for macOS on `x86_64` and `arm64` (`/home/eliot/Documents/Work/Clickhouse-dash/.github/workflows/release.yaml`).
-44. The release links a static OpenSSL (`CHDASH_TLS=ON`, `/home/eliot/Documents/Work/Clickhouse-dash/tools/build_openssl.sh`). The same OpenSSL serves ClickHouse (`secure=1`) and the PDP (`https`).
-45. Dash has its own PEP in C++, in `/home/eliot/Documents/Work/Clickhouse-dash/src/`. `access_identity.cpp` and `signature_verify.cpp` check the token with Monocypher (Ed25519) and micro-ecc (P-256). `access_pdp.cpp` (1608 lines) reads the metadata, sends the questions, keeps answers and handles the approval API.
+43. Dash is C++17 with CMake and Ninja. The Linux release uses `zig cc -target x86_64-linux-musl -static` (and `aarch64`) with `-static-pie`. The release also builds for macOS on `x86_64` and `arm64` (`dash:.github/workflows/release.yaml`).
+44. The release links a static OpenSSL (`CHDASH_TLS=ON`, `dash:tools/build_openssl.sh`). The same OpenSSL serves ClickHouse (`secure=1`) and the PDP (`https`).
+45. Dash has its own PEP in C++, in `dash:src/`. `access_identity.cpp` and `signature_verify.cpp` check the token with Monocypher (Ed25519) and micro-ecc (P-256). `access_pdp.cpp` (1608 lines) reads the metadata, sends the questions, keeps answers and handles the approval API.
 46. `pdp_transport.cpp` (874 lines) is its own HTTP/1.1 client with OpenSSL. It has a pool, one deadline for each request and `post_once` for a question with `context.usage`. `approval_effect.cpp` has its own JCS. `mcp_approval.cpp` runs the steps of 17.7 for each tool.
 47. A thread pool of `cpp-httplib` serves the requests (`server.worker_threads`, `server.max_worker_threads`). A call to the PDP blocks its thread today.
 48. Dash has functions that `procurauth-pep` does not have. They are Resource Search (`access.pdp.search`), `batch_timeout`, a cache bound in bytes and PEM keys. Dash also sends `X-Request-ID` and `traceparent` to the PDP.
@@ -147,7 +147,7 @@ Do one step at a time. After each step, run the tests of the portal and `access-
 ### 2.2 The C header
 
 49. The handles are opaque. The configuration is JSON text, not a C struct, because a new key then does not change the ABI.
-50. The JSON configuration has a closed schema and no default. Each key is necessary. Dash keeps each default in its table of keys (`/home/eliot/Documents/Work/Clickhouse-dash/src/config_keys.def`), so its generated reference stays the one list.
+50. The JSON configuration has a closed schema and no default. Each key is necessary. Dash keeps each default in its table of keys (`dash:src/config_keys.def`), so its generated reference stays the one list.
 51. The credential is a separate argument and is never in the JSON. Dash can then log the JSON, and an error never holds the secret.
 
 ```c
@@ -270,7 +270,7 @@ void procurauth_errors_free(procurauth_errors *e);
 
 ### 2.5 TLS and transport
 
-75. Option A: the client of `procurauth-pep` with its feature `tls`, on `rustls` and `aws-lc-rs`. The lot AL1 adds this feature, off by default (decisions 44 to 51 of `decisions-pep.md`). It reads the system bundle from fixed paths and an optional CA file, and it reads no environment variable. The archive of the C interface can turn it on.
+75. Option A: the client of `procurauth-pep` with its feature `tls`, on `rustls` and `aws-lc-rs`. Version 1.1 adds this feature, off by default (decisions 44 to 51 of `decisions-pep.md`). It reads the system bundle from fixed paths and an optional CA file, and it reads no environment variable. The archive of the C interface can turn it on.
 76. Option A removes `pdp_transport.cpp` from Dash. The rules of 10.6 and 10.7 then run in Rust code that the cases test. But Dash keeps OpenSSL for ClickHouse, so the binary has two TLS stacks and two sets of trusted roots.
 77. With option A, the library must implement the Dash keys `ca_file`, `verify` and `insecure_link` again with `rustls`. `verify = false` needs the dangerous verifier API of `rustls`. The build must give `zig cc` to `cc-rs` for `aws-lc-sys` on musl. The portal builds `aws-lc` on Alpine with `gcc`, not with `zig`.
 78. Option B: a callback transport. Dash implements `send` with its current client and its static OpenSSL. The archive is then pure Rust, and the build needs only `rustup target add`.
@@ -281,10 +281,10 @@ void procurauth_errors_free(procurauth_errors *e);
 ### 2.6 What Dash still does itself
 
 82. The MCP layer: JSON-RPC, `tools/list`, the map of a tool to an operation, `op` and `view` from the arguments, and the control arguments. Also the tool `get_action_status` and the map of a refusal to a tool error (binding 5.7a). The module `mcp` of the library is Rust only, and version 1 of the ABI does not include it.
-83. Dash reads its configuration file with the rules of the owner: a closed schema, `_env` and `_file`, and secrets only through `_env` and `_file`. It also keeps `--print-config` with the source of each value, and the log of the values at start.
+83. Dash reads its configuration file with the configuration rules of the ProcurAuth projects. These rules are a closed schema, `_env` and `_file`, and secrets only through `_env` and `_file`. It also keeps `--print-config` with the source of each value, and the log of the values at start.
 84. Dash gives the library typed values only, as the JSON of item 50. The library never reads an environment variable or a file.
 85. The chain of each node: the type comes from the route, never from the client (4.5). The application of each ceiling to the settings of ClickHouse stays in `access_ceilings.cpp`.
-86. The transport of option B, the log line `access.decision`, the metrics and Resource Search, when the owner keeps it.
+86. The transport of option B, the log line `access.decision`, the metrics and Resource Search, when Dash keeps it.
 87. Dash can then remove most of `access_pdp.cpp`, the PEP part of `mcp_approval.cpp`, `approval_effect.cpp` and the signature checks of the identity token. With option A, it also removes `pdp_transport.cpp`. `jwt.cpp` stays, because other files of Dash use it.
 
 ### 2.7 Changes in procurauth-pep before the ABI
@@ -307,10 +307,10 @@ void procurauth_errors_free(procurauth_errors *e);
 100. Behaviour of Dash: the items of 2.7 change what Dash does. Each change goes in the release notes of Dash, and its conformance job must pass before the change.
 101. Licence: Dash is MIT, and the archive is Apache-2.0. A binary of Dash must carry the Apache-2.0 text and the licences of the Rust dependencies. Option A adds the licences of `aws-lc` and `rustls`.
 
-## Points for the owner
+## Open points
 
-102. Decide the rule for two grants `access` with a budget on one service (item 14). The choices are the first grant, or the lower amount for each window.
-103. Decide whether an owner with no limit (the superadmin of the portal) is part of the PDP library, or stays in the portal.
-104. Decide the TLS option of Dash (items 75 to 81). Option A uses the feature `tls` of the library.
-105. Decide the licence of the merged code of the portal before it depends on ProcurAuth.
-106. Decide whether the core gets a feature that removes the code of tokens and keys (item 40).
+102. Open: the rule for two grants `access` with a budget on one service (item 14). The choices are the first grant, or the lower amount for each window.
+103. Open: whether an owner with no limit (the superadmin of the portal) is part of the PDP library, or stays in the portal.
+104. Open: the TLS option of Dash (items 75 to 81). Option A uses the feature `tls` of the library.
+105. Closed: the licence of the portal is `MIT OR Apache-2.0` since portal 5.6.0, and it fits the dependency.
+106. Open: whether the core gets a feature that removes the code of tokens and keys (item 40).

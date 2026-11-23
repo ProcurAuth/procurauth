@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/key-format.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/key-format.schema.json",
   "title": "Key format",
   "description": "The format of the text of a key. The protocol defines no format (protocol 3.8), so the tool keycheck reads it as an input. The text is a prefix, a random part and an optional checksum. A schema cannot check the rules between members, for example that the alphabet has each digit of the encoding. The tool keycheck checks them.",
   "type": "object",

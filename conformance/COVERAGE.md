@@ -272,7 +272,7 @@ A vector file is not a case. It has no role, and no runner reads it in this vers
 | mcp:4.3a | pep | The schema and the description of each tool in `tools/list` tell the control arguments and the retry. | The text is free, and a matcher cannot judge it. The runner reads no description. |
 | mcp:4.4 | pep | The paragraph gives an example of the load on the PDP. | The paragraph is informative. It states no rule. |
 | mcp:5.7 | pep | The service waits at most wait_s seconds for a verdict, and it bounds wait_s. | The bound is a setting of the service, and a case cannot wait. |
-| mcp:5.7a | pep | The codes approval_unavailable and approval_rate_limited, and invalid_argument for a 413 and for the codes of a bad lease. | The cases U121 to U125 test the codes of the ruling of the lot AL1. A case for each other code is possible with `approval_script`, and a later version can add them. |
+| mcp:5.7a | pep | The codes approval_unavailable and approval_rate_limited, and invalid_argument for a 413 and for the codes of a bad lease. | The cases U121 to U125 test the codes of the ruling of version 1.1. A case for each other code is possible with `approval_script`, and a later version can add them. |
 | mcp:7.1 | pep | For a request with a standalone key, the service asks the PDP no question. | The profile of the service under test has no standalone key in this version. |
 | mcp:7.2 | pep | The text of a standalone key is mcp_ and 43 base64url characters. | The profile of the service under test has no standalone key in this version. |
 | mcp:7.4 | pep | For a standalone key, the 401 and the 429 have an empty body, and the 429 has Retry-After. | The profile of the service under test has no standalone key in this version. |

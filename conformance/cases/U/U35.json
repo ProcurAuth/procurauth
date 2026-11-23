@@ -12,7 +12,7 @@
     "no_budget_action",
     "no_multi_action"
   ],
-  "notes": "Question 7 in notes/spec-questions-cases.md asks if the PEP must ask the other permission first.",
+  "notes": "Question 7 in docs/design/spec-questions-cases.md asks if the PEP must ask the other permission first.",
   "given": {
     "tokens": {
       "person": {

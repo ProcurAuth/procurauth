@@ -9,7 +9,7 @@
   "skip_if": [
     "no_options_route"
   ],
-  "notes": "Question 8 in notes/spec-questions-cases.md asks if a bad escape makes a parameter bad.",
+  "notes": "Question 8 in docs/design/spec-questions-cases.md asks if a bad escape makes a parameter bad.",
   "given": {
     "tokens": {
       "person": {

@@ -7,7 +7,7 @@
     "11.1"
   ],
   "requirement": "MUST",
-  "notes": "Question 2 in notes/spec-questions-cases.md asks if the protocol makes this answer not valid.",
+  "notes": "Question 2 in docs/design/spec-questions-cases.md asks if the protocol makes this answer not valid.",
   "given": {
     "tokens": {
       "zero": {

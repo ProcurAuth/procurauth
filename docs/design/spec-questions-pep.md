@@ -1,6 +1,6 @@
 # Questions about the protocol text, from the PEP library
 
-This file lists the places where the text of the protocol or of the MCP binding has two possible meanings. The library chose one of them. Each item gives the paragraph, the question, and the meaning that the library takes. The owner decides if the text needs a change. The files `spec-questions.md` and `spec-questions-cases.md` list other questions.
+This file lists the places where the text of the protocol or of the MCP binding has two possible meanings. The library chose one of them. Each item gives the paragraph, the question, and the meaning that the library takes. Open an issue if the text needs a change. The files `spec-questions.md` and `spec-questions-cases.md` list other questions.
 
 1. **10.1.** A kept `budget_exceeded` answer gives `retry_after` as "the seconds to the end of that time". Which time? The kept life is the lower of `retry_after` and `cache_ttl`. The end of the window can be later. The library gives the seconds to the end of the window, so that a client does not retry too early.
 2. **10.1.** A PEP that chooses among several actions can ask them without usage in one request, or with usage one at a time. The library takes the second way. It also keeps a `false` answer without usage. The text does not say how a PEP mixes an action with a budget and an action with no budget.

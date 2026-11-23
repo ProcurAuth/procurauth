@@ -7,7 +7,7 @@
     "11.1"
   ],
   "requirement": "MUST",
-  "notes": "Question 1 in notes/spec-questions-cases.md asks which reason the answer has. The case does not check it.",
+  "notes": "Question 1 in docs/design/spec-questions-cases.md asks which reason the answer has. The case does not check it.",
   "given": {
     "directory": "tree.json"
   },

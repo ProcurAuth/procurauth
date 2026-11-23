@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/ProcurAuth/procurauth/security/advisories/new
+    about: Do not open a public issue for a vulnerability. Use the private report.
+  - name: Read the site
+    url: https://procurauth.github.io/procurauth/
+    about: The protocol, the MCP binding, the tools and the conformance cases.

@@ -1,6 +1,6 @@
 # Questions about the protocol text, from the reference edge
 
-This file lists the places where the text of the protocol or of the MCP binding has two possible meanings. The edge chose one of them. Each item gives the paragraph, the question, and the meaning that the edge takes. The owner decides if the text needs a change. The files `spec-questions.md`, `spec-questions-cases.md` and `spec-questions-pep.md` list other questions.
+This file lists the places where the text of the protocol or of the MCP binding has two possible meanings. The edge chose one of them. Each item gives the paragraph, the question, and the meaning that the edge takes. Open an issue if the text needs a change. The files `spec-questions.md`, `spec-questions-cases.md` and `spec-questions-pep.md` list other questions.
 
 1. **9.8, 1.4.** What is "the text of a key" in a request? The edge reads the header `Authorization` with the scheme `Bearer` and a text that is not empty. A request with another scheme, or with `Bearer` and no text, has no key. It gets `WWW-Authenticate: Bearer` with no error parameter.
 2. **9.8.** What does the edge do with a request that has more than one header `Authorization`? The text does not say. The edge refuses it with `error="invalid_token"`. It does not choose one of the values.

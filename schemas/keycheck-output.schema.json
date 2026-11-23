@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/keycheck-output.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/keycheck-output.schema.json",
   "title": "Output of keycheck",
   "description": "The JSON that keycheck prints with the flag --format json. It is one object on one line. The object never holds the text of the key.",
   "oneOf": [

@@ -241,7 +241,7 @@ fn p_17_6_a_decline_gives_a_deny_time_and_the_pep_never_learns_the_text() {
     let done = answer(
         &server,
         &request_id,
-        &json!({"decision": "decline", "answered_by": "eliot", "device": "d:1"}),
+        &json!({"decision": "decline", "answered_by": "answerer-1", "device": "d:1"}),
     );
     assert_eq!(done.status, 200);
     // Only the first valid answer counts.
@@ -284,7 +284,7 @@ fn p_17_11_a_text_with_a_decline_goes_to_the_admin_view_only_when_the_intent_all
     let done = answer(
         &server,
         &request_id,
-        &json!({"decision": "decline", "text": "use staging", "intent": "change_request", "answered_by": "eliot"}),
+        &json!({"decision": "decline", "text": "use staging", "intent": "change_request", "answered_by": "answerer-1"}),
     );
     assert_eq!(done.status, 200, "{}", done.text());
     // Nothing of the text, the owner or the device goes to the PEP, in any route.
@@ -297,7 +297,7 @@ fn p_17_11_a_text_with_a_decline_goes_to_the_admin_view_only_when_the_intent_all
     let verdict = read(&server, &request_id, &format!("subject={KEY}&renew=true"));
     for text in [question.text(), verdict.text()] {
         assert!(
-            !text.contains("staging") && !text.contains("eliot"),
+            !text.contains("staging") && !text.contains("answerer-1"),
             "{text}"
         );
     }
@@ -311,7 +311,7 @@ fn p_17_11_a_text_with_a_decline_goes_to_the_admin_view_only_when_the_intent_all
         .find(|a| a["id"] == request_id.as_str())
         .unwrap();
     assert_eq!(mine["comment"]["text"], "use staging");
-    assert_eq!(mine["answered_by"], "eliot");
+    assert_eq!(mine["answered_by"], "answerer-1");
     assert_eq!(mine["lease_s"], 600);
     assert_eq!(mine["op"], op);
 }

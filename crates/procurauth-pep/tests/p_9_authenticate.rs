@@ -134,7 +134,7 @@ fn p_9_2_the_algorithms_none_hs256_and_eddsa_are_refused() {
         let token = edge.sign_with(&shape, &edge.claims("alice", None));
         let failed = failed_check(check(&pep, &token));
         // The core reports a token with an empty third part as `structure`
-        // (`notes/core-requests-access-token.md`, item 3). The token is refused in each case.
+        // (`docs/design/core-requests.md`, item 5). The token is refused in each case.
         let expected = if alg == AlgName::None {
             "structure"
         } else {

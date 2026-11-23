@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/conformance-case.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/conformance-case.schema.json",
   "title": "Conformance case",
   "description": "One conformance case: the data model of the directory conformance/. A case tests one role: a PEP (series U), a PDP (series D) or an edge (series E). It cites the paragraphs that it tests. It gives the data for the test, one or more steps, and the expected result of each step. The README of the directory conformance/ explains the model. The MCP binding gives the ids U18, U23, U25 to U31 and E01 to the cases of its section 9.",
   "type": "object",
@@ -146,7 +146,7 @@
           "description": "The data of the test PDP. It is the name of a file in conformance/directories/, or the data itself, as the schema fake-pdp-data defines it.",
           "oneOf": [
             { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*\\.json$" },
-            { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json" }
+            { "$ref": "https://procurauth.github.io/procurauth/schemas/fake-pdp-data.schema.json" }
           ]
         },
         "clock": {
@@ -159,7 +159,7 @@
         "counters": {
           "description": "The first values of counters. They replace the entries of the directory for the same subject, limit and window.",
           "type": "array",
-          "items": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/counter" }
+          "items": { "$ref": "https://procurauth.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/counter" }
         },
         "tokens": {
           "description": "The identity tokens that the steps send. The member name is the name that a step uses.",
@@ -248,7 +248,7 @@
           "properties": {
             "subject": { "type": "string" },
             "action": { "type": "string" },
-            "resource": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/node_path" },
+            "resource": { "$ref": "https://procurauth.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/node_path" },
             "usage": { "description": "True for a question with context.usage. False for a question without it.", "type": "boolean" },
             "match": { "enum": ["node", "subtree"] },
             "effect": {

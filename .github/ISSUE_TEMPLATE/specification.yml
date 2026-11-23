@@ -1,0 +1,32 @@
+name: Question or error in the specification
+description: A paragraph of the protocol or of the MCP binding is unclear, wrong or has two meanings.
+labels: ["specification"]
+body:
+  - type: input
+    id: paragraph
+    attributes:
+      label: Paragraph
+      description: The number of the paragraph, for example "protocol 9.4" or "binding 5.7a".
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The version of the text, for example 1.1.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is unclear or wrong
+      description: Quote the words. Say which two meanings you see, or what the text must say.
+    validations:
+      required: true
+  - type: textarea
+    id: case
+    attributes:
+      label: A case that shows it
+      description: If you can, give a question and an answer of AuthZEN that two readers decide in different ways.
+    validations:
+      required: false

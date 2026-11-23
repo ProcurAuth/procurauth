@@ -13,7 +13,7 @@ use jsonschema::Resource;
 use serde_json::{Value, json};
 
 /// The start of the `$id` of each schema.
-pub const BASE_URI: &str = "https://sccagg5.github.io/procurauth/schemas/";
+pub const BASE_URI: &str = "https://procurauth.github.io/procurauth/schemas/";
 
 /// The names of the schemas. The file of a schema is `schemas/<name>.schema.json`.
 pub const SCHEMA_NAMES: [&str; 19] = [

@@ -197,3 +197,7 @@ The tests call the function `run` of the library, with no process. The test name
 | `tests/p_9_4_config.rs` | The reader of the configuration, and its agreement with the schema. |
 | `tests/cli.rs` | Usage errors, exit codes, streams and the proof that no output holds a private key. |
 | `tests/golden.rs` | The exact output, compared with the files in `tests/golden/`. |
+
+## Test keys
+
+The two files `test-edge-ed25519.pem` and `test-edge-es256.pem` in the folder `examples` are public test keys. They sign nothing real and protect nothing. Never use them for a real service.

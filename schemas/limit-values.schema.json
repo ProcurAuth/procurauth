@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/limit-values.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/limit-values.schema.json",
   "title": "Limit values",
   "description": "The limit values that one grant gives (protocol 6.1). Each member name is the name of a limit. The value of a ceiling is a whole number. The value of a budget is an array of 1 to 4 items, one item for each window. A schema cannot check the rules that need the declaration, for example that the limit is declared. The tool access-lint checks them.",
   "type": "object",

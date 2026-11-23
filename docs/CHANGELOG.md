@@ -1,8 +1,24 @@
 # Changelog
 
-## 1.1 (2026-11-23)
+This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The protocol, the MCP binding and the workspace have one version number each time. Each version is a git tag.
 
-Lot AL1, the alignment of the protocol, the portal, ClickHouse Dash and Stowr.
+## [Unreleased]
+
+### Changed
+
+- The repository moved from the GitHub user `SCcagg5` to the GitHub organisation `ProcurAuth`. The address of the repository is now `https://github.com/ProcurAuth/procurauth`. GitHub redirects the old address of the repository.
+- The `$id` of each JSON Schema has a new host: `https://procurauth.github.io/procurauth/schemas/`. The old host was `https://sccagg5.github.io/procurauth/schemas/`, and it does not answer now. The path of each schema and its content do not change. The tags `v1.0` and `v1.1` still hold the old `$id`. A program that compares the `$id` of a schema with a fixed text must use the new value. The constant `BASE_URI` of the crate `procurauth-schema-check` follows.
+- The repository, the site and the manifests use the new addresses. The version of the protocol stays 1.1.
+
+### Added
+
+- The page `implementations.html`, the Open Graph image, the icons, the page 404, `sitemap.xml` and `robots.txt` of the site.
+- `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, the issue forms, the template of a pull request and the file `CODEOWNERS`.
+- The script `scripts/check-docs.py`. It checks the links, the site, the rules of ASD-STE100 and the hygiene of the files.
+
+## [1.1] - 2026-11-23
+
+Version 1.1 aligns the protocol with the portal, ClickHouse Dash and Stowr.
 
 - Protocol 9.3 and 9.4. The claims `iat`, `exp` and `nbf` are JSON integers with digits only: no fraction, no exponent and no sign. A service refuses another form with HTTP 401, and it never rounds the value. This closes GitHub issue 1.
 - Protocol 9.3 and 9.4. A token MAY have `nbf`. A service refuses a token whose `nbf` is later than its clock plus the skew. The edge does not need to give it.
@@ -22,20 +38,20 @@ Lot AL1, the alignment of the protocol, the portal, ClickHouse Dash and Stowr.
 - `procurauth-pep` has the optional feature `tls`, with rustls, aws-lc-rs, the system trust store and an optional CA file. It reads no environment variable. The flag `allow_plain_http` replaces `allow_insecure_pdp_link`. An `https` URL with this flag is a configuration error.
 - `procurauth-pep` has an optional bounded cache of verified identity tokens, `token_cache_max_entries`, which is off by default. It reads `procurauth_directory_max_age_seconds`. It has `Pep::decide_route_without_action` for a route that runs no action, `Operation::also_all` and `Identity::from_checked_token`. The README shows the use from a plain HTTP service.
 - `reference-service` has the routes `/health` and `/static/about.txt`. `reference-service` and `reference-edge` use the key `pdp.allow_plain_http`.
-- `notes/design-libraries.md` describes a PDP library for the portal and a C interface of the PEP library for ClickHouse Dash. This lot does not build them.
+- `docs/design/libraries.md` describes a PDP library for the portal and a C interface of the PEP library for ClickHouse Dash. Version 1.1 does not build them.
 
 ### Earlier changes of 1.1
 
-- Lot PS1, alignment with the portal and with ClickHouse Dash. Protocol 17.8: the `confirm` of a grant of a person has no effect on the questions of that person, and `confirm` has no effect on the action `mcp.session`. A tool never uses `mcp.session` (binding 3.6a).
-- Protocol 6.1 and 7.1. The largest whole number of a limit is 2^53-1. A label and a description have 1 character or more. An action of a `resources` item lists the type of the node. A ceiling name starts with `max_`, or the document is bad. The schemas, the reader of the core and `access-lint` follow. The rule `ceiling_name` is now an error, and `empty_text`, `action_not_on_type` and `number_too_large` are new.
-- Protocol 6.9, 10.7 and 10.7a. A PDP publishes the four members for the idle time, the size of a request, the number of items and the time of a question with usage. The new paragraph 17.4a defines the twelve members `procurauth_approval_*`. The cases D90 and D91 test them.
+- Protocol 17.8: the `confirm` of a grant of a person has no effect on the questions of that person. It also has no effect on the action `mcp.session`. A tool never uses `mcp.session` (binding 3.6a).
+- Protocol 6.1 and 7.1. The largest whole number of a limit is 2^53-1; a label and a description have 1 character or more. An action of a `resources` item lists the type of the node. A ceiling name starts with `max_`, or the document is bad. The schemas, the reader of the core and `access-lint` follow. The rule `ceiling_name` is now an error, and `empty_text`, `action_not_on_type` and `number_too_large` are new.
+- Protocol 6.9, 10.7 and 10.7a. A PDP publishes four members. They give the idle time, the size of a request, the number of items and the time of a question with usage. The new paragraph 17.4a defines the twelve members `procurauth_approval_*`. The cases D90 and D91 test them.
 - Protocol 17.2. The answer is `true` only when the PDP did both the count of the units and the consume of the approval. A failure never loses an approval, and it never leaves one consumed. The units MAY stay counted after a failure.
 - Protocol 3.5, 5.3a, 11.1 and 1.3a. A condition of the owner that can change later gives `false` with no reason, never `unknown_subject`. The decision of an edge for `access` does not depend on the age of the action document. A PDP MAY serve built-in actions in a reserved service id, outside section 17.
 - Protocol 17.1, 17.4, 17.5 and 17.9. An `evaluation_id` has 1024 bytes at most. The list of the error codes of the approval API is longer, and a PEP treats an unknown code as an error of the PDP. The bounds of `lease_s` are in the metadata. A `view` with no member is valid, and the title is the name of the action. The core reader gives `invalid_resource` for a bad id (case D23).
-- Protocol 9.1. When the edge is an authentication server that a proxy calls, the proxy removes the text of the key, and the edge documents the setting.
+- Protocol 9.1. When the edge is an authentication server that a proxy calls, the proxy removes the text of the key. The edge documents how to configure it.
 - Protocol 5.5a, 10.1a, 17.1, 17.7, 17.8 and section 12 and 15, and binding 3.7. The approval follows the action of the use alone. The new member `context.permission_only` marks the question of an other permission, and the PDP ignores `confirm` for it. A `confirm` on an other permission limits the scope and never makes the operation fail closed. This closes spec question 53.
 - New cases D95 and D96 (`permission_only`), and the case U34 checks that a PEP sends the member. The schema `evaluation-context` has the member.
-- Conformance cases U34 and U35 (lot SM1). Each case has a second step with the operation `mcp_call_multi`, so that a PEP that is an MCP server, with a tool of two permissions, runs them. A PEP declares `use_multi`, `mcp_call_multi` or both. The ids stay. The test mock of the runner has a profile with the tool form only.
+- Conformance cases U34 and U35. Each case has a second step with the operation `mcp_call_multi`. A PEP that is an MCP server, with a tool of two permissions, runs them. A PEP declares `use_multi`, `mcp_call_multi` or both. The ids stay. The test mock of the runner has a profile with the tool form only.
 - Protocol 17.7, MCP binding 4.3a, 5.7 and section 10. The retry of a call after an approval repeats the same arguments and exactly one of `approval_ref`, `lease_s` and `until`. A service MAY refuse a retry with none. `tools/list` SHOULD describe the control arguments and the retry. The description of the tools of the reference service says it.
 - New cases D90 to D94 and new directory files `session.json` and `bignumber.json`. The case D23 checks the reason `invalid_resource`.
 - Protocol 17.3. The effect of an operation is `sha256:` and the SHA-256 of the JCS text (RFC 8785) of `{"v":1,"service","action","resource","op"}`. The numbers of `op` are integers from -(2^53-1) to 2^53-1, and any other number makes `op` invalid (`invalid_op`). The `view` of an approval holds JSON Pointers (RFC 6901) to `op`. Section 17 is new. The header of the protocol stays at version 1.0 until the release.
@@ -48,7 +64,7 @@ Lot AL1, the alignment of the protocol, the portal, ClickHouse Dash and Stowr.
 - The PEP learns only a verdict, through a narrow API of three routes. The paragraphs 1.3, 10.1, 10.3, 11.1, 12, 14 and 15 change to fit it.
 - MCP binding 3.5a is new. The new paragraphs 5.7, 5.7a and 5.7b give the result for a request that waits, the tool errors of an approval and the tool `get_action_status`. The case U30 is rewritten. Section 12 has two more open points.
 - The schemas `approval-submission`, `approval-verdict` and `approval-view` are new. The schemas `evaluation-context`, `fake-pdp-data` and `conformance-case` have the new members.
-- The conformance data has 26 new cases: U100 to U110, D76 to D89 and E19, and U30 is rewritten. The directory file `approvals.json` holds the data of the series D. The condition `no_approval_support` skips each case of the series D and E that cites section 17, for a PDP or an edge that gives no approval. The runner reads the new members of a case.
+- The conformance data has 26 new cases: U100 to U110, D76 to D89 and E19, and U30 is rewritten. The directory file `approvals.json` holds the data of the series D. The condition `no_approval_support` skips each case of the series D and E that cites section 17. It applies to a PDP or an edge that gives no approval. The runner reads the new members of a case.
 - The conformance data has 225 cases: 117 for a PEP, 89 for a PDP and 19 for an edge. A PDP or an edge that gives no approval skips 15 of them: D76 to D89 and E19. A PEP skips none of the cases of section 17.
 
 - `procurauth-core` has the module `effect`: the canonical text and the effect of 17.3, the check of `op` and the check of a `view` (17.9). The vectors of `conformance/vectors/effect.json` pass with it. The reader of the data reads the member `confirm` of a grant and the list `approvals`. The reasons and the member `evaluation_id` of 17.1 are in the answer model.
@@ -58,7 +74,7 @@ Lot AL1, the alignment of the protocol, the portal, ClickHouse Dash and Stowr.
 - `procurauth-pep` has the module `approval`. `Pep::decide_approval` follows the steps of 17.7: the question with the effect and no usage, the submission, and the question with usage after the approval. It gives the new value `Outcome::ApprovalRequired`, and the refusal `Refusal::Approval`. The PEP keeps no answer to a question with an effect, and it never reads an intent, an explanation or an `approval_ref`. `Pep::approval_stats` counts what the PEP received from the approval API. The MCP helpers give the result of 5.7, the tool errors of 5.7a and the tool `get_action_status`.
 - `reference-service` has the tool `append_rows` with the action `data.append`. It has the tool `get_action_status`. The tool `write_rows` and its request for input are gone. The results of a tool that ran have no `isError`.
 - Conformance runner. The member `approval` of an entry of the profile gives the runner the `op` of each call. The runner computes the variables `effect`, `effect_2` and `effect_3`, and it runs the variants of the call. The test PDP serves the approval API and counts its requests for `pdp_approvals`. The reference service runs U30 and U100 to U110, and it passes them.
-- MCP binding 3.1, 3.5a and 12. The text follows the contract of the MCP servers, section 9: the service asks the decision point, and a tool that only asks the owner needs no approval. The open point 7 says that the paragraphs 9.2, 9.6, 9.7 and 9.9 are Unused. The items 9 and 10 are new. `approval_rate_limited` has `retry_after` in seconds.
+- MCP binding 3.1, 3.5a and 12. The text follows section 9 of the contract of the MCP servers. The service asks the decision point. A tool that only asks the owner needs no approval. The open point 7 says that the paragraphs 9.2, 9.6, 9.7 and 9.9 are Unused; the items 9 and 10 are new. `approval_rate_limited` has `retry_after` in seconds.
 
 - Section 17 is mandatory for a service (protocol 1.3, 5.2b). Each action of a service follows it, and no action opts out. The member `approval` of an action is removed. A reader ignores it as an unknown member, and `access-lint` gives a warning. A service MUST NOT publish it. The header of the protocol stays at version 1.0, because section 17 is in no release.
 - Protocol 17.3a is new: the `op` and the `view` of any action, a read and a navigation too, and the size limit `max_command_bytes`. Protocol 17.7 is rewritten. The PEP asks first as 10.1 says, with no effect, and it computes the effect on a reason of 17.1. Protocol 17.7a is new: a call that cannot wait gets HTTP 403 with the code `approval_cannot_wait`. Paragraphs 1.3, 5.2b, 10.1, 10.3 and 17.1 change, and the open points 7 and 8 are new.
@@ -67,7 +83,7 @@ Lot AL1, the alignment of the protocol, the portal, ClickHouse Dash and Stowr.
 - The vectors `read-with-default`, `read-empty-op-on-node` and `navigation-page` are new, in the group V01.
 - `fake-pdp` has the test mode `confirm_all`. `procurauth-pep` asks as 10.1 says, and it builds `op` and `view` only on a reason of 17.1. `reference-service` sends each tool through the flow, and it answers HTTP 403 with `approval_cannot_wait` on each route that cannot wait.
 
-## 1.0
+## [1.0] - 2026-10-26
 
 First version.
 
@@ -77,3 +93,7 @@ First version.
 - Seven programs: `keycheck`, `access-token`, `access-lint`, `fake-pdp`, `access-conformance`, `reference-service` and `reference-edge`.
 - The Linux programs are static files (musl). They run on any Linux distribution of the same processor.
 - The PEP library `procurauth-pep` in Rust.
+
+[Unreleased]: https://github.com/ProcurAuth/procurauth/compare/v1.1...HEAD
+[1.1]: https://github.com/ProcurAuth/procurauth/compare/v1.0...v1.1
+[1.0]: https://github.com/ProcurAuth/procurauth/releases/tag/v1.0

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/identity-token-claims.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/identity-token-claims.schema.json",
   "title": "Identity token claims",
   "description": "The payload of the identity token (protocol 9.3). The token is a JWT. A service ignores each claim that it does not know (protocol 9.4). A schema cannot state some rules, for example that a token for a key has the claim owner. The tool access-token checks them. The member $defs.header describes the JOSE header (protocol 9.2).",
   "type": "object",

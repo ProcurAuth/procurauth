@@ -6,7 +6,7 @@
     "6.11"
   ],
   "requirement": "MUST",
-  "notes": "Question 5 in notes/spec-questions-cases.md asks for the shape of the answer to a request without items. The case checks the status and the count only.",
+  "notes": "Question 5 in docs/design/spec-questions-cases.md asks for the shape of the answer to a request without items. The case checks the status and the count only.",
   "given": {
     "directory": "budgets.json"
   },

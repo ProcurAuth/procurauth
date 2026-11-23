@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="The programs that follow ProcurAuth: the portal, Stowr, Hune and ClickHouse Dash, and the reference programs of this repository, with their roles, versions and conformance results.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ProcurAuth">
+<meta property="og:image" content="https://procurauth.github.io/procurauth/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ProcurAuth: delegated access for AI agents. Protocol 1.1, MCP binding, 245 conformance cases.">
+<meta name="twitter:image" content="https://procurauth.github.io/procurauth/assets/og.png">
+<meta name="twitter:image:alt" content="ProcurAuth: delegated access for AI agents.">
+<meta property="og:title" content="Implementations | ProcurAuth">
+<meta property="og:description" content="The programs that follow ProcurAuth: the portal, Stowr, Hune and ClickHouse Dash, and the reference programs of this repository, with their roles, versions and conformance results.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Implementations | ProcurAuth">
+<meta name="twitter:description" content="The programs that follow ProcurAuth: the portal, Stowr, Hune and ClickHouse Dash, and the reference programs of this repository, with their roles, versions and conformance results.">
+<link rel="canonical" href="https://procurauth.github.io/procurauth/implementations.html">
+<meta property="og:url" content="https://procurauth.github.io/procurauth/implementations.html">
+<title>Implementations | ProcurAuth</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#fafafd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0e15" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="index.html" aria-label="ProcurAuth, home page"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="var(--accent)"/><circle cx="12.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><circle cx="19.5" cy="16" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><path d="M16 9.9a7.5 7.5 0 0 1 0 12.2a7.5 7.5 0 0 1 0-12.2z" fill="var(--accent-ink)"/></svg><span>Procur<b>Auth</b></span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav id="site-nav" aria-label="Main"><ul><li><a href="index.html">Home</a></li><li><a href="how-it-works.html">How it works</a></li><li><a href="specification.html">Specification</a></li><li><a href="mcp-binding.html">Agents (MCP)</a></li><li><a href="tools.html">Tools</a></li><li><a href="conformance.html">Conformance</a></li><li><a href="implementations.html" aria-current="page">Implementations</a></li><li><a href="source.html">Source</a></li><li class="nav-gh"><a href="https://github.com/ProcurAuth/procurauth">GitHub</a></li></ul></nav>
+    <a class="gh-link" href="https://github.com/ProcurAuth/procurauth" aria-label="ProcurAuth on GitHub" title="ProcurAuth on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span>GitHub</span></a>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+<main id="main">
+<div class="page-head"><div class="wrap"><p class="eyebrow"><span class="badge">Version 1.1</span> Programs that follow the protocol</p><h1>Implementations</h1><p class="lede">A backend, an edge and a decision point, three services, and the reference programs of this repository. Each result below comes from the repository of the program.</p><ul class="chips" aria-label="On this page"><li><a href="#family">The family</a></li><li><a href="#programs">Programs</a></li><li><a href="#reference">Reference programs</a></li><li><a href="#results">Read the results</a></li><li><a href="#add">Add yours</a></li></ul></div></div>
+<div class="page-body"><div class="wrap">
+
+<section id="family" aria-labelledby="family-h">
+  <h2 id="family-h">The family</h2>
+  <p class="prose">The organisation <a href="https://github.com/ProcurAuth">ProcurAuth</a> holds this specification and three programs. The fourth program, ClickHouse Dash, lives in the organisation <a href="https://github.com/Circular-fi">Circular-fi</a>.</p>
+  <figure class="panel" aria-label="Figure: the ProcurAuth family"><picture><source media="(max-width: 700px)" srcset="assets/family-narrow.svg"><img src="assets/family.svg" width="960" height="560" alt="The specification defines the protocol, the schemas and the conformance cases. The reference tools read them and test the programs. The portal is a backend, an edge and a PDP. It gives identity tokens and AuthZEN decisions to three services: Stowr, Hune and ClickHouse Dash. Each service is a PEP."></picture><figcaption>The specification gives the rules. The reference tools test the programs. The portal is the backend, the edge and the PDP. Each service is a PEP: it asks a PDP and applies the answer.</figcaption></figure>
+  <p class="prose">A service does not know the backend. It speaks only AuthZEN. Thus a service works with any PDP that follows the protocol, and the portal is one such PDP.</p>
+</section>
+
+<section id="programs" aria-labelledby="programs-h">
+  <h2 id="programs-h">Programs</h2>
+  <div class="tablewrap"><table>
+  <thead><tr><th scope="col">Program</th><th scope="col">Role</th><th scope="col">Language</th><th scope="col">Version</th><th scope="col">Follows</th></tr></thead>
+  <tbody>
+  <tr><th scope="row"><a href="https://github.com/ProcurAuth/portal">portal</a></th><td data-label="Role">Backend, edge and PDP</td><td data-label="Language">Rust</td><td data-label="Version">5.6.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
+  <tr><th scope="row"><a href="https://github.com/ProcurAuth/stowr">Stowr</a></th><td data-label="Role">PEP: browser for S3 and Google Cloud Storage</td><td data-label="Language">Rust</td><td data-label="Version">0.3.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
+  <tr><th scope="row"><a href="https://github.com/ProcurAuth/hune">Hune</a></th><td data-label="Role">PEP: dashboards</td><td data-label="Language">Rust</td><td data-label="Version">0.1.1</td><td data-label="Follows">ProcurAuth 1.0 line, commit 058563c</td></tr>
+  <tr><th scope="row"><a href="https://github.com/Circular-fi/Clickhouse-dash">ClickHouse Dash</a></th><td data-label="Role">PEP and MCP server: query console for ClickHouse</td><td data-label="Language">C++</td><td data-label="Version">1.6.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
+  </tbody></table></div>
+
+  <div class="impl-grid">
+    <div class="card impl-card"><h3>portal <span class="badge">Backend, edge, PDP</span></h3>
+      <p>The portal is one program with one configuration file and one database. It keeps the users, their grants and their keys. It checks a key and gives the service an identity token. It answers the AuthZEN questions of the services, with the limits and the budgets. It also gives the approval inbox of protocol section 17.</p>
+      <dl class="facts"><dt>Version</dt><dd>5.6.0</dd><dt>Conformance</dt><dd>The CI runs the series D (98 cases) and E (20 cases) of ProcurAuth 1.1, at the commit <code>bb6f9b0</code> of the main branch. That commit is the parent of <code>v1.1</code>: only the release workflow differs.</dd><dt>Libraries</dt><dd>None of this repository. The portal has its own decision code.</dd></dl>
+      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/portal">portal on GitHub</a></div></div>
+    <div class="card impl-card"><h3>Stowr <span class="badge">PEP</span></h3>
+      <p>Stowr shows S3 buckets, Google Cloud Storage and mounted folders in one web page. It is one static binary with one configuration file. With the access mode <code>authzen</code>, it checks the identity token and asks a PDP for each operation. Its routes are HTTP routes, and it has no MCP endpoint.</p>
+      <dl class="facts"><dt>Version</dt><dd>0.3.0</dd><dt>Conformance</dt><dd>Series U with ProcurAuth 1.1: 127 cases, 81 passed, 0 failed, 46 skipped. 45 cases need an MCP endpoint, and U84 needs a use of the service itself.</dd><dt>Libraries</dt><dd><code>procurauth-pep</code> and <code>procurauth-core</code>, pinned at the commit of the tag <code>v1.1</code>.</dd></dl>
+      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/stowr">Stowr on GitHub</a></div></div>
+    <div class="card impl-card"><h3>Hune <span class="badge">PEP</span></h3>
+      <p>Hune is a dashboard server. It shows tables, time series and charts from ClickHouse, PostgreSQL and MongoDB. In the access mode <code>authzen</code>, it is a PEP: each dashboard and each query asks the PDP. The mode <code>open</code> needs no PDP.</p>
+      <dl class="facts"><dt>Version</dt><dd>0.1.1. The first stable version is 1.0.0.</dd><dt>Conformance</dt><dd>Series U of 2026-11-11: 110 cases, 60 passed, 0 failed, 50 skipped. Hune has no run with ProcurAuth 1.1 yet.</dd><dt>Libraries</dt><dd><code>procurauth-pep</code> and <code>procurauth-core</code>, pinned at the commit <code>058563c</code>. This commit is 18 commits after <code>v1.0</code>.</dd></dl>
+      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/hune">Hune on GitHub</a></div></div>
+    <div class="card impl-card"><h3>ClickHouse Dash <span class="badge">PEP, MCP</span></h3>
+      <p>ClickHouse Dash is a real-time query console for ClickHouse. It has an MCP endpoint for AI agents. It is a PEP: it checks the identity token or its own MCP keys, and it asks the PDP. It conforms to the MCP binding in the mode <code>identity</code>.</p>
+      <dl class="facts"><dt>Version</dt><dd>1.6.0</dd><dt>Conformance</dt><dd>Series U with ProcurAuth 1.1: 127 cases, 126 passed, 0 failed, 1 skipped. The skipped case U117 needs a tool that asks for input, and Dash has none.</dd><dt>Libraries</dt><dd>None of this repository. Dash is a C++ program with its own PEP.</dd></dl>
+      <div class="btn-row"><a class="btn small" href="https://github.com/Circular-fi/Clickhouse-dash">ClickHouse Dash on GitHub</a></div></div>
+  </div>
+</section>
+
+<section id="reference" aria-labelledby="reference-h">
+  <h2 id="reference-h">Reference programs</h2>
+  <p class="prose">This repository holds four programs that follow the protocol. Each one is the test subject of a series of cases. <a href="tools.html">The tools page</a> describes them.</p>
+  <div class="tablewrap"><table>
+  <thead><tr><th scope="col">Program</th><th scope="col">Role</th><th scope="col">Result of <code>scripts/conformance.sh</code></th></tr></thead>
+  <tbody>
+  <tr><th scope="row"><a href="tools.html#reference-service"><code>reference-service</code></a></th><td data-label="Role">PEP, built on <code>procurauth-pep</code></td><td data-label="Result">Series U: 127 cases, 126 passed, 1 skipped. With a budget on <code>mcp.session</code>, 127 passed.</td></tr>
+  <tr><th scope="row"><a href="tools.html#reference-edge"><code>reference-edge</code></a></th><td data-label="Role">Edge</td><td data-label="Result">Series E: 20 cases, 20 passed.</td></tr>
+  <tr><th scope="row"><a href="tools.html#fake-pdp"><code>fake-pdp</code></a></th><td data-label="Role">Test PDP</td><td data-label="Result">Series D: 98 cases. As a separate process, 98 passed. In the process of the runner, 97 passed and 1 skipped.</td></tr>
+  <tr><th scope="row"><a href="tools.html#pep-library"><code>procurauth-pep</code></a></th><td data-label="Role">PEP library in Rust</td><td data-label="Result">Used by <code>reference-service</code>, Stowr and Hune.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="results" aria-labelledby="results-h">
+  <h2 id="results-h">Read the results</h2>
+  <p class="prose">Each project runs <a href="tools.html#access-conformance"><code>access-conformance</code></a> itself, and it pins one commit of this repository. A new case in a later version can change a result. Thus a result belongs to the pinned commit, not to the program alone.</p>
+  <ul>
+    <li>The series U tests a PEP. The series D tests a PDP. The series E tests an edge.</li>
+    <li>A skipped case is not a failure. The runner skips a case when the target lacks the feature that the case needs, for example an MCP endpoint.</li>
+    <li>Section 17 is mandatory for a service. A service that cannot ask for an approval for each of its actions does not conform.</li>
+  </ul>
+  <p class="prose">The file <a href="https://github.com/ProcurAuth/procurauth/blob/main/IMPLEMENTATIONS.md"><code>IMPLEMENTATIONS.md</code></a> repeats this list with the pinned commits.</p>
+</section>
+
+<section id="add" aria-labelledby="add-h">
+  <h2 id="add-h">Add your implementation</h2>
+  <p class="prose">Open an issue in <a href="https://github.com/ProcurAuth/procurauth/issues/new/choose">the issue tracker</a>. Give the name, the role (PEP, PDP or edge), a link and the result of <code>access-conformance</code>. A maintainer adds the program to the list.</p>
+  <div class="btn-row"><a class="btn primary" href="conformance.html">How to run the cases</a><a class="btn" href="https://github.com/ProcurAuth/procurauth/issues/new/choose">Add an implementation</a></div>
+</section>
+
+</div></div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h2>ProcurAuth</h2>
+        <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. Version 1.1.</p>
+      </div>
+      <div>
+        <h2>Read</h2>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="specification.html">Specification</a></li>
+          <li><a href="mcp-binding.html">MCP binding for agents</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Build</h2>
+        <ul>
+          <li><a href="tools.html">Tools and PEP library</a></li>
+          <li><a href="conformance.html">Schemas and conformance</a></li>
+          <li><a href="implementations.html">Implementations</a></li>
+          <li><a href="source.html">Source and releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/ProcurAuth/procurauth">Repository</a></li>
+          <li><a href="source.html#changelog">Changelog</a></li>
+          <li><a href="source.html#contribute">Contribute</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-legal">
+      <p>ProcurAuth, version 1.1.</p>
+      <p>Code: <a href="source.html#licences">Apache-2.0</a>. Texts: <a href="source.html#licences">CC BY 4.0</a>.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

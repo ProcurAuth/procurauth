@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/effect-vectors.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/effect-vectors.schema.json",
   "title": "Effect vectors",
   "description": "The file conformance/vectors/effect.json. It holds test vectors for the effect of protocol 17.3. A vector of the group V01 gives the canonical text and the effect of its input. A vector of the group V02 has an input that a PEP and a PDP refuse with the error invalid_op. A schema cannot check the hash. The tests of the repository compute it again.",
   "type": "object",

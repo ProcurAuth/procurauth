@@ -6,7 +6,7 @@
     "9.5"
   ],
   "requirement": "MUST",
-  "notes": "Question 10 in notes/spec-questions-cases.md asks if a service must accept a key token with no owner.",
+  "notes": "Question 10 in docs/design/spec-questions-cases.md asks if a service must accept a key token with no owner.",
   "given": {
     "tokens": {
       "no_owner": {

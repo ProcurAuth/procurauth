@@ -1461,7 +1461,7 @@ mod tests {
             decision: OwnerDecision::Decline,
             shown_effect: effect_of(&op()),
             comment: comment_of("no", "comment"),
-            answered_by: Some("eliot".into()),
+            answered_by: Some("answerer-1".into()),
             device: Some("d:1".into()),
         };
         a.answer(NOW, &id, &answer).unwrap();

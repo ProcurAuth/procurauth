@@ -7,7 +7,7 @@
     "7.1"
   ],
   "requirement": "SHOULD",
-  "notes": "The core reader gives a warning for a ceiling name that is not max_ and a noun (7.1). Question 13 in notes/spec-questions-cases.md asks about the warnings that the case uses.",
+  "notes": "The core reader gives a warning for a ceiling name that is not max_ and a noun (7.1). Question 13 in docs/design/spec-questions-cases.md asks about the warnings that the case uses.",
   "given": {},
   "steps": [
     {

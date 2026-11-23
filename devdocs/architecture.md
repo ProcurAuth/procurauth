@@ -18,7 +18,7 @@ Other directories:
 | `schemas/` | The JSON Schemas, one file for each document. |
 | `conformance/` | The conformance cases and the test directories. See its README. |
 | `scripts/` | `cargo.sh`, `conformance.sh`, `static.sh` and `ci.sh`. They run in Docker. |
-| `notes/` | The decisions, the questions about the protocol, and the differences from the site. |
+| `docs/design/` | The design records: the decisions, the questions about the protocol and the design of the libraries. |
 
 ## The core crate
 
@@ -112,7 +112,7 @@ The profiles are in the `examples/` directory of each target crate. The exit cod
 4. Put the work in a library module of the crate, so that tests can call it. `main` only reads the arguments, calls the function and sets the exit code.
 5. Follow the common rules of the site: `--help`, `--version`, `--format text|json`, the exit codes 0, 1 and 2.
 6. Write the tests in the crate. Add a test that runs the program on a file of `conformance/` or `schemas/`.
-7. Write the README of the crate in Simplified Technical English. Update `notes/site-differences.md` when the tool differs from the site.
+7. Write the README of the crate in Simplified Technical English. Update `docs/tools.html` when the tool differs from the page.
 
 ### Rules for the configuration of a tool
 

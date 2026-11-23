@@ -6,7 +6,7 @@
     "10.7"
   ],
   "requirement": "SHOULD",
-  "notes": "The test PDP keeps a connection open. Four uses one after the other need one connection, or two at most. Question 9 in notes/spec-questions-cases.md asks for the meaning of a small number.",
+  "notes": "The test PDP keeps a connection open. Four uses one after the other need one connection, or two at most. Question 9 in docs/design/spec-questions-cases.md asks for the meaning of a small number.",
   "given": {
     "tokens": {
       "person": {

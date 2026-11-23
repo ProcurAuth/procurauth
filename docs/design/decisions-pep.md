@@ -73,7 +73,7 @@ Each item gives one choice and the reason. The numbers are for this file only.
 61. The PEP reads the optional metadata member `procurauth_directory_max_age_seconds` (3.9), and it takes no decision on it. The age of the copy of the directory is a duty of the PDP. A value that is not a whole number of 1 or more makes the metadata not valid (decision 11).
 62. A plain HTTP service gets the refusal of 17.7a with `Outcome::into_result` and `Refusal::to_http`. Thus the library adds no other helper for it. The constant `refusal::APPROVAL_CANNOT_WAIT` holds the code for a service that writes its own body.
 
-## Rulings of the lot AL1
+## Rulings of version 1.1
 
 63. `Pep::decide_route_without_action` asks `access` on the service for a route that runs no action of the document (10.1c). It does not check the action against the document, because `access` is never in it. A reason of 17.1 in the answer gives HTTP 503, because `confirm` has no effect on `access` (17.8). The answer is kept as 10.1 says, with the key of the action `access`.
 64. After a 422 `invalid_evaluation`, the approval flow asks the question with the effect one more time (binding 5.7a). It then submits again with the new `evaluation_id`. A second `invalid_evaluation` gives `ApprovalRefusal::Expired`. A 422 `explanation_required` and a 409 `cannot_supersede` give `ApprovalRefusal::InvalidArgument`. A 401 and a 403 of the approval API give HTTP 503.

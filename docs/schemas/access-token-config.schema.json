@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/access-token-config.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/access-token-config.schema.json",
   "title": "Configuration of a service for access-token",
   "description": "The values of protocol 9.4 that the tool access-token check needs. They are the token header, the issuer and the id of the service. They are also the maximum age, the clock skew and the public keys of the edge. The schema is closed. A schema cannot state two rules: a set of more than one key needs a kid for each key, and the header is not Authorization. The tool checks them.",
   "type": "object",

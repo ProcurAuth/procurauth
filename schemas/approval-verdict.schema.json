@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sccagg5.github.io/procurauth/schemas/approval-verdict.schema.json",
+  "$id": "https://procurauth.github.io/procurauth/schemas/approval-verdict.schema.json",
   "title": "Approval verdict",
   "description": "The answer of the narrow API of a PDP to a PEP (protocol 17.4): a read of a request and a keepalive. The root schema is the answer of those two routes. It has the verdict only. The members of $defs give the answer to a submission, the body of a keepalive and an error. No answer has the text of a refusal, the owner, a device, the explanation or the time of an answer (protocol 17.12).",
   "type": "object",

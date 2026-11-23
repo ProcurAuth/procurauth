@@ -77,7 +77,7 @@
           }
         },
         "body_text": {
-          "not_regex": "staging database|eliot|d:7f3a"
+          "not_regex": "staging database|answerer-1|d:7f3a"
         }
       }
     }
