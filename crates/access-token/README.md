@@ -22,8 +22,8 @@ scripts/cargo.sh test -p access-token
 
 ```text
 access-token make --key FILE [--alg ALG] [--typ TYPE] [--kid ID]
-    [--crit NAME] [--bad-signature] [--allow-bad-claims]
-    [--format text|json] CLAIMS
+    [--crit NAME] [--bad-signature] [--number-form CLAIM=FORM]...
+    [--allow-bad-claims] [--format text|json] CLAIMS
 ```
 
 `CLAIMS` is a JSON file with the claims. Use `-` to read the standard input. The tool writes the token on the standard output.
@@ -62,6 +62,10 @@ Each row shows how to make one bad token. The last column shows the check that f
 | Bad signature | `--bad-signature` | `signature` | 9.4 |
 | Header `crit` | `--crit NAME` | `header` | 9.4 |
 | Unknown `kid` | `--kid NAME` with a name that the service does not hold. | `kid` | 9.4 |
+| `iat` or `exp` with a fraction | `--number-form iat=fraction` writes `1792569600.0`. | `claims` and the claim | 9.3 |
+| `iat` or `exp` with an exponent | `--number-form exp=exponent` writes `1792569900e0`. | `claims` and the claim | 9.3 |
+| `iat` or `exp` with a sign | `--number-form iat=negative` writes `-1792569600`. | `claims`, the claim and `life` | 9.3 |
+| No `kid` with two keys | Make the token with no `--kid`, and check it with a configuration of two keys. | `kid` | 9.4 |
 | Absent claim | Remove the claim and add `--allow-bad-claims`. | `claims` and the claim | 9.3 |
 | Wrong `iss` or `aud` | Write another value in the claims file. | `iss` or `aud` | 9.4 |
 | Extra claim | Add the claim. The service must ignore it. | none | 9.4 |
@@ -69,6 +73,8 @@ Each row shows how to make one bad token. The last column shows the check that f
 The option `--alg` accepts `Ed25519`, `ES256`, `EdDSA`, `HS256`, `RS256` and `none`. The default is the algorithm of the key. The tool always signs with the real algorithm of the key. The option changes only the name in the header.
 
 The option `--bad-signature` cannot go with `--alg none`, because that token has no signature.
+
+The option `--number-form` changes only the JSON text of a claim. The value of the claim stays the same. Give the option one time for each claim. The claim must be a whole number in the claims file. The forms are `fraction`, `exponent` and `negative`. Protocol 9.3 accepts only a JSON integer with digits only, so each form makes a bad token.
 
 ## Check a token
 
@@ -108,7 +114,7 @@ The tool prints one line for each of the 13 checks, always in the same order. A 
 | `typ` | 9.2 | `typ` is `JWT`. |
 | `kid` | 9.4 | The key set has a key for the token. |
 | `signature` | 9.4 | The signature is good, with the key and the algorithm of the header. |
-| `claims` | 9.3 | The payload has `iss`, `sub`, `aud`, `iat` and `exp`. |
+| `claims` | 9.3 | The payload has `iss`, `sub`, `aud`, `iat` and `exp`. `iat` and `exp` are JSON integers with digits only. |
 | `iss` | 9.4 | `iss` is the issuer of the configuration. |
 | `sub` | 9.3 | `sub` is a string that is not empty. |
 | `aud` | 9.4 | `aud` is the id of the service, or an array that holds it. |

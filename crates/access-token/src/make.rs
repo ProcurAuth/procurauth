@@ -9,9 +9,11 @@
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use procurauth_core::finding::Severity;
-use procurauth_core::identity::{TOKEN_TYPE, profile_findings};
+use std::collections::BTreeMap;
+
+use procurauth_core::identity::{NumberForm, TOKEN_TYPE, claims_text_with_forms, profile_findings};
 use procurauth_core::json::parse_str;
-use procurauth_core::jws::{SigningKey, sign_compact};
+use procurauth_core::jws::{SigningKey, sign_compact, sign_compact_text};
 use serde_json::{Map, Value, json};
 
 use crate::cli::{AlgName, Format, MakeArgs};
@@ -81,6 +83,63 @@ pub fn make_token(shape: &Shape, claims: &Value, key: &SigningKey) -> Made {
     Made { token, header }
 }
 
+/// Make a token whose time claims have the number forms of `forms` (9.3).
+/// Each named claim keeps its value, and only its JSON text changes. This makes
+/// a bad token. With no form, the result is the result of [`make_token`].
+///
+/// # Errors
+/// Returns a message when a named claim is absent or is not a whole number.
+pub fn make_token_with_forms(
+    shape: &Shape,
+    claims: &Value,
+    forms: &BTreeMap<String, NumberForm>,
+    key: &SigningKey,
+) -> Result<Made, String> {
+    if forms.is_empty() {
+        return Ok(make_token(shape, claims, key));
+    }
+    let Value::Object(map) = claims else {
+        return Err("The claims are not a JSON object.".to_owned());
+    };
+    let payload = claims_text_with_forms(map, forms)?;
+    let header = header_for(shape, key);
+    let mut token = if shape.alg == Some(AlgName::None) {
+        format!(
+            "{}.{}.",
+            URL_SAFE_NO_PAD.encode(header.to_string()),
+            URL_SAFE_NO_PAD.encode(&payload)
+        )
+    } else {
+        sign_compact_text(&header.to_string(), &payload, key)
+    };
+    if shape.bad_signature && shape.alg != Some(AlgName::None) {
+        token = flip_signature(&token);
+    }
+    Ok(Made { token, header })
+}
+
+/// Read the values of `--number-form`: `CLAIM=FORM`, one time for each claim.
+fn read_forms(values: &[String]) -> Result<BTreeMap<String, NumberForm>, Fault> {
+    let mut out = BTreeMap::new();
+    for value in values {
+        let parsed = value
+            .split_once('=')
+            .filter(|(claim, _)| !claim.is_empty())
+            .and_then(|(claim, form)| NumberForm::parse(form).map(|form| (claim, form)));
+        let Some((claim, form)) = parsed else {
+            return Err(Fault::new(format!(
+                "Option `--number-form`: expected CLAIM=FORM with the form `fraction`, `exponent` or `negative`, found {value:?}."
+            )));
+        };
+        if out.insert(claim.to_owned(), form).is_some() {
+            return Err(Fault::new(format!(
+                "Option `--number-form`: expected one value for each claim, found the claim `{claim}` two times."
+            )));
+        }
+    }
+    Ok(out)
+}
+
 /// Change the first byte of the signature of a compact JWS.
 fn flip_signature(token: &str) -> String {
     let Some((signing_input, signature)) = token.rsplit_once('.') else {
@@ -125,6 +184,7 @@ pub fn run_make(args: &MakeArgs, io: &mut Io<'_>) -> Result<u8, Fault> {
             "Option `--bad-signature` cannot go with `--alg none`: the token has no signature.",
         ));
     }
+    let forms = read_forms(&args.number_forms)?;
     let key = read_key(&args.key)?;
     let text = read_text(&args.claims, Some(&mut *io.stdin))?;
     let claims = parse_str(&text).map_err(|error| {
@@ -148,7 +208,11 @@ pub fn run_make(args: &MakeArgs, io: &mut Io<'_>) -> Result<u8, Fault> {
         crit: args.crit.clone(),
         bad_signature: args.bad_signature,
     };
-    let made = (!refused).then(|| make_token(&shape, &claims, &key));
+    let made = if refused {
+        None
+    } else {
+        Some(make_token_with_forms(&shape, &claims, &forms, &key).map_err(Fault::new)?)
+    };
     match args.format {
         Format::Text => {
             let mut diagnostics = String::new();

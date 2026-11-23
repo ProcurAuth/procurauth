@@ -37,7 +37,7 @@ fn two_keys(name: &str, defects: EdgeDefects) -> Out {
 fn a_correct_edge_passes_every_case_that_the_runner_can_run() {
     let out = two_keys("edge_correct", EdgeDefects::default());
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "19 cases: 16 passed, 0 failed, 3 skipped");
+    assert_eq!(out.summary(), "20 cases: 17 passed, 0 failed, 3 skipped");
     // The case E19 needs the key `confirm_access`, and this profile has none.
     assert_eq!(out.ids_with("skip"), vec!["E15", "E16", "E19"]);
     assert!(
@@ -72,7 +72,7 @@ fn p_17_8_a_profile_with_a_confirm_access_key_runs_the_case_e19() {
     let url = mock.url();
     let out = run_cli(&["--role", "edge", "--profile", &profile_path, "--url", &url]);
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "19 cases: 17 passed, 0 failed, 2 skipped");
+    assert_eq!(out.summary(), "20 cases: 18 passed, 0 failed, 2 skipped");
     assert_eq!(out.ids_with("skip"), vec!["E15", "E16"]);
     assert!(out.line("E19").contains("pass"), "{}", out.line("E19"));
     // The text of the key is a secret: it never shows.
@@ -123,7 +123,7 @@ fn p_9_9_an_edge_that_keeps_tokens_passes_the_cases_of_the_cache() {
         },
     );
     assert_eq!(out.code, 0, "{}\n{}", out.stdout, out.stderr);
-    assert_eq!(out.summary(), "19 cases: 18 passed, 0 failed, 1 skipped");
+    assert_eq!(out.summary(), "20 cases: 19 passed, 0 failed, 1 skipped");
 }
 
 #[test]

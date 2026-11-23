@@ -109,8 +109,8 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 7.5 | pep | U36, U37, U39, U92 |
 | 7.6 | pep | U38 |
 | 8.3 | pep | U40 |
-| 9.3 | pep | U43, U44, U46, U47, U49 |
-| 9.4 | pep | U03, U14, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U75, U85, U99 |
+| 9.3 | pep | U43, U44, U46, U47, U49, U118 |
+| 9.4 | pep | U03, U14, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U75, U85, U99, U118 |
 | 9.5 | pep | U10 |
 | 9.6 | pep | U01, U09 |
 | 9.7 | pep | U55 |
@@ -173,7 +173,7 @@ Section 17 of the protocol is mandatory for a service (protocol 1.3, 5.2b). A PE
 | 8.3 | edge | E10, E19 |
 | 9.1 | edge | E05, E06, E11 |
 | 9.2 | edge | E12 |
-| 9.3 | edge | E07, E14 |
+| 9.3 | edge | E07, E14, E20 |
 | 9.4 | edge | E13 |
 | 9.8 | edge | E01, E02, E03, E04, E09, E10, E11, E17 |
 | 9.9 | edge | E15, E16 |

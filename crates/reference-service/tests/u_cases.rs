@@ -19,8 +19,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use access_token::cli::AlgName;
-use access_token::make::{Shape, make_token};
+use access_token::make::{Shape, make_token_with_forms};
 use common::{Reply, now, send};
+use procurauth_core::identity::NumberForm;
 use procurauth_core::jws::SigningKey;
 use reference_service::config::{Sources, load};
 use reference_service::service::build_app;
@@ -499,7 +500,21 @@ fn make_case_token(keys: &Keys, spec: &Value) -> String {
             other => panic!("the runner does not set the header member {other:?}"),
         }
     }
-    let token = make_token(&shape, &claims, key).token;
+    let forms: std::collections::BTreeMap<String, NumberForm> = spec
+        .get("number_forms")
+        .and_then(Value::as_object)
+        .map(|map| {
+            map.iter()
+                .map(|(claim, form)| {
+                    let form = form.as_str().and_then(NumberForm::parse).unwrap();
+                    (claim.clone(), form)
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let token = make_token_with_forms(&shape, &claims, &forms, key)
+        .unwrap()
+        .token;
     if header_overrides.get("typ") == Some(&Value::Null) {
         return without_typ(&token);
     }
@@ -1289,7 +1304,7 @@ fn the_reference_service_passes_the_cases_of_the_series_u() {
     if cfg!(feature = "mcp") {
         // The case U95 needs a budget on the action `mcp.session`. The service lists none.
         // U30 and U100 to U117 are the cases of the approval profile: they run, for each action.
-        assert_eq!(ran, 116, "the number of cases that ran");
+        assert_eq!(ran, 117, "the number of cases that ran");
         skipped_ids.sort();
         assert_eq!(skipped_ids, ["U95"]);
     }

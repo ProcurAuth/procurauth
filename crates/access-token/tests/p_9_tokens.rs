@@ -4,6 +4,7 @@
 
 mod common;
 
+use base64::Engine as _;
 use common::*;
 use serde_json::{Value, json};
 
@@ -291,6 +292,54 @@ fn p_9_3_each_claim_is_mandatory() {
         assert_eq!(check_entry(&out, "claims")["rule"], "9.3");
         assert!(failed.contains(&claim.to_owned()), "{claim}: {failed:?}");
     }
+}
+
+#[test]
+fn p_9_3_a_time_claim_with_a_fraction_an_exponent_or_a_sign_fails() {
+    for claim in ["iat", "exp"] {
+        for form in ["fraction", "exponent", "negative"] {
+            let option = format!("{claim}={form}");
+            let token = make(ED, &person_claims(), &["--number-form", &option]);
+            let out = json_check(SINGLE, &token);
+            assert_eq!(out.code, 1, "{option}");
+            let failed = failing(&out);
+            assert!(
+                failed.contains(&"claims".to_owned()),
+                "{option}: {failed:?}"
+            );
+            assert!(failed.contains(&claim.to_owned()), "{option}: {failed:?}");
+        }
+    }
+    // The payload keeps the value and writes another form of it.
+    let token = make(ED, &person_claims(), &["--number-form", "iat=exponent"]);
+    let payload = token.split('.').nth(1).unwrap();
+    let text = String::from_utf8(
+        base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(payload)
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(text.contains("\"iat\":1792569600e0"), "{text}");
+}
+
+#[test]
+fn p_9_3_a_bad_number_form_option_is_a_usage_error() {
+    for value in ["iat", "iat=other", "=fraction", "iss=fraction"] {
+        let out = make_out(ED, &person_claims(), &["--number-form", value]);
+        assert_eq!(out.code, 2, "{value}: {}", out.all());
+        assert_eq!(out.stdout, "", "{value}");
+    }
+    let out = make_out(
+        ED,
+        &person_claims(),
+        &[
+            "--number-form",
+            "iat=fraction",
+            "--number-form",
+            "iat=negative",
+        ],
+    );
+    assert_eq!(out.code, 2, "{}", out.all());
 }
 
 #[test]

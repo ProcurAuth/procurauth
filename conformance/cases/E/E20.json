@@ -1,0 +1,44 @@
+{
+  "id": "E20",
+  "title": "The edge writes the claims iat and exp, and nbf when it has it, as JSON integers with digits only.",
+  "role": "edge",
+  "paragraphs": [
+    "9.3"
+  ],
+  "requirement": "MUST",
+  "notes": "The runner checks the token with the rules of 9.4 before it reads the claims. A number with a fraction or an exponent then has a text with a dot or a letter.",
+  "given": {},
+  "steps": [
+    {
+      "name": "A request with a valid key",
+      "request": {
+        "method": "GET",
+        "path": "/probe",
+        "headers": {
+          "Authorization": "Bearer {{valid_key_text}}"
+        }
+      },
+      "expect": {
+        "status": {
+          "regex": "^2[0-9]{2}$"
+        },
+        "upstream": {
+          "count": {
+            "equals": 1
+          },
+          "token_claims": {
+            "/iat": {
+              "regex": "^[0-9]+$"
+            },
+            "/exp": {
+              "regex": "^[0-9]+$"
+            },
+            "/nbf": {
+              "not_regex": "[^0-9]"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

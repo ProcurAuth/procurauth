@@ -539,6 +539,10 @@ pub(crate) struct TokenSpec {
     /// A named defect.
     #[serde(default)]
     pub(crate) defect: Option<Defect>,
+    /// The JSON form of the number of a claim: `fraction`, `exponent` or `negative` (protocol 9.3).
+    /// The value of the claim stays the same.
+    #[serde(default)]
+    pub(crate) number_forms: BTreeMap<String, procurauth_core::identity::NumberForm>,
 }
 
 /// The data that the runner sets up before the first step.

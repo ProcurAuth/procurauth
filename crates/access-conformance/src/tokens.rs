@@ -5,9 +5,9 @@ use std::fs;
 use std::path::Path;
 
 use base64::Engine as _;
-use procurauth_core::identity::{TokenPolicy, verify};
+use procurauth_core::identity::{TokenPolicy, claims_text_with_forms, verify};
 use procurauth_core::json::parse_slice;
-use procurauth_core::jws::{KeySet, PublicKey, SigningKey, b64url_decode, sign_compact};
+use procurauth_core::jws::{KeySet, PublicKey, SigningKey, b64url_decode, sign_compact_text};
 use serde_json::{Map, Value, json};
 
 use crate::model::{Defect, TokenAlg, TokenSpec};
@@ -67,6 +67,8 @@ pub(crate) fn read_secret(key: &str, path: &Path) -> Result<String, String> {
 pub(crate) enum MintError {
     /// The profile has no key for this algorithm.
     NoKey(TokenAlg),
+    /// A member `number_forms` names a claim that is absent or that is not a whole number.
+    BadForm(String),
 }
 
 struct SigningEntry {
@@ -206,7 +208,9 @@ impl Signer {
         }
         overlay(&mut claims, &spec.claims);
         overlay(&mut header, &spec.header);
-        let token = sign_compact(&Value::Object(header), &Value::Object(claims), &entry.key);
+        let payload =
+            claims_text_with_forms(&claims, &spec.number_forms).map_err(MintError::BadForm)?;
+        let token = sign_compact_text(&Value::Object(header).to_string(), &payload, &entry.key);
         let (input, signature) = token.rsplit_once('.').unwrap_or((token.as_str(), ""));
         if strip {
             return Ok(format!("{input}."));
@@ -388,6 +392,7 @@ mod tests {
             claims: Map::new(),
             header: Map::new(),
             defect,
+            number_forms: std::collections::BTreeMap::new(),
         }
     }
 
@@ -439,6 +444,30 @@ mod tests {
             let token = signer(300, 30).mint(&spec(Some(defect)), NOW).unwrap();
             assert_eq!(failed_check(&token).as_deref(), Some(check), "{defect:?}");
         }
+    }
+
+    #[test]
+    fn a_number_form_keeps_the_value_and_fails_the_check_of_the_claims() {
+        use procurauth_core::identity::NumberForm;
+        for form in [
+            NumberForm::Fraction,
+            NumberForm::Exponent,
+            NumberForm::Negative,
+        ] {
+            let mut s = spec(None);
+            s.number_forms.insert("exp".into(), form);
+            let token = signer(300, 30).mint(&s, NOW).unwrap();
+            let payload = token.split('.').nth(1).unwrap();
+            let text = String::from_utf8(b64url_decode(payload).unwrap()).unwrap();
+            assert!(text.contains(&form.write(NOW + 150)), "{text}");
+            assert_eq!(failed_check(&token).as_deref(), Some("claims"), "{form:?}");
+        }
+        let mut s = spec(None);
+        s.number_forms.insert("nbf".into(), NumberForm::Fraction);
+        assert!(matches!(
+            signer(300, 30).mint(&s, NOW),
+            Err(MintError::BadForm(_))
+        ));
     }
 
     #[test]

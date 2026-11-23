@@ -381,11 +381,14 @@ impl Runner<'_> {
                 (Env::Pep(env), false) => {
                     env.signer
                         .mint(&spec, (self.now)())
-                        .map_err(|MintError::NoKey(alg)| {
-                            Prep::Skip(format!(
+                        .map_err(|error| match error {
+                            MintError::NoKey(alg) => Prep::Skip(format!(
                                 "the profile has no {} key for the token `{name}`",
                                 alg.name()
-                            ))
+                            )),
+                            MintError::BadForm(why) => {
+                                Prep::Error(format!("token `{name}`: {why}"))
+                            }
                         })?
                 }
                 _ => {

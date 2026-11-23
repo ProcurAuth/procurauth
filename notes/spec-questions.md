@@ -30,6 +30,9 @@ This file lists the places where the text of the protocol or of the MCP binding 
 ## Identity token
 
 11. **9.3, 9.4.** Can `iat` and `exp` have a fraction, as RFC 7519 permits for a NumericDate? The code accepts a whole number of seconds only.
+
+   Status: Closed (lot AL1, decision 203): `iat` and `exp` are JSON integers with digits only, and a service refuses another form.
+
 12. **9.4.** What happens when `exp` is before `iat`? The text bounds the life by a maximum and gives no minimum. The code refuses such a token.
 13. **9.4.** Is the check of `typ` case-sensitive? RFC 7515 treats the media type `JWT` without case. The code accepts only the text `JWT`.
 14. **9.4.** What does the service do with a header `crit`? The protocol is silent. RFC 7515 says to refuse a token with an extension that the service does not know. The code refuses each `crit`.

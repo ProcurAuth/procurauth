@@ -266,3 +266,7 @@ Each item gives one choice and the reason in one sentence.
 200. The retry of a call after an approval repeats the same arguments. It also has exactly one control argument (protocol 17.7, binding 5.7, section 10). The control argument is `approval_ref`, `lease_s` or `until`. A service MAY refuse a retry with none, with `invalid_argument`, also when the approval waits. ClickHouse Dash does this: it refuses after the first question, before it asks the effect.
 201. The reference PEP asks the effect first, so it runs an approved call that has no control argument. Both behaviours follow the text, because it says MAY. No behaviour changes.
 202. The `tools/list` of a service SHOULD describe the control arguments and the retry (binding 4.3a). The description of each tool of the reference service now says that the retry repeats the same arguments and one control argument. The page `mcp-binding.html` stays as it was (site-differences 31).
+
+## Alignment of the four products (lot AL1, 2026-11)
+
+203. The claims `iat` and `exp` are JSON integers with digits only: no fraction, no exponent and no sign (9.3, 9.4). A service refuses another form with HTTP 401, and it never rounds or converts the value. The owner chose this rule on GitHub issue 1, because it removes the differences between the number readers, as 17.3 does for `op`. The strict reader of the core already refused these forms, so its checks did not change. `access-token make --number-form`, the member `number_forms` of a token of a case, and the cases U118 and E20 are new. This closes spec question 11.

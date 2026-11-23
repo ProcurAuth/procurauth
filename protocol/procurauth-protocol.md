@@ -244,12 +244,13 @@ The edge MUST use its signing key only for the identity token.
 9.3 Claims: `iss`, `sub`, `aud`, `iat` and `exp`. A token for a key also has `owner`.
 - `sub` is the id of the subject (section 3). `aud` is the id of the service.
 - For a key, `owner` is the id of its owner (3.1). The token and the questions never hold the text of the key. The token has no `act` claim, because `sub` is the key and not the person.
+- `iat` and `exp` are whole numbers of seconds since the Unix epoch. Each one is a JSON integer with digits only: it has no fraction, no exponent and no sign. Thus `1792569600.0`, `1.7925696e9` and `-1` are not valid. This rule is stricter than the NumericDate of [RFC 7519, 2], which permits a fraction. It removes the differences between the number readers of the languages, as 17.3 does for `op`.
 
 9.4 The configuration of the service names the token header, the value of `iss` and the public keys of the edge. It also names the id of the service, its maximum age for a token and its clock skew.
 
 The edge gives its public keys as a JWK Set [RFC 7517, 5]. When the set holds more than one key, the edge puts `kid` in the header of each token [RFC 7515, 4.1.4]. The service then checks the token with the key that has this `kid`. The service refuses a token with a `kid` that the set does not hold.
 
-For each request other than a read of its action document (5.1), the service MUST check that `alg` is one of the algorithms of 9.2 [RFC 8725, 3.1]. It MUST also check the signature, `typ` (`JWT`), `iss`, `aud` and `exp`. It refuses a token without `iss`, `sub`, `aud`, `iat` or `exp` (9.3). `aud` is the id of the service, or an array that holds it [RFC 7519, 4.1.3].
+For each request other than a read of its action document (5.1), the service MUST check that `alg` is one of the algorithms of 9.2 [RFC 8725, 3.1]. It MUST also check the signature, `typ` (`JWT`), `iss`, `aud` and `exp`. It refuses a token without `iss`, `sub`, `aud`, `iat` or `exp` (9.3). It refuses a token whose `iat` or `exp` does not have the form of 9.3. It never rounds or converts such a value. `aud` is the id of the service, or an array that holds it [RFC 7519, 4.1.3].
 
 The service refuses a token whose `exp` minus `iat` is more than its maximum age. It also refuses a token whose `iat` is later than its clock plus the skew. The skew also applies to `exp`: the service refuses a token when its clock is later than `exp` plus the skew. It refuses any other `typ`, for example `at+jwt` [RFC 8725, 3.12].
 

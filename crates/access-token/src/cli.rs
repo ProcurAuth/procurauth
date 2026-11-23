@@ -111,6 +111,13 @@ pub struct MakeArgs {
     #[arg(long)]
     pub bad_signature: bool,
 
+    /// Write the number of a time claim in a form that protocol 9.3 forbids:
+    /// `CLAIM=FORM`, with the form `fraction`, `exponent` or `negative`.
+    /// The value of the claim does not change. This makes a bad token.
+    /// Give the option one time for each claim.
+    #[arg(long = "number-form", value_name = "CLAIM=FORM")]
+    pub number_forms: Vec<String>,
+
     /// Make the token also when the claims break the rules of protocol 9.3.
     /// Use it to make a token that lacks a claim.
     #[arg(long)]

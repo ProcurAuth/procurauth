@@ -1,0 +1,157 @@
+{
+  "id": "U118",
+  "title": "The service refuses a token whose iat or exp is not a JSON integer with digits only: a fraction, an exponent or a sign.",
+  "role": "pep",
+  "paragraphs": [
+    "9.3",
+    "9.4"
+  ],
+  "requirement": "MUST",
+  "notes": "Each token keeps the value of the claim, and only the JSON form changes. A service that rounds or converts the value accepts the token and fails the case. GitHub issue 1 asked this question.",
+  "given": {
+    "tokens": {
+      "iat_fraction": {
+        "subject": "alice",
+        "number_forms": {
+          "iat": "fraction"
+        }
+      },
+      "exp_fraction": {
+        "subject": "alice",
+        "number_forms": {
+          "exp": "fraction"
+        }
+      },
+      "iat_exponent": {
+        "subject": "alice",
+        "number_forms": {
+          "iat": "exponent"
+        }
+      },
+      "exp_exponent": {
+        "subject": "alice",
+        "number_forms": {
+          "exp": "exponent"
+        }
+      },
+      "iat_negative": {
+        "subject": "alice",
+        "number_forms": {
+          "iat": "negative"
+        }
+      }
+    },
+    "pdp_script": [
+      {
+        "when": {},
+        "respond": {
+          "body": {
+            "decision": true
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "The claim iat with a fraction",
+      "request": {
+        "operation": "use_plain",
+        "token": "iat_fraction"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The claim exp with a fraction",
+      "request": {
+        "operation": "use_plain",
+        "token": "exp_fraction"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The claim iat with an exponent",
+      "request": {
+        "operation": "use_plain",
+        "token": "iat_exponent"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The claim exp with an exponent",
+      "request": {
+        "operation": "use_plain",
+        "token": "exp_exponent"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "The claim iat with a sign",
+      "request": {
+        "operation": "use_plain",
+        "token": "iat_negative"
+      },
+      "expect": {
+        "status": {
+          "equals": 401
+        },
+        "pdp_questions": [
+          {
+            "json": {},
+            "count": {
+              "equals": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -21,6 +21,92 @@ use crate::subject::{SubjectKind, classify};
 pub const TOKEN_TYPE: &str = "JWT";
 /// The longest token that the functions read, in bytes. A token is about 1 KB.
 pub const MAX_TOKEN_BYTES: usize = 16 * 1024;
+/// The form of a time claim (9.3), as an error message gives it.
+const TIME_FORM: &str =
+    "a JSON integer with digits only: no fraction, no exponent and no sign (9.3)";
+
+/// A form of a JSON number that 9.3 forbids for a time claim. A test tool uses
+/// it to make a bad token. Each form keeps the value of the number when it can.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NumberForm {
+    /// The digits and `.0`, for example `1792569600.0`. The value does not change.
+    Fraction,
+    /// The digits and `e0`, for example `1792569600e0`. The value does not change.
+    Exponent,
+    /// A minus sign and the digits, for example `-1792569600`.
+    Negative,
+}
+
+impl NumberForm {
+    /// The name of the form, as the data of the tools writes it.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Fraction => "fraction",
+            Self::Exponent => "exponent",
+            Self::Negative => "negative",
+        }
+    }
+
+    /// The form with this name.
+    pub fn parse(name: &str) -> Option<Self> {
+        [Self::Fraction, Self::Exponent, Self::Negative]
+            .into_iter()
+            .find(|form| form.as_str() == name)
+    }
+
+    /// The text of a whole number in this form.
+    pub fn write(self, number: u64) -> String {
+        match self {
+            Self::Fraction => format!("{number}.0"),
+            Self::Exponent => format!("{number}e0"),
+            Self::Negative => format!("-{number}"),
+        }
+    }
+}
+
+/// Write claims as JSON text, with the number of each named claim in a form
+/// that 9.3 forbids. A test tool signs this text to make a bad token. The
+/// other members have the form of `serde_json`.
+///
+/// # Errors
+/// Returns a message when a named claim is absent, or when it is not a whole
+/// number of 0 or more.
+pub fn claims_text_with_forms(
+    claims: &Map<String, Value>,
+    forms: &std::collections::BTreeMap<String, NumberForm>,
+) -> Result<String, String> {
+    for name in forms.keys() {
+        match claims.get(name) {
+            Some(value) if value.as_u64().is_some() => {}
+            Some(value) => {
+                return Err(format!(
+                    "Claim `{name}`: expected a whole number for a number form, found {}.",
+                    show(value)
+                ));
+            }
+            None => {
+                return Err(format!(
+                    "Claim `{name}` is absent, so it cannot have a number form."
+                ));
+            }
+        }
+    }
+    let mut out = String::from("{");
+    for (index, (name, value)) in claims.iter().enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+        out.push_str(&Value::String(name.clone()).to_string());
+        out.push(':');
+        match (forms.get(name), value.as_u64()) {
+            (Some(form), Some(number)) => out.push_str(&form.write(number)),
+            _ => out.push_str(&value.to_string()),
+        }
+    }
+    out.push('}');
+    Ok(out)
+}
 
 /// What a service knows about its edge (9.4). The configuration of the
 /// service gives each value.
@@ -736,7 +822,7 @@ fn check_claims(b: &mut Builder, map: &Map<String, Value>, policy: &TokenPolicy,
         None => b.set(
             CheckName::Iat,
             false,
-            claim_problem(map, "iat", "a whole number of 0 or more").unwrap_or_default(),
+            claim_problem(map, "iat", TIME_FORM).unwrap_or_default(),
         ),
     }
     // exp
@@ -755,7 +841,7 @@ fn check_claims(b: &mut Builder, map: &Map<String, Value>, policy: &TokenPolicy,
         None => b.set(
             CheckName::Exp,
             false,
-            claim_problem(map, "exp", "a whole number of 0 or more").unwrap_or_default(),
+            claim_problem(map, "exp", TIME_FORM).unwrap_or_default(),
         ),
     }
     // life
@@ -1071,6 +1157,88 @@ mod tests {
             let token = sign_compact(&header("Ed25519"), &c, &key);
             assert!(!failing(&token, &set_for(&key)).is_empty(), "{claim}");
         }
+    }
+
+    fn forms(pairs: &[(&str, NumberForm)]) -> std::collections::BTreeMap<String, NumberForm> {
+        pairs.iter().map(|(n, f)| ((*n).to_owned(), *f)).collect()
+    }
+
+    #[test]
+    fn p_9_3_iat_and_exp_are_integers_with_digits_only() {
+        let key = ed();
+        let set = set_for(&key);
+        let header = r#"{"alg":"Ed25519","typ":"JWT"}"#;
+        let Value::Object(map) = claims() else {
+            panic!("the claims are an object");
+        };
+        for claim in ["iat", "exp"] {
+            for form in [
+                NumberForm::Fraction,
+                NumberForm::Exponent,
+                NumberForm::Negative,
+            ] {
+                let text = claims_text_with_forms(&map, &forms(&[(claim, form)])).unwrap();
+                let token = sign_compact_text(header, &text, &key);
+                let found = failing(&token, &set);
+                assert!(
+                    found.contains(&CheckName::Claims),
+                    "{claim} {form:?}: {found:?}"
+                );
+                assert!(
+                    verify(&token, &set, &policy(), NOW).is_err(),
+                    "{claim} {form:?}"
+                );
+                assert!(verify_for_pep(&token, &set, &policy(), NOW).is_err());
+            }
+        }
+        // Other texts of a value that a reader could round: a fraction, a mantissa, -0 and 2^64.
+        for (claim, text) in [
+            ("iat", "1792569600.5"),
+            ("iat", "1.7925696e9"),
+            ("iat", "17925696E2"),
+            ("exp", "-0"),
+            ("exp", "18446744073709551616"),
+        ] {
+            let payload = format!(
+                r#"{{"iss":"https://edge.example","sub":"alice","aud":"datastore","iat":{},"exp":{}}}"#,
+                if claim == "iat" { text } else { "1792569600" },
+                if claim == "exp" { text } else { "1792569900" },
+            );
+            let token = sign_compact_text(header, &payload, &key);
+            assert!(
+                verify(&token, &set, &policy(), NOW).is_err(),
+                "{claim} {text}"
+            );
+        }
+        // The digits only: the token is good.
+        let text = claims_text_with_forms(&map, &forms(&[])).unwrap();
+        assert!(
+            verify(
+                &sign_compact_text(header, &text, &key),
+                &set,
+                &policy(),
+                NOW
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn a_number_form_keeps_the_value_and_needs_a_whole_number() {
+        assert_eq!(NumberForm::Fraction.write(5), "5.0");
+        assert_eq!(NumberForm::Exponent.write(5), "5e0");
+        assert_eq!(NumberForm::Negative.write(5), "-5");
+        assert_eq!(NumberForm::parse("exponent"), Some(NumberForm::Exponent));
+        assert_eq!(NumberForm::parse("other"), None);
+        let Value::Object(map) = json!({"a": 1, "b": "x", "c": 2}) else {
+            panic!("an object");
+        };
+        assert_eq!(
+            claims_text_with_forms(&map, &forms(&[("c", NumberForm::Fraction)])).unwrap(),
+            r#"{"a":1,"b":"x","c":2.0}"#
+        );
+        assert!(claims_text_with_forms(&map, &forms(&[("b", NumberForm::Fraction)])).is_err());
+        assert!(claims_text_with_forms(&map, &forms(&[("d", NumberForm::Fraction)])).is_err());
     }
 
     #[test]
