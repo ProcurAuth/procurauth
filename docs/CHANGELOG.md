@@ -9,12 +9,23 @@ This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en
 - The repository moved from the GitHub user `SCcagg5` to the GitHub organisation `ProcurAuth`. The address of the repository is now `https://github.com/ProcurAuth/procurauth`. GitHub redirects the old address of the repository.
 - The `$id` of each JSON Schema has a new host: `https://procurauth.github.io/procurauth/schemas/`. The old host was `https://sccagg5.github.io/procurauth/schemas/`, and it does not answer now. The path of each schema and its content do not change. The tags `v1.0` and `v1.1` still hold the old `$id`. A program that compares the `$id` of a schema with a fixed text must use the new value. The constant `BASE_URI` of the crate `procurauth-schema-check` follows.
 - The repository, the site and the manifests use the new addresses. The version of the protocol stays 1.1.
+- `reference-service` and `reference-edge` read a configuration file of 4 MiB at most. A `_file` member of a text key names a file of 1 MiB at most. A `_file` member of a JSON document (`jwks`, `keys`, `key_format`) has the limit of 4 MiB. A larger file stops the program at start.
+- `fake-pdp` and `access-conformance` refuse a hexadecimal value with a sign: a digest, a percent escape and the size of a chunk. Before, `+5` was a valid value.
+- The release workflow runs the workflow `ci` before the builds. It compares the tag with `Cargo.toml` and with this file. The notes of a release are the section of its version in this file. The tar archives are deterministic.
+- The development scripts use `--locked` for each cargo command. The tag of each development image is the start of the SHA-256 of its Dockerfile. `scripts/static.sh` builds for the architecture of the host: x86_64 or aarch64.
+- The site uses the family `site.css` and `site.js`. The footer of each page links the home page of the organisation and the other programs.
+- `scripts/check-docs.py` shows all the warnings. It does not count ids and section numbers as words.
+- The normative Markdown has one Markdown paragraph for each numbered paragraph. The text does not change.
 
 ### Added
 
 - The page `implementations.html`, the Open Graph image, the icons, the page 404, `sitemap.xml` and `robots.txt` of the site.
 - `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, the issue forms, the template of a pull request and the file `CODEOWNERS`.
 - The script `scripts/check-docs.py`. It checks the links, the site, the rules of ASD-STE100 and the hygiene of the files.
+- `.editorconfig`, `.gitattributes` and `THIRD-PARTY-NOTICES.md`.
+- The script `scripts/changelog-section.sh`. It prints the section of one version of a changelog.
+- The workflow `ci` has the job `Policy (no image is published)`.
+- `SECURITY.md` has the section "Known limits" about ES256 signatures and RUSTSEC-2026-0387, and it lists each test value.
 
 ## [1.1] - 2026-11-23
 

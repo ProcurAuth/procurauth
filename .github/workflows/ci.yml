@@ -1,18 +1,40 @@
 name: ci
 
+# The workflow release.yml calls this workflow (workflow_call) before it builds the programs of a tag.
+# No job logs in to a registry or publishes an image.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
+  policy:
+    name: Policy (no image is published)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Never publish container images
+        shell: bash
+        run: |
+          # The pattern is split so that this line does not match itself.
+          if grep -rnE 'ghcr''\.io|docker/login''-action|docker pus''h\b|packages: *wr''ite|push: *tr''ue' .github/workflows; then
+            echo "::error::workflows must not publish container images"
+            exit 1
+          fi
+
   checks:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - name: Format, lint, tests and conformance runs
         run: scripts/ci.sh

@@ -441,13 +441,44 @@ def split_sentences(text: str) -> list[str]:
     return out
 
 
-def ste_problems(text: str, count_sentences: bool = True) -> list[str]:
+# A paragraph id such as "3.6a" or "17.4" starts a paragraph of the normative texts. It is not a word.
+# Only the normative texts have these ids: in another file, a first number is a word.
+ID_PREFIX = re.compile(r"^\d+(?:\.\d+)*[a-z]?\s+")
+# Release marks such as "[5.1.0]" or the mark "FUTURE." can follow the id. They are not sentences.
+MARK_PREFIX = re.compile(r"^(?:(?:FUTURE\.|\[\d+(?:\.\d+)+\])\s*)+")
+# A citation such as [RFC 9110, 15.6.4], [AUTHZEN 1.0, l.473] or [CONTRACT, 9.1] counts as one word.
+CITATION = re.compile(r"\[[A-Z][A-Z0-9-]+(?: [0-9][0-9A-Za-z.-]*)?(?:, [^\[\]]{1,60})?\]")
+# One character with no space takes the place of a citation, so that a citation is one word and
+# a full stop in it does not end a sentence. The messages show the citation again.
+CITATION_MARK = "\u0001"
+
+
+def ste_sentences(text: str, normative: bool = False) -> list[tuple[str, str]]:
+    """Give each sentence of a paragraph as (text to show, text to check).
+
+    In the text to check, each citation is one word. In a normative text, the paragraph id and
+    the release marks are removed first."""
+    text = text.strip()
+    if normative:
+        text = MARK_PREFIX.sub("", ID_PREFIX.sub("", text, count=1), count=1)
+    citations = iter(CITATION.findall(text))
+    out: list[tuple[str, str]] = []
+    for sentence in split_sentences(CITATION.sub(CITATION_MARK, text)):
+        shown = sentence
+        while CITATION_MARK in shown:
+            shown = shown.replace(CITATION_MARK, next(citations), 1)
+        out.append((shown, sentence))
+    return out
+
+
+def ste_problems(text: str, count_sentences: bool = True, normative: bool = False) -> list[str]:
     found: list[str] = []
-    sentences = split_sentences(text)
+    sentences = ste_sentences(text, normative)
     if count_sentences and len(sentences) > 6:
         found.append(f"{len(sentences)} sentences in one paragraph")
-    for sentence in sentences:
-        words = sentence.split()
+    for shown, checked in sentences:
+        words = checked.split()
+        sentence = shown
         if len(words) > 25:
             found.append(f"{len(words)} words: {sentence[:110]}")
         for word in words:
@@ -459,7 +490,7 @@ def ste_problems(text: str, count_sentences: bool = True) -> list[str]:
             if bare in BANNED or letters in BANNED:
                 key = bare if bare in BANNED else letters
                 found.append(f"the word `{key}` (use {BANNED[key]}) in: {sentence[:90]}")
-        lower = f" {sentence.lower()} "
+        lower = f" {checked.lower()} "
         for phrase in PHRASAL:
             if f" {phrase} " in lower:
                 found.append(f"the phrasal verb `{phrase}` in: {sentence[:90]}")
@@ -524,7 +555,7 @@ def check_ste(report: Report) -> None:
         report.count("markdown files")
         seen: set[str] = set()
         for number, text in markdown_paragraphs(path):
-            for problem in ste_problems(text):
+            for problem in ste_problems(text, normative=name in NORMATIVE):
                 line = f"{name}:{number}: {problem}"
                 if line not in seen:
                     seen.add(line)
@@ -546,13 +577,22 @@ def check_ste(report: Report) -> None:
 
 HYGIENE = [
     (re.compile(r"\bsccagg5\b", re.I), "the old account name"),
+    # The pattern is split so that this file does not hold the names. This file is not checked.
+    (re.compile(r"\b(?:page" r"me|pa" r"ger|vi" r"gie)\b", re.I), "a name that must not appear"),
     (re.compile(r"[A-Za-z0-9._%+-]+@(?!example\.|users\.noreply)[A-Za-z0-9-]+\.[A-Za-z]{2,}"), "an e-mail address"),
     (re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), "an IP address"),
     (re.compile(r"docker\s+push|ghcr\.io|docker\.io/[a-z]+/", re.I), "an image registry"),
     (re.compile(r"\b(?:ghp_|github_pat_|gho_|AKIA|xox[bp]-|sk-[A-Za-z0-9]{20})[A-Za-z0-9_]{8,}"), "a token"),
-    (re.compile(r"the owner (?:decides if|chooses|updates the site)|the maintainers? (?:decides|keeps|owns)|the lead\b", re.I), "an internal decision"),
-    (re.compile(r"\blot [A-Z]{1,2}[0-9]\b"), "an internal lot name"),
+    # The owner of a key is also a role of the protocol. ROLE_TEXT says where this rule does not apply.
+    # "A tool that only asks the owner" is the term of contract 9.1, which a released changelog quotes.
+    (re.compile(r"\bthe owner (?:confirms|confirmed|decides|decided|chooses|chose|wants|wanted|said|updates the site)\b"
+                r"|\b(?<!only )(?:asks|asked) the owner\b"
+                r"|\bthe maintainers? (?:decides|decided|keeps|owns)\b|\bthe lead\b", re.I), "an internal decision"),
+    (re.compile(r"\b(?:dialogue|confirmation) paper\b", re.I), "the name of a private paper"),
+    (re.compile(r"\b[Ll]ots? [A-Z]{1,2}[0-9]+[a-z]?\b|\bprofile of S[0-9]+[a-z]?\b"), "an internal lot name"),
 ]
+# The normative texts and their HTML pages use "the owner" only as the role of the protocol.
+ROLE_TEXT = NORMATIVE | {"docs/specification.html", "docs/mcp-binding.html"}
 ALLOWED_IPS = {"127.0.0.1", "0.0.0.0", "203.0.113.1", "203.0.113.2", "203.0.113.10", "10.0.0.1", "1.1.0.0", "1.0.0.0"}
 # Public test keys. See .gitignore.
 PUBLIC_KEY_FILES = re.compile(r"test-edge-.*\.pem$|tls-test-.*\.pem$|key-format\.test-only|keys\.test-only")
@@ -581,6 +621,8 @@ def check_hygiene(report: Report) -> None:
                             continue
                         if re.search(r"version|\d+\.\d+\.\d+\.\d+-", line, re.I) or rel.endswith((".lock", ".json")) and "ip" not in line.lower():
                             continue
+                    if what == "an internal decision" and rel in ROLE_TEXT:
+                        continue
                     if what == "the old account name" and rel in ("docs/CHANGELOG.md", "docs/source.html", ".github/CODEOWNERS"):
                         continue  # The changelog records the move in one factual line.
                     if what == "an e-mail address" and (
@@ -611,7 +653,7 @@ def main(argv: list[str]) -> int:
         sys.stdout.write(line + "\n")
     if report.warnings:
         sys.stdout.write(f"warnings (not a failure): {len(report.warnings)}\n")
-        for line in report.warnings[:3]:
+        for line in report.warnings:
             sys.stdout.write(f"  {line}\n")
     sys.stdout.write("counts: " + ", ".join(f"{k}={v}" for k, v in sorted(report.counts.items())) + "\n")
     return 1 if report.problems else 0

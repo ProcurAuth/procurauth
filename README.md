@@ -5,19 +5,17 @@
 <p align="center">
   <a href="https://github.com/ProcurAuth/procurauth/actions/workflows/ci.yml"><img src="https://github.com/ProcurAuth/procurauth/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/ProcurAuth/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/ProcurAuth/procurauth?color=4338ca&label=release" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/protocol-1.1-4338ca" alt="Protocol 1.1">
+  <a href="#licence"><img src="https://img.shields.io/badge/licence-Apache--2.0%20%7C%20CC%20BY%204.0-lightgrey" alt="Licence: Apache-2.0 for the code, CC BY 4.0 for the texts"></a>
+  <a href="https://procurauth.github.io/procurauth/implementations.html"><img src="https://img.shields.io/badge/ProcurAuth-1.1-4338ca" alt="ProcurAuth 1.1"></a>
   <img src="https://img.shields.io/badge/profile%20of-AuthZEN%201.0-0ea5e9" alt="Profile of AuthZEN 1.0">
   <img src="https://img.shields.io/badge/conformance-245%20cases-34d399" alt="245 conformance cases">
-  <img src="https://img.shields.io/badge/code-Apache--2.0-lightgrey" alt="Code: Apache-2.0">
-  <img src="https://img.shields.io/badge/texts-CC%20BY%204.0-lightgrey" alt="Texts: CC BY 4.0">
 </p>
 
 <p align="center">
   <a href="https://procurauth.github.io/procurauth/"><b>Website</b></a> ·
+  <a href="#documentation">Docs</a> ·
   <a href="https://procurauth.github.io/procurauth/specification.html">Protocol</a> ·
   <a href="https://procurauth.github.io/procurauth/mcp-binding.html">MCP binding</a> ·
-  <a href="https://procurauth.github.io/procurauth/tools.html">Tools</a> ·
-  <a href="https://procurauth.github.io/procurauth/implementations.html">Implementations</a> ·
   <a href="SECURITY.md">Security</a> ·
   <a href="https://github.com/ProcurAuth/procurauth/releases/latest">Downloads</a>
 </p>
@@ -101,25 +99,9 @@ When the budget is spent, the answer is:
 
 Section 13 of the protocol has the full example, with the key of an agent.
 
-## Tools
-
-Seven programs help you to build and to test a service. They are Rust programs. The Linux builds are static files with no dependency.
-
-| Program | What it does |
-| --- | --- |
-| `keycheck` | Checks the text of a key against a key format. |
-| `access-token` | Makes and checks identity tokens. It runs the checks of protocol 9.4 and prints the result of each one. |
-| `access-lint` | Checks the action document of a service, a file of grants and an answer of the options route. |
-| `fake-pdp` | A test PDP that serves AuthZEN 1.0 from fixed data. Use it to run a service with no backend. |
-| `access-conformance` | Runs the conformance cases against a PEP, a PDP or an edge. |
-| `reference-service` | A small service that uses the library `procurauth-pep`. It passes the series U. |
-| `reference-edge` | A small edge: a reverse proxy that swaps a key for a token. It passes the series E. |
-
-The library `procurauth-pep` in `crates/procurauth-pep` has the checks that a PEP must do. Its optional feature `tls` gives a link to the PDP over TLS.
-
 ## Quick start
 
-This start takes five minutes on Linux x86-64. Each [release](https://github.com/ProcurAuth/procurauth/releases/latest) also has archives for Linux aarch64, macOS (Apple silicon and Intel) and Windows (x86-64). Docker is not necessary.
+This start takes five minutes on Linux x86-64. Each [release](https://github.com/ProcurAuth/procurauth/releases/latest) also has archives for Linux aarch64, macOS (Apple silicon and Intel) and Windows (x86-64). Docker is not necessary. The archive holds the seven programs of the section [Tools](#tools).
 
 ```sh
 curl -LO https://github.com/ProcurAuth/procurauth/releases/download/v1.1/procurauth-tools-1.1-x86_64-linux.tar.gz
@@ -154,6 +136,22 @@ Run the 98 conformance cases of the series D against the test PDP. The last line
 access-conformance --role pdp --profile crates/access-conformance/examples/pdp-fake.json
 ```
 
+## Tools
+
+Seven programs help you to build and to test a service. They are Rust programs. The Linux builds are static files with no dependency.
+
+| Program | What it does |
+| --- | --- |
+| `keycheck` | Checks the text of a key against a key format. |
+| `access-token` | Makes and checks identity tokens. It runs the checks of protocol 9.4 and prints the result of each one. |
+| `access-lint` | Checks the action document of a service, a file of grants and an answer of the options route. |
+| `fake-pdp` | A test PDP that serves AuthZEN 1.0 from fixed data. Use it to run a service with no backend. |
+| `access-conformance` | Runs the conformance cases against a PEP, a PDP or an edge. |
+| `reference-service` | A small service that uses the library `procurauth-pep`. It passes the series U. |
+| `reference-edge` | A small edge: a reverse proxy that swaps a key for a token. It passes the series E. |
+
+The library `procurauth-pep` in `crates/procurauth-pep` has the checks that a PEP must do. Its optional feature `tls` gives a link to the PDP over TLS.
+
 ## Conformance
 
 <p align="center">
@@ -174,11 +172,21 @@ The runner skips a case that needs a feature that the target does not have. A PD
 
 ## The ProcurAuth family
 
-This repository is the specification. The organisation [ProcurAuth](https://github.com/ProcurAuth) also holds programs that follow it. The [implementations page](https://procurauth.github.io/procurauth/implementations.html) and [IMPLEMENTATIONS.md](IMPLEMENTATIONS.md) list them, with the results of the conformance runs and the pinned commits. To add your program, open an issue.
+This repository is the specification. The organisation [ProcurAuth](https://github.com/ProcurAuth) also holds programs that follow it. The [implementations page](https://procurauth.github.io/procurauth/implementations.html) and [IMPLEMENTATIONS.md](IMPLEMENTATIONS.md) list them, with the results of the conformance runs and the pinned commits.
 
 <p align="center">
   <img src="docs/assets/family.svg" alt="The specification defines the protocol, the schemas and the conformance cases. The reference tools read them and test the programs. The portal is a backend, an edge and a PDP. Stowr, Hune and ClickHouse Dash are services that ask the portal." width="90%">
 </p>
+
+| Part | Role | Repository | Site |
+| --- | --- | --- | --- |
+| **procurauth** | The specification and the reference tools | [ProcurAuth/procurauth](https://github.com/ProcurAuth/procurauth) | [procurauth.github.io/procurauth](https://procurauth.github.io/procurauth/) |
+| **portal** | Backend, edge and PDP | [ProcurAuth/portal](https://github.com/ProcurAuth/portal) | [procurauth.github.io/portal](https://procurauth.github.io/portal/) |
+| **Stowr** | PEP: a browser for S3, Google Cloud Storage and folders | [ProcurAuth/stowr](https://github.com/ProcurAuth/stowr) | [procurauth.github.io/stowr](https://procurauth.github.io/stowr/) |
+| **Hune** | PEP: dashboards over ClickHouse, PostgreSQL and MongoDB | [ProcurAuth/hune](https://github.com/ProcurAuth/hune) | [procurauth.github.io/hune](https://procurauth.github.io/hune/) |
+| **ClickHouse Dash** | PEP and MCP server: a query console for ClickHouse | Outside this organisation | [Implementations page](https://procurauth.github.io/procurauth/implementations.html#programs) |
+
+To add your program to the implementations page, [open an issue](https://github.com/ProcurAuth/procurauth/issues/new/choose).
 
 ## Documentation
 
@@ -192,7 +200,7 @@ This repository is the specification. The organisation [ProcurAuth](https://gith
 | [Changelog](docs/CHANGELOG.md) | The changes of each version. |
 | [Design records](docs/design/README.md) and [architecture](devdocs/architecture.md) | The decisions and the structure of the code, for a developer. |
 
-## Repository
+These are the main directories of the repository.
 
 | Path | Content |
 | --- | --- |
@@ -202,7 +210,7 @@ This repository is the specification. The organisation [ProcurAuth](https://gith
 | `docs/` | The source of the [website](https://procurauth.github.io/procurauth/). GitHub Pages serves this directory. |
 | `scripts/` | The scripts that run the checks in Docker, and `check-docs.py`. |
 
-### Build and test
+## Build and test
 
 Use Docker. Do not install Rust on your machine.
 

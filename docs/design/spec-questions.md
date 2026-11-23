@@ -69,7 +69,7 @@ This file lists the places where the text of the protocol or of the MCP binding 
 30. **17.4.** The names of the errors of the narrow API are new: `invalid_evaluation`, `lease_required`, `invalid_lease` and `cannot_supersede`. The earlier drafts also differ for the owner with no device: `no_phone` and `no_device`. The text takes `no_device`.
 31. **Binding 5.7.** A call must give exactly one of `approval_ref`, `lease_s` and `until`. A service can give a default lease from its own configuration instead. The earlier drafts say that the PDP refuses a call with none.
 32. **Binding 5.7a.** The earlier drafts list `approval_cancelled`, but the PEP learns only `void` (17.12). The text defines no such code. Is a ninth verdict needed, or does the code leave the list?
-33. **Binding 5.7.** The result for a request that waits has a second item `NOT EXECUTED` and no `isError`. The paper asks to read this choice again after two weeks of use. Is the contract of the MCP servers changed to hold it?
+33. **Binding 5.7.** The result for a request that waits has a second item `NOT EXECUTED` and no `isError`. The earlier draft asks to read this choice again after two weeks of use. Is the contract of the MCP servers changed to hold it?
 34. **17.4.** Each read of a request has the parameter `subject`, also without `renew=true`. The earlier drafts show it only with `renew=true`. The text makes it mandatory, so that no verdict leaks to another subject.
 35. **17.9.** The effect and the pointers are checked by the PDP only. A case cannot check that a pointer of the `view` names a value of the `op` that the PEP sent. A new matcher could do it.
 36. **15, item 2.** The series A of the earlier drafts (API of the PDP) is not in the data. Are conformance cases needed for a PDP, with the endpoints `approval_requests` and `approval_status`?
@@ -86,7 +86,7 @@ This file lists the places where the text of the protocol or of the MCP binding 
 43. **17.4.** A request for an effect that has an approval that can be used still gets a new request. Is this an error? The code makes the new request the latest approval (decision 108).
 44. **17.8, 5.2b.** Does `confirm` apply to an action that has no member `approval`? The text says that the member "tells" that a grant can have it. The code applies `confirm` to each action except `access` (decision 105).
 
-## The PEP for the approval of an effect (lot S4b)
+## The PEP for the approval of an effect
 
 45. **Binding 5.7.** A call with a bad control argument gets `invalid_argument` and no question goes to the PDP. A subject that has no right on the tool then sees a different reply from the reply for an unknown tool (4.2). Is this accepted, or must the service ask the PDP first?
 46. **17.4, 17.5, binding 5.7.** A call with `wait_s` waits for the verdict and does not renew the lease, because the call does not name the request. The agent can still renew with `get_action_status`. Should the wait renew the lease?

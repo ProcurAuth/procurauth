@@ -14,12 +14,16 @@
 //! - A key that accepts indirection takes exactly one of three forms: `<name>`, `<name>_env` and `<name>_file`.
 //! - A secret takes only `_env` and `_file`. A secret in clear text in the file stops the program.
 //! - A variable that does not exist, an empty value, and a file that the program cannot read stop the program.
+//! - The configuration file has 4 MiB at most. The `_file` member of the JSON document `jwks` has the same limit.
+//! - The `_file` member of a different key names a file of 1 MiB at most.
 //! - Two keys that contradict each other stop the program.
 //!
 //! The table [`KEYS`] is the source of the configuration reference in the README.
 //! [`reference_table`] writes it, and a test compares it with the README.
 
 use std::fmt::Write as _;
+use std::fs::File;
+use std::io::Read as _;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::time::Duration;
@@ -384,10 +388,40 @@ pub struct Sources<'a> {
     pub file: &'a dyn Fn(&Path) -> Result<String, String>,
 }
 
+/// The largest configuration file, in bytes: 4 MiB.
+pub const MAX_CONFIG_BYTES: u64 = 4 << 20;
+
+/// The largest file that the `_file` member of a text key names, in bytes: 1 MiB.
+///
+/// The `_file` member of the JSON document `jwks` has the limit [`MAX_CONFIG_BYTES`], as the same document in the file.
+pub const MAX_VALUE_FILE_BYTES: u64 = 1 << 20;
+
+/// The reason for a file that has more than `limit` bytes.
+fn too_large(limit: u64) -> String {
+    format!("expected a file of {limit} bytes at most, found a larger file")
+}
+
+/// Read a file of at most `limit` bytes as UTF-8 text. The error is the reason.
+fn read_bounded(path: &Path, limit: u64) -> Result<String, String> {
+    let file = File::open(path).map_err(|e| e.to_string())?;
+    let mut bytes = Vec::new();
+    file.take(limit.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .map_err(|e| e.to_string())?;
+    if bytes.len() as u64 > limit {
+        return Err(too_large(limit));
+    }
+    // The standard reader gives the same error text as `std::fs::read_to_string` for bytes that are not UTF-8.
+    std::io::read_to_string(bytes.as_slice()).map_err(|e| e.to_string())
+}
+
 /// The sources of the real program: the environment of the process and the file system.
+///
+/// The file source reads [`MAX_CONFIG_BYTES`] bytes at most. The reader gives the `_file` member of
+/// a text key [`MAX_VALUE_FILE_BYTES`] bytes at most.
 pub fn real_sources<R>(run: impl FnOnce(&Sources<'_>) -> R) -> R {
     let env = |name: &str| std::env::var(name).ok();
-    let file = |path: &Path| std::fs::read_to_string(path).map_err(|e| e.to_string());
+    let file = |path: &Path| read_bounded(path, MAX_CONFIG_BYTES);
     run(&Sources {
         env: &env,
         file: &file,
@@ -474,22 +508,41 @@ impl Reader<'_> {
         let direct = obj.optional(key.leaf);
         let env = key.env.and_then(|n| obj.optional(n));
         let file = key.file.and_then(|n| obj.optional(n));
-        self.pick(key, direct, env, file, |reader, key, value| match value {
-            Value::String(text) => Some(text.clone()),
-            other => {
-                reader.error(&key.name(), "a string", &other.to_string());
-                None
-            }
-        })
+        self.pick(
+            key,
+            direct,
+            env,
+            file,
+            MAX_VALUE_FILE_BYTES,
+            |reader, key, value| match value {
+                Value::String(text) => Some(text.clone()),
+                other => {
+                    reader.error(&key.name(), "a string", &other.to_string());
+                    None
+                }
+            },
+        )
+    }
+
+    /// The error for a `_file` member that names a file of more than `limit` bytes.
+    fn value_file_too_large(&mut self, member: &str, path: &str, limit: u64) {
+        self.error(
+            member,
+            &format!("a file of {limit} bytes at most"),
+            &format!("{} (a larger file)", quote(path)),
+        );
     }
 
     /// Choose the form, and read the value of the form.
+    ///
+    /// `limit` is the largest file, in bytes, that the `_file` member can name. It is at most [`MAX_CONFIG_BYTES`].
     fn pick(
         &mut self,
         key: &'static Key,
         direct: Option<&Value>,
         env: Option<&Value>,
         file: Option<&Value>,
+        limit: u64,
         read_direct: impl FnOnce(&mut Self, &Key, &Value) -> Option<String>,
     ) -> Option<(String, Source)> {
         let name = key.name();
@@ -580,6 +633,15 @@ impl Reader<'_> {
                 return None;
             };
             return match (self.sources.file)(Path::new(path)) {
+                // The real source stops at `MAX_CONFIG_BYTES`. `limit` is not above it.
+                Err(reason) if reason == too_large(MAX_CONFIG_BYTES) => {
+                    self.value_file_too_large(&member, path, limit);
+                    None
+                }
+                Ok(text) if text.len() as u64 > limit => {
+                    self.value_file_too_large(&member, path, limit);
+                    None
+                }
                 Err(reason) => {
                     self.error(
                         &member,
@@ -719,14 +781,19 @@ pub fn load(text: &str, sources: &Sources<'_>) -> Result<Loaded, Vec<String>> {
 /// Read the configuration from a file.
 ///
 /// # Errors
-/// Returns every error. A file that the program cannot read is one error.
+/// Returns every error. A file that the program cannot read is one error. A file of more than
+/// [`MAX_CONFIG_BYTES`] bytes is one error.
 pub fn load_file(path: &Path, sources: &Sources<'_>) -> Result<Loaded, Vec<String>> {
-    let text = (sources.file)(path).map_err(|reason| {
+    let cannot = |reason: String| {
         vec![format!(
             "Cannot read the configuration file {}: {reason}.",
             path.display()
         )]
-    })?;
+    };
+    let text = (sources.file)(path).map_err(cannot)?;
+    if text.len() as u64 > MAX_CONFIG_BYTES {
+        return Err(cannot(too_large(MAX_CONFIG_BYTES)));
+    }
     load(&text, sources)
 }
 
@@ -845,7 +912,10 @@ fn read_jwks(reader: &mut Reader<'_>, obj: &mut Obj<'_>) -> Option<KeySet> {
     let file = key.file.and_then(|n| obj.optional(n));
     let before = reader.errors.len();
     // The direct form is a JSON object. The other forms give its JSON text.
-    let picked = reader.pick(key, direct, env, file, |_, _, _| Some(String::new()));
+    // A document has the limit of the configuration file, in the file and in a `_file` member.
+    let picked = reader.pick(key, direct, env, file, MAX_CONFIG_BYTES, |_, _, _| {
+        Some(String::new())
+    });
     let Some((text, source)) = picked else {
         if reader.errors.len() == before {
             reader.error(
@@ -979,4 +1049,93 @@ fn read_pdp(reader: &mut Reader<'_>, obj: &mut Obj<'_>, report: &mut Report) -> 
     pdp.max_connections = usize::try_from(connections).unwrap_or(1);
     pdp.plain_retries = u32::try_from(retries).unwrap_or(1);
     Some(pdp)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    /// A new empty folder for one test.
+    fn folder(name: &str) -> PathBuf {
+        let dir =
+            std::env::temp_dir().join(format!("reference-service-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    fn bytes(count: u64) -> Vec<u8> {
+        vec![b'a'; usize::try_from(count).unwrap()]
+    }
+
+    #[test]
+    fn a_file_over_the_limit_is_refused() {
+        let dir = folder("limits");
+        // The configuration file.
+        let config = dir.join("config.json");
+        std::fs::write(&config, bytes(MAX_CONFIG_BYTES + 1)).unwrap();
+        let errors = real_sources(|sources| load_file(&config, sources)).unwrap_err();
+        assert_eq!(
+            errors,
+            vec![format!(
+                "Cannot read the configuration file {}: expected a file of 4194304 bytes at most, found a larger file.",
+                config.display()
+            )]
+        );
+        // A `_file` member, above its limit and above the limit of the real source.
+        let value = dir.join("listen");
+        let text = serde_json::json!({"listen_file": value.to_str().unwrap()}).to_string();
+        let want = format!(
+            "Key `listen_file`: expected a file of 1048576 bytes at most, found {} (a larger file).",
+            quote(value.to_str().unwrap())
+        );
+        for size in [MAX_VALUE_FILE_BYTES + 1, MAX_CONFIG_BYTES + 1] {
+            std::fs::write(&value, bytes(size)).unwrap();
+            let errors = real_sources(|sources| load(&text, sources)).unwrap_err();
+            assert!(errors.contains(&want), "{errors:?}");
+        }
+        // A file at the limit is read.
+        std::fs::write(&value, bytes(MAX_VALUE_FILE_BYTES)).unwrap();
+        assert_eq!(
+            read_bounded(&value, MAX_VALUE_FILE_BYTES).unwrap().len(),
+            1 << 20
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// A JSON document of `size` bytes: an empty object, then spaces.
+    fn padded_document(size: u64) -> Vec<u8> {
+        let mut text = b"{}".to_vec();
+        text.resize(usize::try_from(size).unwrap(), b' ');
+        text
+    }
+
+    #[test]
+    fn a_document_file_has_the_limit_of_the_configuration_file() {
+        let dir = folder("document-limits");
+        let document = dir.join("jwks");
+        let text = serde_json::json!({"jwks_file": document.to_str().unwrap()}).to_string();
+        let size_error = |errors: &[String]| {
+            errors
+                .iter()
+                .any(|e| e.starts_with("Key `jwks_file`: expected a file of"))
+        };
+        // Above the limit of a text key, and at the limit of the configuration file: no size error.
+        for size in [MAX_VALUE_FILE_BYTES + 1, MAX_CONFIG_BYTES] {
+            std::fs::write(&document, padded_document(size)).unwrap();
+            let errors = real_sources(|sources| load(&text, sources)).unwrap_err();
+            assert!(!size_error(&errors), "{size} bytes: {errors:?}");
+        }
+        // Above the limit of the configuration file.
+        std::fs::write(&document, padded_document(MAX_CONFIG_BYTES + 1)).unwrap();
+        let errors = real_sources(|sources| load(&text, sources)).unwrap_err();
+        let want = format!(
+            "Key `jwks_file`: expected a file of 4194304 bytes at most, found {} (a larger file).",
+            quote(document.to_str().unwrap())
+        );
+        assert!(errors.contains(&want), "{errors:?}");
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 }

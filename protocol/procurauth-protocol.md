@@ -78,20 +78,28 @@ The words PDP, PEP, subject, action, resource and evaluation have the meaning of
 
 ## 3. Subjects
 3.1 The id of a person has no colon. Thus the PDP can know if a subject is a person or a key (3.2, 3.7).
+
 3.2 A key has the subject id `<prefix>:<local>`. This protocol defines the prefix `key`.
 The local part has 1 to 64 characters from a to z, 0 to 9, underscore and hyphen. It is the id of the key in the system that makes the key. Example: the subject id `key:9b1c04e2aa71f0c3` has the local part `9b1c04e2aa71f0c3`.
+
 3.3 The PEP sends the subject with the type `user`, for a person and for a key. The id is the `sub` of the identity token.
 The PEP MUST treat the id as opaque text. The PEP MUST NOT read a meaning from its characters. A subject of another type is an unknown subject (11.1).
+
 3.4 The PDP knows the owner of each key. The PEP does not send the owner (9.6).
+
 3.5 The PDP answers `true` for a key only when two conditions are true at that moment. A grant of the key gives the action and covers the resource (4.3). The owner has the right to do that action on that resource. This protocol does not say how the PDP decides the current rights of the owner. A grant of the key that the rights of the owner do not cover gives nothing. The decision for a key follows this paragraph only.
 
 When the owner loses a right, the key loses it at the first decision of the PDP after the PDP has the change. A kept answer of the PEP can delay this by `cache_ttl` at most (10.1). The PDP copies no right.
 
 A PDP MAY need other conditions of the owner. Examples are the right to have keys, and a maximum life of a key that the rules of the owner set. When a condition fails, the answer is `false` with no reason (11.2). It is never `unknown_subject`, because the condition can change later.
+
 3.6 Unused.
+
 3.7 An id with a colon and an unknown prefix, or a bad local part, is an unknown subject (11.1).
+
 3.8 Each key is one subject. The grants and the limit values of a key are its own.
 The system that makes a key chooses the local part of its subject id (3.2) and the format of its text. This protocol defines no format for the text of a key. When the system revokes or deletes a key, or when a key expires, the key is an unknown subject (11.1). A condition of 3.5 that can change later never makes a key unknown.
+
 3.9 A PDP that decides from a copy of its directory MUST bound the age of that copy. It MUST answer `false` for each key when the copy is older than the bound. The PDP publishes the bound in whole seconds, in the metadata member `procurauth_directory_max_age_seconds` (10.7b). A PDP that decides from its directory itself, with no copy, publishes 1.
 
 ## 4. Resources and coverage
@@ -101,18 +109,23 @@ A resource below the service MUST carry the chain of its ancestors in `resource.
 
 The types of the chain, then the type of the resource, follow the parents of the action document (5.2). The depth of a type is the number of steps from `service` to it: a type with the parent `service` has the depth 1. The maximum depth is 4.
 An id is an exact string of 1 to 256 bytes in UTF-8, with no control character. The PEP does not encode it.
+
 4.2 An id is unique only below its parent. Two parents can have a child with the same id.
+
 4.3 A grant on a node covers the node and each node below it, also a node that the service adds later. A grant on a database does not cover its host.
 Example, with the service and the notation of section 13: a grant of `data.read` on `service:datastore/host:prod` covers each database of this host, now and later. To give two databases only, give one grant on each of them. Alice in section 13 has no such grant, so her grants do not cover the host.
+
 4.4 The request can carry `context.match`. The value `node` is the default: the answer is a decision about the node.
 The value `subtree` asks if a grant applies on the node, above it or below it. A `true` answer for `subtree` is for the display only.
 A PEP MUST NOT let an operation run because of it.
 
 For a key, a `true` answer for `subtree` needs one node that a grant of the key and a right of the owner both cover (3.5). This node is the node of the question, a node above it or a node below it. The next example uses the databases `test1` and `test2` of section 13. A key with `data.read` on `test2`, and an owner with `data.read` only on `test1`, gets `false` for `data.read` with `subtree` on the service.
+
 4.5 The PEP builds the chain from its own data. It never takes the chain from a client.
 
 ## 5. The action document and the list of the options
 5.1 A service publishes its document at `/.well-known/procurauth/actions`, without authentication.
+
 5.2 The document is a JSON object with these members:
 - `server`: the id of the service. It is equal to the `aud` of the identity tokens of the service;
 - `resource_types`: the tree of types below the service. Each item has `name`, `parent` and `description`. A description has 1 character or more. A type name has 1 to 32 characters: a to z first, then a to z, 0 to 9 or underscore. A type name is not `service` and occurs one time. The `parent` is `service` or another declared type, with no cycle and a depth of 4 at most (4.1). The type `service` is the root, and the document does not declare it;
@@ -121,20 +134,28 @@ For a key, a `true` answer for `subtree` needs one node that a grant of the key 
 - `limits`: optional, the limit declarations of the service (6.1). A limit name has 1 to 32 characters: a to z first, then a to z, 0 to 9 or underscore.
 
 5.2a A service publishes only the actions that it serves. An action of a feature that the configuration of the service turns off is not in `actions`, and the service sends no question for it. A service that serves an action for some of its hosts or settings publishes the action when it serves it for at least one of them. When the feature turns on, the service publishes the action again with the same name and the same `resource_types`. The reader finds it at its next read (5.3b).
+
 5.2b Each action of the document follows section 17. An action has no member `approval`, and no flag lets a service skip section 17 for an action. A service MUST NOT publish the member `approval`. A reader ignores it as an unknown member (5.3), and it never makes a service skip section 17. The PDP decides which uses need an approval, with the member `confirm` of a grant (17.8).
+
 5.3 The reader checks the document. A bad member, or an unknown member of a limit declaration, makes the whole document bad.
 
 A read fails when it gets a status other than 200, also 404, or no answer. After a bad document or a failed read, the reader keeps the last good document, for a maximum time (5.3a). Only a good document replaces it.
 
 The reader bounds the size of the document that it reads, and it gives this bound in its documentation. A larger document is bad (5.3c).
+
 5.3a The reader MUST give this maximum time in its documentation. The time starts at the last good read. After this time, the reader acts as with no good document of the service (11.1).
 The decision of an edge for `access` never depends on the age of the document (8.3). An edge MUST NOT refuse a subject because the document of the service is too old or absent. The PDP answers each other question `false` with no reason (11.1).
+
 5.3b A reader that reads the document of each service at a fixed period SHOULD make these reads at equal intervals over the period. With a period of 5 minutes, it makes approximately 3.3 reads each second for 1,000 services and approximately 33 for 10,000. The reader keeps the last good document of each service. With a bound of 64 KiB for each document, they take approximately 66 MB at most for 1,000 services and 655 MB for 10,000.
+
 5.3c A reader MUST accept a document of 64 KiB, with 64 actions, 16 types, 256 resources and 16 limit declarations. It MUST accept a label of 60 characters, a description of 300 characters and a unit of 20 characters. A reader MAY accept more. A service SHOULD stay within these numbers, because a reader MAY treat a larger document as bad (5.3).
+
 5.4 The labels and the descriptions are in English.
+
 5.5 Each use has one action. That action lists each budget that the use spends and each ceiling that applies to the action of the use. A ceiling of another permission of the operation applies only to the part that this permission lets run (5.5a).
 
 A service MUST NOT ask two actions with `context.usage` for one operation, except to choose the action of the use as 10.1 says. Only the action of the use takes units (5.5a). A PEP can choose the action of a use among several actions for one operation (10.1). Other actions of the operation can list a budget.
+
 5.5a An operation can also need permissions on other actions or on other resources. The action of the use is the one action that the call runs and consumes. A service declares the action of the use for each tool and each route, and the PEP names it in its questions. The question of the use is the only question of the operation that can have `context.usage` (6.4) or `context.approval` (17.1).
 
 The PEP asks each other permission of the operation with `context.permission_only` equal to `true`, and with no `context.usage` and no `context.approval` (6.6). The PDP decides such a question as 3.5 says, and it ignores `confirm` (17.8). It asks only the action of the use with `context.usage`, when this action lists a budget (6.4). Thus one operation takes units for one action only, and one approval covers the action of the use only. 10.1a gives an example. This is also true when another of its actions lists a budget.
@@ -142,6 +163,7 @@ The PEP asks each other permission of the operation with `context.permission_onl
 A `true` answer for one of these other permissions can have `context.limits`. The PEP applies these ceilings to the part of the operation that this permission lets run (7.5). A question with `context.permission_only` never gets a reason of 17.1. A PEP that gets such a reason treats it as an answer that is not valid (10.3).
 
 `context.permission_only` is a member of the context of a question. Its only valid value is `true`. A question that has `permission_only` with `context.usage` or with `context.approval` gets HTTP 400, or `invalid_request` in an item of an Access Evaluations request (11.1). Another value gets the same answer. The member is valid with `context.match` equal to `subtree`. A PDP that gives no approval ignores the member (AuthZEN 1.0).
+
 5.6 A service MAY publish a route that lists the children of a node, page by page, with a search. A system that shows a form for grants, the caller, uses it to show the options of a node. The request is `GET /.well-known/procurauth/resources` with the query parameters of 5.7, and the answer is a JSON object (5.8).
 
 The request carries an identity token that the edge makes for the person who fills the form (section 9). Only the edge signs identity tokens (9.1, 9.4), so the caller is a part of the edge. The caller sends the request to the origin of the action document (5.1). Thus the rule of 9.4 lets the caller reach the service.
@@ -151,6 +173,7 @@ The service checks the token as 9.4 says, and it lists only the children that th
 For each child that it lists, the service MUST get a `true` answer with `context.match` = `subtree` (4.4). The question of this answer names an action whose `resource_types` holds the type of the child (5.2). The service can use a kept answer (10.1). The service MAY also apply its own rules that remove more children, and it gives these rules in its documentation. When the PDP gives no valid answer, the service follows 10.3.
 
 The service SHOULD bound the number of questions to the PDP for one request. When it reaches this bound, it gives the items that it has and a `next` value (5.7, 5.8). Thus a node with many children that the subject cannot see does not make one request ask the PDP for each child.
+
 5.7 The caller encodes the value of each query parameter as 5.2 encodes an id. Each byte outside A-Z, a-z, 0-9, `-`, `.`, `_` and `~` becomes `%XX`, with upper-case hexadecimal digits [RFC 3986]. The service decodes each `%XX` one time. It does not read `+` as a space. The parameters are:
 - `parent`: optional, the path of the node, in the form of the member `path` of 5.2. Without it, the service lists the nodes whose type has the parent `service`;
 - `type`: mandatory, the type of the children. Its parent in the action document is the type of the node of `parent`, or `service` when the request has no `parent`;
@@ -163,6 +186,7 @@ The service decodes the value of `parent` one time. Then it reads the value as a
 A parameter is bad when it occurs more than one time, or when its value breaks the rules of 5.7. Thus a `type` is bad when its parent in the action document is not the type of the node of `parent`, or `service` without `parent`. A bad parameter gets HTTP 400. A request without `type` also gets HTTP 400. The service ignores a parameter that 5.7 does not name.
 
 A request with no token, or with a token that is not valid, gets HTTP 401 (9.4). A node that does not exist, or that the subject of the token cannot see, gets an answer with no items.
+
 5.8 Each item of `items` is one child of the node, with these members:
 - `id`: the id of the child, as 4.1 says. The service does not encode it;
 - `label`: a short text for the form, for example the id itself;
@@ -179,6 +203,7 @@ GET /.well-known/procurauth/resources?parent=host%3Aprod&type=database&q=test&li
   "next": null }
 ```
 A caller MUST accept an answer of 64 KiB with 50 items, an id of 256 bytes and a label of 60 characters. The service SHOULD stay within these numbers. A caller MAY treat a larger answer as a failed call.
+
 5.9 The caller MAY keep each answer for a short time that it chooses. An entry applies only to the same service, subject and query parameters. The caller never gives an entry to another subject. It bounds the number of entries. This bound does not grow with the number of services: it is the same for 1,000 and for 10,000 services.
 
 The caller bounds the size of an answer and the number of its items. A larger answer is a failed call.
@@ -199,50 +224,69 @@ A grant gives a value for a limit in one of two forms:
 Each window of a budget value has its own counter (6.7). A PDP MAY refuse a grant of more than 8 limit values. It documents its bound.
 
 6.2 An action lists the limits that apply to it. One use of the action takes units from each budget that it lists. The PEP applies each ceiling that it lists (section 7). To count one action separately, the service declares a second budget and lists it only on that action.
+
 6.3 The window is fixed. It starts at a multiple of its length since the Unix epoch, by one clock that all instances of the PDP use. A client can send at most two times the amount around the boundary of two windows. A shorter window on the same grant bounds this burst.
+
 6.4 For each use of an action that lists a budget, the PEP sends one question with `context.usage` (6.11). The one exception is the kept answer of 10.1. For an action without a budget, it sends none.
 `context.usage` is an object with one member, `units`. In this version, `units` is 1: `"context": {"usage": {"units": 1}}`. Another value gets HTTP 400.
+
 6.5 The PDP first checks the subject, the resource and the grants. It takes units only when they give `true`. It takes the units from each counter of the use in one atomic step, or from none. When the use also consumes an approval, 17.2 gives the order. These are the counters of each window, for the key and for its owner (6.7).
 If one counter has fewer units left than the use asks, the PDP takes none. It answers `false` with the reason `budget_exceeded` and `retry_after` (section 11).
+
 6.6 A question without `context.usage` counts nothing.
+
 6.7 Each subject that a grant gives a budget has its own counter for each window of that budget value. A use by a key takes units from each of these counters that exists: the counters of the key and the counters of its owner. A use with no counter takes no unit (6.12).
 The uses of the owner and the uses of all its keys share the counters of the owner. The PDP chooses the counters. The PEP never names a counter.
+
 6.8 A PDP with several instances counts each counter one time for all of them. The units that all its instances take from a counter never exceed its amount in one window. No instance counts on its own.
+
 6.9 When the PDP cannot read or change a counter that a question needs, it immediately answers HTTP 503, never a decision [RFC 9110, 15.6.4].
 A PDP publishes the longest time that it takes to answer a question with `context.usage`. Within this time, it gives a decision or HTTP 503. The PDP gives this time, in whole seconds, in the metadata member `procurauth_usage_max_seconds` (section 14).
+
 6.10 A limit that no grant gives is no limit from the PDP. A grant value for a limit that the current document of the service does not declare gives nothing.
 The right of the grant and its other values still apply. The own limits of the PEP still apply.
+
 6.11 Only a request with one evaluation can carry `context.usage`: an Access Evaluation API request, or an Access Evaluations API request without items [AUTHZEN 1.0, l.473].
 Any other request that has `context.usage` at any level gets HTTP 400, and the PDP counts nothing. This applies to an Access Evaluations request with items and to each Search API request. A request with `context.usage` and `context.match` = `subtree` also gets HTTP 400.
 A PEP that chooses among several actions for one operation follows 10.1.
+
 6.12 A `true` answer to a question with `context.usage` has `context.usage.units`: the units that the PDP took from each counter of the use, 0 or 1. The value 0 tells that no budget applies to the subject for this action.
 A PEP that gets `true` without this member MUST treat the answer as `false`.
 
 ## 7. Ceilings
 7.1 A ceiling is the maximum of one use. A lower value is stricter: a service MUST NOT declare a ceiling where a higher value is stricter.
 A ceiling name is `max_` and a noun, with no unit. A ceiling name that does not start with `max_` makes the document bad (5.3). A duration is in whole seconds. Examples: `max_rows`, the most rows that one read gives, and `max_duration`, the longest run of one use, in seconds.
+
 7.3 For a `true` answer, `context.limits` gives each ceiling that the action lists and that a grant gives. It holds only ceilings. The PDP uses a ceiling value only on a grant of the action of the question, for a ceiling that this action lists. The PDP ignores a ceiling value on any other grant. The value is the combination of these grants that cover the resource, as section 8 says. A budget value never appears in an answer.
 
 Example: `{"decision": true, "context": {"limits": {"max_duration": 30}}}`. For a use of an action that lists a budget, the PEP applies the `context.limits` of the answer to the question with `context.usage` (6.4).
+
 7.4 A ceiling applies to each use of the action, on each route of the service.
+
 7.5 A ceiling is mandatory to understand. A PEP that cannot apply a ceiling of `context.limits` MUST treat the answer as `false`.
 The action document of the service is its adoption: the PDP gives only the ceilings that the action lists. The PEP sends no opt-in member.
+
 7.6 The PDP does not add `context.limits` to a `false` answer. A PEP ignores it.
 
 ## 8. Combination of values
 8.1 Limits narrow access. No limit widens it. A decision for a key has two sides, the key and its owner, and each limit value of both sides applies (3.5). For a ceiling, the lowest value applies: among the grants of the asked action that cover the resource (7.3), and between the two sides. For a budget, each side has its own counters (6.7). The PDP never compares two budgets.
+
 8.2 A value that only one grant or only one side gives stays as it is.
+
 8.3 A subject has one value for each budget of a service. It is on the grant of the action `access` on the service: the grant that opens the service to the subject. The PDP ignores a budget value on any other grant.
 An edge gives an identity token for a service only to a subject with a `true` decision for the action `access` on that service (3.5). A PEP asks for `access` only for a route that runs no action of the action document (10.1c).
+
 8.4 For a ceiling, a value of a key above the value of its owner has no effect (8.1). For a budget, the counters of the owner still bound each use of the key (6.7). The budget of a key adds no units to its owner.
 
 ## 9. The identity token
 9.1 An edge authenticates a client and gives a service an identity token. This section defines the token for a person and for a key. A service receives no other token.
 When a client sends a header with the name of the token header, the edge MUST replace it. The edge MUST remove the text of the key from the request before it sends the request to the service.
 An edge can be an authentication server that a proxy calls, for example with ForwardAuth. Its answer cannot clear a header of the request, so the proxy removes the text of the key. The edge documents the proxy option that does it.
+
 9.2 The token is a JWT, signed with `Ed25519` or `ES256`, with the header type `JWT`. The operator MUST set the life of the token (`exp` minus `iat`) to no more than the maximum age that each service accepts. A service refuses a token with a longer life (9.4).
 The edge MUST use its signing key only for the identity token.
 [RFC 9864, 4.1.1] registers the JOSE name `Ed25519` for the header `alg`, and deprecates the name `EdDSA` [RFC 9864, 4.1.2].
+
 9.3 Claims: `iss`, `sub`, `aud`, `iat` and `exp`. A token for a key also has `owner`. A token MAY also have `nbf` [RFC 7519, 4.1.5]. An edge does not need to give it.
 - `sub` is the id of the subject (section 3). `aud` is the id of the service.
 - For a key, `owner` is the id of its owner (3.1). The token and the questions never hold the text of the key. The token has no `act` claim, because `sub` is the key and not the person.
@@ -259,12 +303,17 @@ The service refuses a token whose `exp` minus `iat` is more than its maximum age
 The service takes the token only from the header that the edge sets, never from `Authorization`, a cookie or a query parameter. The service MUST accept requests only through the edge, for example with a network rule (section 12). The service answers a read of its action document (5.1) without a token, through the edge. A request with no token, or with a token that is not valid, gets HTTP 401. The service MUST ignore an unknown claim.
 
 The read of the action document and a health-probe route (10.1c) are the two exceptions to the rule on the edge. The service can answer this read directly to the reader of 5.3 that the operator names. It can answer a health probe directly to the system that supervises it.
+
 9.5 `owner` is for logs and for approvals. A service MUST NOT use it in a decision.
+
 9.6 The service sends no claim other than `sub` (3.3) to the PDP.
+
 9.7 The token carries no grant, no limit and no decision. A decision comes only from the PDP.
 A service MAY keep the result of a token check until `exp` plus its clock skew (9.4), only for that exact token. It bounds the number of kept results.
+
 9.8 An edge that refuses a key answers HTTP 401 with `WWW-Authenticate: Bearer`. When the request has the text of a key, the header also has `error="invalid_token"` [RFC 6750, 3.1]. The edge never redirects a request that has the text of a key.
 The body of this answer is empty. Thus the edge needs no part of the body of the request.
+
 9.9 An edge MAY keep an identity token that it made, and give it again to the same subject for the same service. It gives a kept token only after it authenticated the client and got a `true` decision for `access` (8.3) for this request. It gives a kept token only before its `exp`, and it bounds the number of kept tokens.
 
 The number of kept tokens grows with the pairs of a subject and a service that this subject uses. Example: 1,000 subjects that each use 10 of 1,000 services need 10,000 tokens, approximately 10 MB at 1 KB each. If each subject uses 100 of 10,000 services, they need 100,000 tokens, approximately 100 MB. A bound keeps the memory fixed: when the table is full, the edge signs a new token.
@@ -294,13 +343,17 @@ A kept answer applies only to the same subject, action, resource with its chain 
 10.1a An example of 5.5a: an operation copies the table `orders` of the database `test1` into the database `test2` of the service `datastore` (section 13). The action of the use is `data.write`. For Alice, the PEP first asks `data.read` on the table `orders` of `test1`, with `context.permission_only` equal to `true` and without `context.usage`. Her grant on `test1` gives `max_rows` 1000. Then the PEP asks `data.write` on the database `test2`, with `context.usage`. Only the second question takes a unit. When the first answer is `false`, the PEP refuses the operation and sends no question with `context.usage`. A `confirm` on the grant of `data.read` changes nothing: only a `confirm` on `data.write` asks for an approval.
 
 The value `max_rows` 1000 applies to the read: thus the copy reads 1000 rows at most. The first question takes no unit, although `data.read` also lists the budget `requests`.
+
 10.1b The PEP bounds the number of kept answers (10.1). The bound does not depend on the requests of the clients, because a client chooses the resources of the questions. When the table is full, the PEP keeps no new answer.
+
 10.1c A route of a service that runs no action of the action document follows one of two rules:
 - A health-probe route gives no data of the service, for example a fixed text that tells that the service runs. It needs no identity token, and the PEP asks no question for it. The service gives each such route in its documentation.
 - Each other route needs a valid identity token (10.0, step 2). This includes a route that gives a static file. For each request, the PEP asks the action `access` on the resource of type `service`, with the id of the service (4.1). The question has no `context.usage` and no `context.approval`. The route runs only after a `true` answer, and the PEP maps a refusal as 10.3 says.
 
 The action `access` is never in the action document (5.2). `confirm` has no effect on it (17.8), so such a route never waits for an approval. A reason of 17.1 in the answer is an answer that is not valid (10.3). The PEP MAY keep the answer for `cache_ttl` (10.1).
+
 10.2 The PEP applies the ceilings as 7.3 and 7.5 say.
+
 10.3 The PEP MUST fail closed. It MUST NOT send `context.reason` to the client. On an HTTP route, it maps each answer of the PDP as the list below shows. The MCP binding gives the map for an MCP request [MCP-BINDING]. Its tool errors for `budget_exceeded` and for the reasons of 17.1 are exceptions to the rule on `context.reason`. The error code `approval_cannot_wait` is an exception too.
 - `false` with no reason, or with a reason other than `budget_exceeded`: HTTP 403.
 - `false` with a reason of 17.1, for a call that cannot wait (17.7a): HTTP 403 with the body `{"error": "approval_cannot_wait"}`. For a call that can wait, 17.7 gives the steps, and the MCP binding gives the result.
@@ -309,9 +362,13 @@ The action `access` is never in the action document (5.2). `confirm` has no effe
 
 10.6 The PEP MUST NOT send a question with `context.usage` again after a timeout, a lost answer or a connection error. The one exception: the connection failed before the PEP wrote the request.
 The units of a lost answer stay counted. The PEP refuses that use as for a PDP that does not answer (10.3). The PEP SHOULD wait for each answer longer than the longest time that the PDP publishes (6.9).
+
 10.7 The PEP SHOULD keep its connections to the PDP open between questions [RFC 9112, 9.3]. It SHOULD keep a small fixed number of connections. The PDP publishes the longest time that it keeps an idle connection open. The PEP closes an idle connection before the PDP does: after half of this time, or less. The PDP gives this time, in whole seconds, in the metadata member `procurauth_idle_max_seconds` (section 14).
+
 10.7a A PDP publishes the largest body and the largest number of items of one Access Evaluations request that it reads. A PEP sends its questions in requests within these maxima. When necessary, it splits them into several requests. The PDP gives these maxima in the metadata members `procurauth_evaluations_max_bytes` and `procurauth_evaluations_max_items` (section 14). A request above a maximum gets HTTP 400 or 413, and the PDP evaluates nothing.
+
 10.7b A PDP publishes the age bound of its directory (3.9) in the metadata member `procurauth_directory_max_age_seconds` (section 14). The value is a whole number of seconds, from 1. A PEP MAY read it, for example for its logs, and it takes no decision from it. A PEP that does not know the member ignores it.
+
 10.8 Unused. The MCP binding holds the tool error of a refused budget [MCP-BINDING].
 
 ## 11. Answers and reasons

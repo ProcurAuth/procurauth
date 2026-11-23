@@ -270,7 +270,7 @@ void procurauth_errors_free(procurauth_errors *e);
 
 ### 2.5 TLS and transport
 
-75. Option A: the client of `procurauth-pep` with its feature `tls`, on `rustls` and `aws-lc-rs`. Version 1.1 adds this feature, off by default (decisions 44 to 51 of `decisions-pep.md`). It reads the system bundle from fixed paths and an optional CA file, and it reads no environment variable. The archive of the C interface can turn it on.
+75. Option A: the client of `procurauth-pep` with its feature `tls`, on `rustls` and `aws-lc-rs`. Version 1.1 adds this feature, off by default (decisions 44 to 51 of `decisions-pep.md`). It reads the system bundle from fixed paths and an optional CA file, and it reads no environment variable. The archive of the C interface can enable it.
 76. Option A removes `pdp_transport.cpp` from Dash. The rules of 10.6 and 10.7 then run in Rust code that the cases test. But Dash keeps OpenSSL for ClickHouse, so the binary has two TLS stacks and two sets of trusted roots.
 77. With option A, the library must implement the Dash keys `ca_file`, `verify` and `insecure_link` again with `rustls`. `verify = false` needs the dangerous verifier API of `rustls`. The build must give `zig cc` to `cc-rs` for `aws-lc-sys` on musl. The portal builds `aws-lc` on Alpine with `gcc`, not with `zig`.
 78. Option B: a callback transport. Dash implements `send` with its current client and its static OpenSSL. The archive is then pure Rust, and the build needs only `rustup target add`.
@@ -310,7 +310,7 @@ void procurauth_errors_free(procurauth_errors *e);
 ## Open points
 
 102. Open: the rule for two grants `access` with a budget on one service (item 14). The choices are the first grant, or the lower amount for each window.
-103. Open: whether an owner with no limit (the superadmin of the portal) is part of the PDP library, or stays in the portal.
+103. Open: the place of an owner with no limit, the superadmin of the portal. The PDP library can hold it, or the portal can keep it.
 104. Open: the TLS option of Dash (items 75 to 81). Option A uses the feature `tls` of the library.
 105. Closed: the licence of the portal is `MIT OR Apache-2.0` since portal 5.6.0, and it fits the dependency.
 106. Open: whether the core gets a feature that removes the code of tokens and keys (item 40).

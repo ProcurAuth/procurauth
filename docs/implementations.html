@@ -58,8 +58,8 @@
   <div class="tablewrap"><table>
   <thead><tr><th scope="col">Program</th><th scope="col">Role</th><th scope="col">Language</th><th scope="col">Version</th><th scope="col">Follows</th></tr></thead>
   <tbody>
-  <tr><th scope="row"><a href="https://github.com/ProcurAuth/portal">portal</a></th><td data-label="Role">Backend, edge and PDP</td><td data-label="Language">Rust</td><td data-label="Version">5.6.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
-  <tr><th scope="row"><a href="https://github.com/ProcurAuth/stowr">Stowr</a></th><td data-label="Role">PEP: browser for S3 and Google Cloud Storage</td><td data-label="Language">Rust</td><td data-label="Version">0.3.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
+  <tr><th scope="row"><a href="https://github.com/ProcurAuth/portal">portal</a> &middot; <a href="https://procurauth.github.io/portal/" aria-label="portal website">website</a></th><td data-label="Role">Backend, edge and PDP</td><td data-label="Language">Rust</td><td data-label="Version">5.6.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
+  <tr><th scope="row"><a href="https://github.com/ProcurAuth/stowr">Stowr</a> &middot; <a href="https://procurauth.github.io/stowr/" aria-label="Stowr website">website</a></th><td data-label="Role">PEP: browser for S3 and Google Cloud Storage</td><td data-label="Language">Rust</td><td data-label="Version">0.3.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
   <tr><th scope="row"><a href="https://github.com/ProcurAuth/hune">Hune</a></th><td data-label="Role">PEP: dashboards</td><td data-label="Language">Rust</td><td data-label="Version">0.1.1</td><td data-label="Follows">ProcurAuth 1.0 line, commit 058563c</td></tr>
   <tr><th scope="row"><a href="https://github.com/Circular-fi/Clickhouse-dash">ClickHouse Dash</a></th><td data-label="Role">PEP and MCP server: query console for ClickHouse</td><td data-label="Language">C++</td><td data-label="Version">1.6.0</td><td data-label="Follows">ProcurAuth 1.1</td></tr>
   </tbody></table></div>
@@ -67,12 +67,12 @@
   <div class="impl-grid">
     <div class="card impl-card"><h3>portal <span class="badge">Backend, edge, PDP</span></h3>
       <p>The portal is one program with one configuration file and one database. It keeps the users, their grants and their keys. It checks a key and gives the service an identity token. It answers the AuthZEN questions of the services, with the limits and the budgets. It also gives the approval inbox of protocol section 17.</p>
-      <dl class="facts"><dt>Version</dt><dd>5.6.0</dd><dt>Conformance</dt><dd>The CI runs the series D (98 cases) and E (20 cases) of ProcurAuth 1.1, at the commit <code>bb6f9b0</code> of the main branch. That commit is the parent of <code>v1.1</code>: only the release workflow differs.</dd><dt>Libraries</dt><dd>None of this repository. The portal has its own decision code.</dd></dl>
-      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/portal">portal on GitHub</a></div></div>
+      <dl class="facts"><dt>Version</dt><dd>5.6.0</dd><dt>Conformance</dt><dd>The CI runs the series D (98 cases) and E (20 cases) of ProcurAuth 1.1, at the commit of the tag <code>v1.1</code>. The portal is not a PEP, so it has no series U result. The script <code>demo/conformance/run-conformance-u.sh</code> runs the series U against the demo service <code>notes</code>. The portal repository records no count of this run.</dd><dt>Libraries</dt><dd>None of this repository. The portal has its own decision code.</dd></dl>
+      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/portal">portal on GitHub</a><a class="btn small" href="https://procurauth.github.io/portal/">portal website</a></div></div>
     <div class="card impl-card"><h3>Stowr <span class="badge">PEP</span></h3>
       <p>Stowr shows S3 buckets, Google Cloud Storage and mounted folders in one web page. It is one static binary with one configuration file. With the access mode <code>authzen</code>, it checks the identity token and asks a PDP for each operation. Its routes are HTTP routes, and it has no MCP endpoint.</p>
       <dl class="facts"><dt>Version</dt><dd>0.3.0</dd><dt>Conformance</dt><dd>Series U with ProcurAuth 1.1: 127 cases, 81 passed, 0 failed, 46 skipped. 45 cases need an MCP endpoint, and U84 needs a use of the service itself.</dd><dt>Libraries</dt><dd><code>procurauth-pep</code> and <code>procurauth-core</code>, pinned at the commit of the tag <code>v1.1</code>.</dd></dl>
-      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/stowr">Stowr on GitHub</a></div></div>
+      <div class="btn-row"><a class="btn small" href="https://github.com/ProcurAuth/stowr">Stowr on GitHub</a><a class="btn small" href="https://procurauth.github.io/stowr/">Stowr website</a></div></div>
     <div class="card impl-card"><h3>Hune <span class="badge">PEP</span></h3>
       <p>Hune is a dashboard server. It shows tables, time series and charts from ClickHouse, PostgreSQL and MongoDB. In the access mode <code>authzen</code>, it is a PEP: each dashboard and each query asks the PDP. The mode <code>open</code> needs no PDP.</p>
       <dl class="facts"><dt>Version</dt><dd>0.1.1. The first stable version is 1.0.0.</dd><dt>Conformance</dt><dd>Series U of 2026-11-11: 110 cases, 60 passed, 0 failed, 50 skipped. Hune has no run with ProcurAuth 1.1 yet.</dd><dt>Libraries</dt><dd><code>procurauth-pep</code> and <code>procurauth-core</code>, pinned at the commit <code>058563c</code>. This commit is 18 commits after <code>v1.0</code>.</dd></dl>
@@ -122,6 +122,11 @@
       <div>
         <h2>ProcurAuth</h2>
         <p>ProcurAuth lets a backend manage the rights of its users and the rights of the AI agents that act for them. Version 1.1.</p>
+        <ul>
+          <li><a href="https://procurauth.github.io/">All projects</a></li>
+          <li><a href="https://procurauth.github.io/portal/">portal</a></li>
+          <li><a href="https://procurauth.github.io/stowr/">Stowr</a></li>
+        </ul>
       </div>
       <div>
         <h2>Read</h2>

@@ -372,7 +372,8 @@ impl Server {
 }
 
 pub(crate) fn digest_from_hex(text: &str) -> Option<[u8; 32]> {
-    if text.len() != 64 {
+    // `from_str_radix` accepts a sign: refuse each byte that is not a hexadecimal digit.
+    if text.len() != 64 || !text.bytes().all(|b| b.is_ascii_hexdigit()) {
         return None;
     }
     let mut out = [0_u8; 32];
@@ -554,6 +555,12 @@ mod tests {
         assert_eq!(digest_from_hex(&good), Some([0xab; 32]));
         assert_eq!(digest_from_hex("ab"), None);
         assert_eq!(digest_from_hex(&"zz".repeat(32)), None);
+    }
+
+    #[test]
+    fn a_digest_with_a_sign_is_refused() {
+        assert_eq!(digest_from_hex(&"0a".repeat(32)), Some([0x0a; 32]));
+        assert_eq!(digest_from_hex(&"+a".repeat(32)), None);
     }
 
     #[test]

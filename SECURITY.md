@@ -18,8 +18,8 @@ These times are targets for a project that has no paid staff.
 
 | Step | Target |
 | --- | --- |
-| We acknowledge your report. | 5 working days |
-| We tell you if we accept it as a vulnerability. | 15 working days |
+| We acknowledge your report. | 5 business days |
+| We tell you if we accept it as a vulnerability. | 15 business days |
 | We publish a fix or a corrected text. | 90 days after the report, or sooner |
 
 We ask you to wait for the fix before you publish details. We give credit in the advisory, unless you ask us not to.
@@ -46,6 +46,40 @@ The project covers three kinds of problem:
 - A configuration of a deployment that does not follow the protocol or the documents.
 - `fake-pdp` and `reference-edge` as production servers. They are test programs. They have no TLS code, and the documents say so.
 
-## Test keys
+## Known limits
 
-The repository holds test keys and one test certificate authority. They are in `crates/access-token/examples/`, `crates/access-conformance/examples/`, `crates/reference-edge/examples/` and `crates/procurauth-pep/tests/data/`. They are public on purpose, and they protect nothing. A report about one of these keys is not a vulnerability.
+`access-token`, `access-conformance` and `reference-edge` can sign an identity token with ES256. For ES256, they use the crate `p256` 0.13 on `crypto-bigint` 0.5.
+
+The advisory [RUSTSEC-2026-0387](https://rustsec.org/advisories/RUSTSEC-2026-0387.html) applies to `crypto-bigint` 0.5. Some of its operations on secret values do not run in constant time. This can let an attacker who measures the time of many signatures learn data about the private key. The check of an ES256 signature uses only a public key. The advisory does not apply to it.
+
+Use Ed25519 for a key that protects real data. This limit stays until the project uses a version of `p256` with a corrected `crypto-bigint`.
+
+## Test values
+
+The repository holds test keys, test certificates and test values. They are public on purpose, and they protect nothing. A report about one of these values is not a vulnerability.
+
+- The private keys for the identity token, Ed25519 and P-256:
+  - `crates/access-token/examples/test-edge-ed25519.pem`
+  - `crates/access-token/examples/test-edge-es256.pem`
+  - `crates/access-conformance/examples/test-edge-ed25519.pem`
+  - `crates/access-conformance/examples/test-edge-es256.pem`
+- The public keys of the identity token, in PEM and JWKS form:
+  - `crates/access-token/examples/test-edge-ed25519.pub.pem`
+  - `crates/access-token/examples/test-edge-es256.pub.pem`
+  - `crates/access-token/examples/service-two-keys.json`
+  - `crates/access-conformance/examples/edge-jwks.json`
+  - `crates/access-conformance/examples/edge-jwks-one.json`
+- The test certificate authorities, the server certificate and its private key for the TLS tests of `procurauth-pep`:
+  - `crates/procurauth-pep/tests/data/tls-test-ca.pem`
+  - `crates/procurauth-pep/tests/data/tls-test-other-ca.pem`
+  - `crates/procurauth-pep/tests/data/tls-test-server.pem`
+  - `crates/procurauth-pep/tests/data/tls-test-server-key.pem`
+- The test API keys and the test credential of the conformance runs:
+  - `crates/access-conformance/examples/edge-valid-key.txt`
+  - `crates/access-conformance/examples/edge-confirm-key.txt`
+  - `crates/access-conformance/examples/edge-no-access-key.txt`
+  - `crates/access-conformance/examples/edge-unknown-key.txt`
+  - `crates/access-conformance/examples/pdp-credential.txt`
+- The test credential of `fake-pdp`: `crates/fake-pdp/examples/pep-credential.txt`.
+- The digests and the format of the test API keys of `reference-edge`: `crates/reference-edge/examples/keys.test-only.json` and `crates/reference-edge/examples/key-format.test-only.json`.
+- The test API keys in the tests: `crates/reference-edge/tests/common/mod.rs`, `crates/reference-edge/tests/edge.rs` and `crates/access-conformance/tests/common/mock_edge.rs`.

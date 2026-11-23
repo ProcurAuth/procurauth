@@ -111,7 +111,7 @@ Each item gives one choice and the reason in one sentence.
 
 70. The resource in the effect is the path of 5.2 for `resources`. The service itself has the empty string, so the effect needs no second notation for a resource and no chain.
 71. The number subset of `op` is the integers from -(2^53-1) to 2^53-1. Any other number makes `op` invalid with `invalid_op`, because the number formats of the languages differ.
-72. `op` is a JSON object, because a `view` needs pointers into it and the paper gives an object in each example. The empty object is valid.
+72. `op` is a JSON object, because a `view` needs pointers into it and the earlier draft gives an object in each example. The empty object is valid.
 73. Section 17 has only the paragraph 17.3 in this version. The numbers 17.1 to 17.12 stay free for the approval profile, because a paragraph keeps its number.
 74. The ids V01 and V02 name two groups of vectors, not cases of a series, because no runner uses a vector file in this version.
 75. The header of the protocol stays at version 1.0. The changelog shows the changes as unreleased until a release, and the site pages show the version 1.0.
@@ -131,23 +131,23 @@ Each item gives one choice and the reason in one sentence.
 86. `confirm` has no effect on `access` and on a question with `context.match` equal to `subtree` (17.8). The edge decides only `access`, and a display must not hide a tool.
 87. The binding has no code `approval_cancelled`. The PEP learns only `void` for a request that someone cancelled (17.12), so it gives `approval_expired`.
 88. The tool `get_action_status` has no action and sends no question. The approval API checks the subject, and `tools/list` names the tool when it names a tool with an approval.
-89. The API of the PDP uses the error `no_device` for an owner with no device, as the dialogue paper does. The confirmation paper says `no_phone`.
-90. The result for a request that waits is not an error. It has a second content item that starts with `NOT EXECUTED`, as the paper recommends (question 9).
-91. The `view` has the members `title`, `fields`, `body` and `body_label`. The paper shows them in its example, and a schema needs a closed list.
+89. The API of the PDP uses the error `no_device` for an owner with no device, because the name fits any device, not only a phone. An earlier draft says `no_phone`.
+90. The result for a request that waits is not an error. It has a second content item that starts with `NOT EXECUTED`, as the earlier draft recommends (question 9).
+91. The `view` has the members `title`, `fields`, `body` and `body_label`. The earlier draft shows them in its example, and a schema needs a closed list.
 92. In the data of a PDP, the last entry of `approvals` for one subject, action, resource and effect is the latest approval. A list has an order, so no timestamp is needed.
 
 ## Case ids of the approval profile
 
-93. The ids follow the rule of no gap. The paper ids U107 and U109 to U112 become U106 to U110, and the paper D90 becomes D89. The paper U106 is the case U30, which is rewritten.
-94. The paper cases D88 and D89 stay out of the data, because the answer of a person is outside the protocol. A new case D88 tests `approval_pending`, which the paper had no case for.
-95. A case of the approval profile has the condition `no_approval_support`. The runner holds it for each target until the lots S4a and S4b, so that the reference programs stay green.
+93. The ids follow the rule of no gap. The draft ids U107 and U109 to U112 become U106 to U110, and the draft D90 becomes D89. The draft U106 is the case U30, which is rewritten.
+94. The draft cases D88 and D89 stay out of the data, because the answer of a person is outside the protocol. A new case D88 tests `approval_pending`, which the draft had no case for.
+95. A case of the approval profile has the condition `no_approval_support`. The runner holds it for each target until the reference programs support the profile, so that they stay green. The next two sections give this support.
 96. The runner model reads the new members of a case now: `variant`, `approval_script`, `pdp_approvals` and the matcher `effect`. The runner loads each case, and one case that it cannot read stops the whole run.
-97. The directory `approvals.json` is valid against the schema only. The reader of the core does not know `confirm` and `approvals` until the lot S4a, and the test of the data files skips this file.
+97. The directory `approvals.json` is valid against the schema only. The reader of the core knows `confirm` and `approvals` only after the next section, so the test of the data files skips this file.
 98. The schema `conformance-case` has no endpoint `approval_requests` or `approval_status`. No case sends a request to the approval API of a PDP, because the API series stays with the tests of the PDP.
 99. The variable `approval_ref` has the fixed value `ref_conformance_0001`, and the base call of the runner gives `lease_s` 900. A case then needs no value from the profile for the control arguments.
 100. The reader of the core reads the member `approval` of an action (5.2b) and refuses another value. The schema and the lint examples of 5.2b need it, and the protocol makes it a rule for each reader.
 
-## The reference programs for the approval profile (lot S4a)
+## The reference programs for the approval profile
 
 101. The core has the module `effect`. It computes the canonical text and the effect, and it checks `op` and a `view`. The test `effect_vectors` keeps its own code, so two programs prove the vectors.
 102. The module `effect` takes a `Value` that the strict reader made. A duplicate member name and a lone surrogate cannot exist in a `Value`. The PDP maps the reader error under `op` to `invalid_op`.
@@ -170,9 +170,9 @@ Each item gives one choice and the reason in one sentence.
 119. The runner holds `no_approval_support` for a PDP unless the profile has `pdp.approvals` or starts fake-pdp. A profile that gives both stops the run. fake-pdp gives approvals, so the two keys contradict each other.
 120. The runner holds `no_approval_support` for an edge unless the profile has `edge.keys.confirm_access`. The case E19 needs a key whose grant of `access` has `confirm`.
 121. The test key `key:ann-k3` and its text `pk_live_...0004` are for E19. The directory `access.json` has a grant of `access` with `confirm` for it, and `reference-edge` knows its digest.
-122. The cases keep the condition `no_approval_support` in the data. The runner no longer holds it for fake-pdp and reference-edge. The cases U30 and U100 to U110 stay skipped until the lot S4b.
+122. The cases keep the condition `no_approval_support` in the data. The runner no longer holds it for fake-pdp and reference-edge. The cases U30 and U100 to U110 stay skipped until the PEP supports the profile (next section).
 
-## The PEP and the reference service for the approval profile (lot S4b)
+## The PEP and the reference service for the approval profile
 
 123. The library has the module `approval`. `Pep::decide_approval` follows 17.7 for an action with the member `approval`. The caller gives `op`, `view` and the controls. The PEP computes the effect from its own service id, the action and the node of the operation.
 124. The decision value `ApprovalRequired` is a value of `Outcome`, with the id and the code of the request. `Outcome::into_result` gives the refusal of a `false` answer for it. A caller that does not know approvals then fails closed, as decision 83 asks.
@@ -185,9 +185,9 @@ Each item gives one choice and the reason in one sentence.
 131. `wait_s` is a whole number of seconds, and the PEP bounds it to 25. The value is the wait time of the portal plan. After a submission, a call with `wait_s` reads the verdict with `wait` and with no `renew`, because the call names no request. A failed read leaves the result "it waits". A verdict `approved` makes the PEP ask again from the start, one time.
 132. A control argument has its type checked, and a bad one gives `invalid_argument` before any question. `lease_s` is a whole number from 1. `approval_ref`, `until` and `supersedes` are texts of 1 to 512 bytes. The PDP checks the rest, as 17.4 and 17.5 say.
 133. The code `approval_rate_limited` has `retry_after` in whole seconds. Protocol 10.3, 17.4 and binding 5.3 use seconds. The contract 6.1 has `retry_after_ms` as an option, and the binding wins (binding 12, item 9).
-134. The error for an owner with no way to receive the request is `approval_unavailable`, and the PDP error is `no_device`. The earlier drafts also write `no_phone`. Decision 89 chose `no_device`.
+134. The error for an owner with no way to receive the request is `approval_unavailable`, and the PDP error is `no_device`. An earlier draft also writes `no_phone`. Decision 89 chose `no_device`.
 135. The contract 9.8 and binding 5.7b give `invalid_argument` for the request of another owner. The earlier plan said `not_found` for the contract cases P. This text uses `invalid_argument`, and it adds no code `not_found`.
-136. The binding 3.1 and 3.5a follow the contract 9: the service asks the decision point. The text adds the exception for a tool that only asks the owner (contract 9.1). Open point 7 of the binding says that the contract 9.2, 9.6, 9.7 and 9.9 are Unused. Items 9 and 10 are new. The paragraph numbers do not change.
+136. The binding 3.1 and 3.5a follow the contract 9: the service asks the decision point. The text adds the exception for a tool that only asks the owner (contract 9.1). The binding has an open point 7. It says that the contract 9.2, 9.6, 9.7 and 9.9 are Unused. Items 9 and 10 are new. The paragraph numbers do not change.
 137. The reference service has the tool `append_rows`. Its action is `data.append`, which has the member `approval`. The HTTP routes and the tool `copy_table` use `data.write`, which has no approval. Thus no route asks an action that needs an approval with no effect. The tool `write_rows` and its request for input are gone.
 138. The `op` of `append_rows` has `tool`, `host`, `database`, `table` and `rows`. `rows` is the compact JSON text of the array, because a `body` of a `view` must name a text of `op` (decision 103). The `view` has three fields and the body `/rows`. A text above 16 KiB gives `invalid_argument` (contract 9.5).
 139. A result of a tool that ran has no member `isError`. MCP gives the default false. The cases U30, U102 and U104 ask for no `isError`, and the result of 5.7 has none.
@@ -204,7 +204,7 @@ Each item gives one choice and the reason in one sentence.
 
 148. Section 17 is mandatory for a service. Decided on 2026-11-10: each function that a service exposes must be approvable, or the service does not conform. This ends decision 76 for a PEP. No action opts out, and no flag or member says that a service gives approvals. A PDP MAY give no approval, and it then gates no action. An edge asks only `access`, so it ignores `confirm` (17.8).
 149. The member `approval` of an action is removed (5.2b). It is now an unknown member of an action. A reader ignores it, as 5.3 and AuthZEN 1.0 say, and the core reader gives the warning `removed_member`. The document stays good, and no alias stays. A service MUST NOT publish it, and the case U112 tests this. The paragraph 5.2b stays and says that each action follows section 17.
-150. The PEP asks the question of 10.1 first, with no effect. It computes the effect only when the answer has a reason of 17.1. The other design sends the effect in each question. It needs a hash for each use, and it stops the kept answers of 10.1 for each action. The lazy design leaves the questions of an action that needs no approval as they were. Spec question 54 asks the owner to confirm it.
+150. The PEP asks the question of 10.1 first, with no effect. It computes the effect only when the answer has a reason of 17.1. The other design sends the effect in each question. It needs a hash for each use, and it stops the kept answers of 10.1 for each action. The lazy design leaves the questions of an action that needs no approval as they were. Spec question 54 is open.
 151. The effect of any action follows 17.3a. `op` holds the canonical arguments of the call that will run, with each default as a value. It has the name of the operation, with the member `tool` for an MCP tool. An action that serves one operation and has no argument gives the empty `op`. A read and a navigation have an `op` as a write has. The hash of 17.3 does not change, so the old vectors stay valid.
 152. The vectors read-with-default, read-empty-op-on-node and navigation-page are new in the group V01. They give the effect of a read, of an empty `op` and of a navigation. Two programs computed each one: the Rust test `effect_vectors` and a one-off program in Python.
 153. The size limit of `op` and `view` is `max_command_bytes`, the bound that the PDP publishes (17.4). A PEP never cuts or hides a part of the command. A command that does not fit refuses the call, with the tool error `invalid_argument` for an MCP tool. The check of the size is the check of the PDP: the PEP learns the bound from the answer 413.
@@ -270,7 +270,7 @@ Each item gives one choice and the reason in one sentence.
 ## Alignment of the four products (version 1.1, 2026-11)
 
 203. The claims `iat` and `exp` are JSON integers with digits only: no fraction, no exponent and no sign (9.3, 9.4). A service refuses another form with HTTP 401, and it never rounds or converts the value. This rule closes GitHub issue 1, because it removes the differences between the number readers, as 17.3 does for `op`. The strict reader of the core already refused these forms, so its checks did not change. `access-token make --number-form`, the member `number_forms` of a token of a case, and the cases U118 and E20 are new. This closes spec question 11.
-204. When its key set holds more than one key, a service refuses a token without `kid` with HTTP 401 (9.4). It never tries each key, because such a loop makes the cost of a bad token grow with the set. The core already gave this result (`SelectError::KidRequired`). The condition `single_key_set` now also holds for a PEP whose profile has one signing key, and the case U119 tests the rule. This closes the question of the owner on `kid`.
+204. When its key set holds more than one key, a service refuses a token without `kid` with HTTP 401 (9.4). It never tries each key, because such a loop makes the cost of a bad token grow with the set. The core already gave this result (`SelectError::KidRequired`). The condition `single_key_set` now also holds for a PEP whose profile has one signing key, and the case U119 tests the rule. This closes the question on `kid`.
 205. A token MAY have the claim `nbf` (9.3). A service that gets it refuses the token when `nbf` is later than its clock plus the skew (9.4). `nbf` has the form of `iat` (decision 203). The edge does not need to give it, and the reference edge does not. The core has the check `nbf` between `exp` and `life`, so `access-token check` prints 14 checks. The member `nbf` of a token of a case and the case U120 are new, and they close spec question 16.
 206. The approval API answers a request with no credential, or with an unknown credential, with HTTP 401 and `unauthorized` (17.4). This is the answer of the evaluation endpoints of AuthZEN 1.0. A PDP gives 403 `forbidden` only when it knows the credential and gives no approval. For a PEP, both are faults of the PDP or of its configuration, so its caller gets HTTP 503. `fake-pdp` gives a code of 17.4 for each error of the API, and the schema `approval-verdict` lists all the codes. The runner has the endpoint `approval_requests` and the condition `no_pdp_credential`, and the cases D97 and U121 test the rule.
 207. The `unit` of a ceiling is a plural noun, for example `rows`, `bytes` or `seconds` (6.1). The `unit` of a budget is a singular noun, for example `query`, `export` or `request`. A form then shows "100 rows" and "1 request" with no change of the text. The linter gives only the warnings `ceiling_unit_plural` and `budget_unit_singular`, because its test is a heuristic. The core reader does not give them, so the cases with `_no_warning` do not change. The examples, the directories of the cases and the reference service now use `rows` and `seconds`.

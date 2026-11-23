@@ -65,6 +65,10 @@ fn percent_decode(text: &str) -> Option<String> {
     while i < bytes.len() {
         if bytes[i] == b'%' {
             let pair = text.get(i + 1..i + 3)?;
+            // `from_str_radix` accepts a sign: `%+5` is not an escape.
+            if !pair.bytes().all(|b| b.is_ascii_hexdigit()) {
+                return None;
+            }
             out.push(u8::from_str_radix(pair, 16).ok()?);
             i += 3;
         } else {
@@ -369,6 +373,13 @@ mod tests {
         assert!(query_params("subject=%zz").is_none());
         assert!(query_params("subject=%ff").is_none());
         assert_eq!(query_params("").unwrap(), Vec::new());
+    }
+
+    #[test]
+    fn an_escape_with_a_sign_is_refused() {
+        assert_eq!(percent_decode("%2B5").as_deref(), Some("+5"));
+        assert!(percent_decode("%+5").is_none());
+        assert!(query_params("subject=%+5").is_none());
     }
 
     #[test]

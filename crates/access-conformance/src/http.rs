@@ -263,10 +263,7 @@ impl<'a> Reader<'a> {
         if chunked {
             let mut body = Vec::new();
             loop {
-                let line = self.line(until)?;
-                let size_text = line.split(';').next().unwrap_or("").trim();
-                let size = usize::from_str_radix(size_text, 16)
-                    .map_err(|_| format!("a chunk size is not valid: {size_text}"))?;
+                let size = chunk_size(&self.line(until)?)?;
                 if size == 0 {
                     loop {
                         if self.line(until)?.is_empty() {
@@ -313,6 +310,17 @@ impl<'a> Reader<'a> {
         }
         Ok(Vec::new())
     }
+}
+
+/// The size of a chunk from its size line. An extension after `;` has no effect.
+fn chunk_size(line: &str) -> Result<usize, String> {
+    let size_text = line.split(';').next().unwrap_or("").trim();
+    // `from_str_radix` accepts a sign: refuse each byte that is not a hexadecimal digit.
+    if !size_text.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err(format!("a chunk size is not valid: {size_text}"));
+    }
+    usize::from_str_radix(size_text, 16)
+        .map_err(|_| format!("a chunk size is not valid: {size_text}"))
 }
 
 fn find(hay: &[u8], needle: &[u8]) -> Option<usize> {
@@ -830,6 +838,15 @@ mod tests {
         .unwrap();
         assert_eq!(reply.text(), "abcde");
         handle.join().unwrap();
+    }
+
+    #[test]
+    fn a_chunk_size_with_a_sign_is_refused() {
+        assert_eq!(chunk_size("1a;name=value"), Ok(26));
+        assert_eq!(
+            chunk_size("+5"),
+            Err("a chunk size is not valid: +5".to_owned())
+        );
     }
 
     #[test]

@@ -1,6 +1,12 @@
 name: release
 
-# A tag such as v1.0 builds the programs for each platform and makes a release.
+# A tag such as v1.1 builds the programs for each platform and makes a release.
+# The job prepare compares the tag with Cargo.toml and docs/CHANGELOG.md. The job checks runs the workflow ci.
+# The notes of the release are the section of the version in docs/CHANGELOG.md (scripts/changelog-section.sh).
+# The tag must equal a heading: the tag v1.1 needs "## [1.1]", and the tag v1.1.0 needs "## [1.1.0]".
+# The packing of the tar archives is deterministic: names in order, owner 0:0, and the date of the commit on each entry.
+# The Rust toolchain is the stable toolchain of the runner. It is not pinned, so a new build can give other binaries.
+# No job logs in to a registry or publishes an image.
 on:
   push:
     tags: ["v*"]
@@ -8,11 +14,60 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   PROGRAMS: "-p keycheck -p access-token -p access-lint -p fake-pdp -p access-conformance -p reference-service -p reference-edge"
 
 jobs:
+  prepare:
+    name: Version and notes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Compare the tag with Cargo.toml and docs/CHANGELOG.md
+        shell: bash
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if ! printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+(\.[0-9]+)?$'; then
+            echo "::error::the tag $tag is not vX.Y or vX.Y.Z"
+            exit 1
+          fi
+          version="${tag#v}"
+          tag_xy="$(printf '%s\n' "$version" | cut -d. -f1-2)"
+          # The version of [workspace.package] is X.Y.Z. The tag v1.1 goes with the versions 1.1.Z.
+          crate="$(sed -n '/^\[workspace\.package\]$/,/^\[/{s/^version *= *"\(.*\)"$/\1/p;}' Cargo.toml | head -n 1)"
+          crate_xy="$(printf '%s\n' "$crate" | cut -d. -f1-2)"
+          if [ -z "$crate" ] || [ "$tag_xy" != "$crate_xy" ]; then
+            echo "::error::the tag $tag gives $tag_xy, but the version of [workspace.package] in Cargo.toml is '$crate'"
+            exit 1
+          fi
+          if ! scripts/changelog-section.sh "$version" docs/CHANGELOG.md > "$RUNNER_TEMP/notes.md"; then
+            echo "::error::docs/CHANGELOG.md has no section \"## [$version] - DATE\" with text"
+            exit 1
+          fi
+          {
+            echo
+            echo "The archives hold the programs of ProcurAuth $version. Check each archive with \`SHA256SUMS\`."
+          } >> "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: notes
+          path: ${{ runner.temp }}/notes.md
+          if-no-files-found: error
+
+  checks:
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: [prepare, checks]
     strategy:
       fail-fast: true
       matrix:
@@ -26,12 +81,29 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - name: Add the target
         shell: bash
         run: rustup target add "${{ matrix.target }}"
+      - name: Remove the paths of the runner from the programs
+        shell: bash
+        run: |
+          # rustc writes the paths of the workspace and of CARGO_HOME as procurauth and cargo.
+          workspace="$GITHUB_WORKSPACE"
+          cargo_home="${CARGO_HOME:-$HOME/.cargo}"
+          # On Windows, rustc sees the paths in the Windows form.
+          if command -v cygpath > /dev/null; then
+            workspace="$(cygpath -w "$workspace")"
+            cargo_home="$(cygpath -w "$cargo_home")"
+          fi
+          echo "RUSTFLAGS=--remap-path-prefix=${workspace}=procurauth --remap-path-prefix=${cargo_home}=cargo" >> "$GITHUB_ENV"
       - name: Build
         shell: bash
-        run: cargo build --release --locked --target "${{ matrix.target }}" $PROGRAMS
+        run: |
+          # PROGRAMS is a list of options: the shell splits it into words on purpose.
+          # shellcheck disable=SC2086
+          cargo build --release --locked --target "${{ matrix.target }}" $PROGRAMS
       - name: Pack
         shell: bash
         run: |
@@ -43,8 +115,28 @@ jobs:
           done
           cp LICENSE LICENSE-TEXTS.txt "$dir/"
           if [ "${{ matrix.pack }}" = tar ]; then
-            tar -czf "${dir}.tar.gz" "$dir"
             file="${dir}.tar.gz"
+            # Each entry has the date of the commit, the owner 0:0 without a name, and a place in name order.
+            SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+            export SOURCE_DATE_EPOCH
+            case "$RUNNER_OS" in
+              Linux)
+                tar --sort=name --owner=0 --group=0 --numeric-owner --mtime="@${SOURCE_DATE_EPOCH}" -cf - "$dir" | gzip -9n > "$file"
+                ;;
+              macOS)
+                # bsdtar has no --mtime and no --sort. touch sets the date, and sort gives the names in order.
+                stamp="$(TZ=UTC0 date -r "$SOURCE_DATE_EPOCH" +%Y%m%d%H%M.%S)"
+                TZ=UTC0 find "$dir" -exec touch -t "$stamp" {} +
+                find "$dir" -print | LC_ALL=C sort |
+                  tar --format ustar --uid 0 --gid 0 --numeric-owner --no-acls --no-fflags --no-xattrs --no-mac-metadata \
+                    -n -cf - -T - | gzip -9n > "$file"
+                ;;
+              *)
+                echo "::error::no tar command for $RUNNER_OS"
+                exit 1
+                ;;
+            esac
+            tar -tvzf "$file"
           else
             7z a -tzip "${dir}.zip" "$dir" > /dev/null
             file="${dir}.zip"
@@ -53,14 +145,14 @@ jobs:
           echo "FILE=$file" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ${{ matrix.name }}
+          name: build-${{ matrix.name }}
           path: |
             ${{ env.FILE }}
             ${{ env.FILE }}.sha256
           if-no-files-found: error
 
   publish:
-    needs: build
+    needs: [prepare, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -68,14 +160,19 @@ jobs:
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
+          pattern: build-*
           path: dist
           merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: notes
+          path: notes
       - name: Make the sums and the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd dist
-          cat *.sha256 > SHA256SUMS
+          cat ./*.sha256 > SHA256SUMS
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "ProcurAuth ${GITHUB_REF_NAME#v}" \
-            --notes "Programs of ProcurAuth ${GITHUB_REF_NAME#v}. Check each archive with SHA256SUMS." \
+            --notes-file ../notes/notes.md \
             ./*.tar.gz ./*.zip ./*.sha256 SHA256SUMS
