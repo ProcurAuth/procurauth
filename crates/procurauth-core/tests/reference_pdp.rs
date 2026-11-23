@@ -182,14 +182,22 @@ impl ReferencePdp {
             return Self::metadata();
         }
         let Some(index) = self.service_index(headers) else {
-            return Response {
-                status: 401,
-                body: json!({}),
+            // 17.4: the approval API answers an unknown credential as the evaluation endpoints do.
+            let body = if endpoint == "approval_requests" {
+                json!({"error": "unauthorized"})
+            } else {
+                json!({})
             };
+            return Response { status: 401, body };
         };
         match endpoint {
             "evaluation" => self.single(index, body),
             "evaluations" => self.batch(index, body),
+            // The reference PDP has no approval API: a known credential gets `forbidden` (17.4).
+            "approval_requests" => Response {
+                status: 403,
+                body: json!({"error": "forbidden"}),
+            },
             other => panic!("the reference PDP has no endpoint {other}"),
         }
     }
@@ -487,11 +495,18 @@ fn run_case_value(case: &Value) -> Result<(), String> {
     let id = case["id"].as_str().unwrap();
     let given = &case["given"];
     let counters = given["counters"].as_array().cloned().unwrap_or_default();
-    let mut pdp = ReferencePdp::new(
-        load_directory(given),
-        given["clock"]["now"].as_u64(),
-        &counters,
-    );
+    let mut directory = load_directory(given);
+    let needs_credential = case["skip_if"]
+        .as_array()
+        .is_some_and(|list| list.iter().any(|c| c == "no_pdp_credential"));
+    if needs_credential {
+        // The case needs a PDP that asks for a credential: give one to each service.
+        let digest = hex::encode(Sha256::digest(b"credential-of-the-test"));
+        for service in &mut directory.services {
+            service.credential_sha256 = Some(digest.clone());
+        }
+    }
+    let mut pdp = ReferencePdp::new(directory, given["clock"]["now"].as_u64(), &counters);
     let no_headers = Map::new();
     for step in case["steps"].as_array().unwrap() {
         let name = step["name"].as_str().unwrap_or("step");
