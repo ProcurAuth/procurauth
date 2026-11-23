@@ -12,3 +12,5 @@ This file lists the places where the reference edge, the profiles and the script
 8. `procurauth-pep` has a new module, `access`. It gives the question of an edge for the action `access`. The site says that a PEP never asks for `access`. This is still true. The module is for an edge.
 9. The reference service has a new key, `mcp_session_budget`. With it, the action `mcp.session` lists a budget, and the case U95 runs.
 10. The scripts `scripts/conformance.sh` and `scripts/ci.sh` are new in the description of the repository. The site does not describe them.
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.

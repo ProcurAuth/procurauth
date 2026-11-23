@@ -24,12 +24,17 @@
       ]
     },
     "iat": {
-      "description": "The time of issue, in whole seconds since the Unix epoch.",
+      "description": "The time of issue, in whole seconds since the Unix epoch. The JSON text is an integer with digits only: no fraction, no exponent and no sign (protocol 9.3). JSON Schema cannot see the text, so it also accepts 1792569600.0: a service refuses that form.",
       "type": "integer",
       "minimum": 0
     },
     "exp": {
-      "description": "The end of the life of the token, in whole seconds since the Unix epoch.",
+      "description": "The end of the life of the token, in whole seconds since the Unix epoch. It has the form of iat (protocol 9.3).",
+      "type": "integer",
+      "minimum": 0
+    },
+    "nbf": {
+      "description": "Optional. The start of the life of the token, in whole seconds since the Unix epoch, with the form of iat. A service refuses the token when nbf is later than its clock plus the skew (protocol 9.3, 9.4).",
       "type": "integer",
       "minimum": 0
     },

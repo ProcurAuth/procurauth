@@ -79,6 +79,24 @@
       "type": "string",
       "pattern": "^[A-Za-z0-9-]+$"
     },
+    "approval_variant": {
+      "description": "A call whose arguments change the effect.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arguments",
+        "op"
+      ],
+      "properties": {
+        "arguments": {
+          "description": "The arguments of the tool for this call, with no control argument."
+        },
+        "op": {
+          "description": "The op that the service builds from these arguments. A JSON object that protocol 17.3 accepts.",
+          "type": "object"
+        }
+      }
+    },
     "operation": {
       "description": "One operation of the data model. It gives the method, the path, the headers and the body of the request, and the variables that the cases use.",
       "type": "object",
@@ -166,6 +184,38 @@
         "arguments": {
           "description": "The arguments of the tool of an MCP call. The default is an empty object."
         },
+        "approval": {
+          "description": "Only for an entry of approval_calls. What the runner needs to compute the effects of the calls (protocol 17.3, 17.3a). The effect binds the service, the action, the resource of the operation and the op. The op is what the service builds from the arguments of the call.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "variants"
+          ],
+          "properties": {
+            "op": {
+              "description": "The op of the base call. A JSON object that protocol 17.3 accepts.",
+              "type": "object"
+            },
+            "variants": {
+              "description": "The two changes of the arguments that change the effect. Each one gives the arguments of the call and the op that the service builds from them.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "effect_2",
+                "effect_3"
+              ],
+              "properties": {
+                "effect_2": {
+                  "$ref": "#/$defs/approval_variant"
+                },
+                "effect_3": {
+                  "$ref": "#/$defs/approval_variant"
+                }
+              }
+            }
+          }
+        },
         "capture": {
           "description": "Names for members of the JSON answer to the step before. Each value is a JSON Pointer. The templates of the operation read each name as a variable.",
           "type": "object",
@@ -176,6 +226,11 @@
             "type": "string",
             "pattern": "^(/([^/~]|~[01])*)*$"
           }
+        },
+        "other_action": {
+          "description": "Only for an entry of approval_calls. The variable other_action: the action of the other permission of the call (protocol 5.5a), for a tool that needs two permissions. The test PDP answers true to that question. Without the member, the variable is a hyphen, which no action has.",
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -423,6 +478,32 @@
             "list_options": {
               "$ref": "#/$defs/operation"
             },
+            "read_health": {
+              "description": "A health-probe route (protocol 10.1c). The runner sends no token.",
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "path"
+                  ]
+                }
+              ]
+            },
+            "use_no_action": {
+              "description": "A route that runs no action of the action document, for example a static file (protocol 10.1c).",
+              "allOf": [
+                {
+                  "$ref": "#/$defs/operation"
+                },
+                {
+                  "required": [
+                    "path"
+                  ]
+                }
+              ]
+            },
             "mcp_call_plain": {
               "allOf": [
                 {
@@ -463,19 +544,6 @@
               ]
             },
             "mcp_call_multi": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/operation"
-                },
-                {
-                  "required": [
-                    "tool",
-                    "action"
-                  ]
-                }
-              ]
-            },
-            "mcp_call_approval": {
               "allOf": [
                 {
                   "$ref": "#/$defs/operation"
@@ -531,6 +599,35 @@
               ]
             }
           }
+        },
+        "approval_calls": {
+          "description": "One call of a tool for each action of the service, except mcp.session (protocol 5.2b). The key is the name of the action. The cases of protocol section 17 that use mcp_call_approval run once for each entry. The runner reads the action document of the service, and the case U111 fails when an action has no entry. The member needs the member mcp.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$",
+            "maxLength": 64
+          },
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/operation"
+              },
+              {
+                "required": [
+                  "tool",
+                  "resource_type",
+                  "resource_id",
+                  "ancestors",
+                  "approval"
+                ],
+                "not": {
+                  "required": [
+                    "action"
+                  ]
+                }
+              }
+            ]
+          }
         }
       },
       "allOf": [
@@ -560,11 +657,6 @@
                   {
                     "required": [
                       "mcp_call_multi"
-                    ]
-                  },
-                  {
-                    "required": [
-                      "mcp_call_approval"
                     ]
                   },
                   {
@@ -605,6 +697,30 @@
               "options_type"
             ]
           }
+        },
+        {
+          "if": {
+            "required": [
+              "approval_calls"
+            ]
+          },
+          "then": {
+            "required": [
+              "mcp"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "mcp"
+            ]
+          },
+          "then": {
+            "required": [
+              "approval_calls"
+            ]
+          }
         }
       ]
     },
@@ -615,6 +731,10 @@
       "properties": {
         "spawn_fake_pdp": {
           "description": "True to start fake-pdp in the process, with the directory of each case. Do not give it with the option --url. The default is false.",
+          "type": "boolean"
+        },
+        "approvals": {
+          "description": "True when the PDP gives approvals (protocol section 17). The runner then runs the cases of this section. Do not give it with spawn_fake_pdp: the PDP that the runner starts gives approvals. The default is false.",
           "type": "boolean"
         },
         "credential_file": {
@@ -685,6 +805,11 @@
           "then": {
             "not": {
               "anyOf": [
+                {
+                  "required": [
+                    "approvals"
+                  ]
+                },
                 {
                   "required": [
                     "load"
@@ -839,6 +964,19 @@
             },
             "unknown": {
               "description": "A text with the format of a key that the edge does not know.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "text_file"
+              ],
+              "properties": {
+                "text_file": {
+                  "$ref": "#/$defs/file"
+                }
+              }
+            },
+            "confirm_access": {
+              "description": "A key that the edge knows, and whose grant of the action access has confirm (protocol 17.8). The case E19 uses it: the edge ignores confirm. Without it, the runner skips the case.",
               "type": "object",
               "additionalProperties": false,
               "required": [

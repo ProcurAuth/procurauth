@@ -29,3 +29,5 @@ This file lists the places where `keycheck` differs from the section `keycheck` 
 11. The page says that the tool never writes the text to a log. The tool goes further. A usage error never shows the text of an argument, and no message shows the path of the format file. Each of them can be a key that the user gave by mistake.
 12. A finding about the format file repeats the value that it found. The tool replaces each run of more than 24 characters without a space by `<N characters hidden>`. A user can give a key as the format file by mistake.
 13. The configuration rules say that an error message names the value. This does not apply to the arguments of the command line, for the reason in item 11. It applies to the members of the format file.
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.

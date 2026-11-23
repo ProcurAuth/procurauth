@@ -21,14 +21,15 @@
       }
     },
     "metadata": {
-      "description": "The values of the metadata members of the PDP (protocol 6.9, 10.7, 10.7a). A member that the file does not give is not in the metadata.",
+      "description": "The values of the metadata members of the PDP (protocol 6.9, 10.7, 10.7a, 10.7b). A member that the file does not give is not in the metadata.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "usage_max_seconds": { "description": "The member procurauth_usage_max_seconds.", "type": "integer", "minimum": 1 },
         "idle_max_seconds": { "description": "The member procurauth_idle_max_seconds.", "type": "integer", "minimum": 1 },
         "evaluations_max_bytes": { "description": "The member procurauth_evaluations_max_bytes.", "type": "integer", "minimum": 1 },
-        "evaluations_max_items": { "description": "The member procurauth_evaluations_max_items.", "type": "integer", "minimum": 1 }
+        "evaluations_max_items": { "description": "The member procurauth_evaluations_max_items.", "type": "integer", "minimum": 1 },
+        "directory_max_age_seconds": { "description": "The member procurauth_directory_max_age_seconds: the largest age of the copy of the directory, in seconds (protocol 3.9, 10.7b).", "type": "integer", "minimum": 1 }
       }
     },
     "services": {
@@ -45,6 +46,15 @@
       "description": "The first values of counters. Without an entry, a counter starts at zero.",
       "type": "array",
       "items": { "$ref": "#/$defs/counter" }
+    },
+    "approvals": {
+      "description": "The approvals that the PDP holds at the start (protocol 17.6). For one subject, action, resource and effect, the last entry is the latest approval. A PDP that gives no approval does not read this member.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/approval" }
+    },
+    "confirm_all": {
+      "description": "Test mode. Default false. When it is true, each action except access needs an approval for each subject, as if each grant had confirm equal to true (protocol 17.8). Use it to test that a PEP follows protocol section 17 for each action of its action document.",
+      "type": "boolean"
     },
     "failures": {
       "description": "The failures that the PDP makes, to test the PEP (protocol 6.9, 10.3).",
@@ -132,8 +142,75 @@
           "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"
         },
         "resource": { "$ref": "#/$defs/node_path" },
-        "limits": { "$ref": "https://sccagg5.github.io/procurauth/schemas/limit-values.schema.json" }
+        "limits": { "$ref": "https://sccagg5.github.io/procurauth/schemas/limit-values.schema.json" },
+        "confirm": {
+          "description": "The default is false. When it is true, the action needs the approval of the owner (protocol 17.8). It has no effect on the action access.",
+          "type": "boolean",
+          "default": false
+        }
       }
+    },
+    "approval": {
+      "description": "One approval at the start (protocol 17.6). The PDP answers a question with an effect from it (protocol 17.1). The members answered_by, device, answered_at and comment are data that a PDP never gives to a PEP (protocol 17.12).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subject", "action", "resource", "effect", "status"],
+      "properties": {
+        "id": { "description": "The id of the request.", "type": "string", "minLength": 1 },
+        "subject": { "type": "string", "minLength": 1 },
+        "action": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"
+        },
+        "resource": { "$ref": "#/$defs/node_path" },
+        "effect": { "$ref": "https://sccagg5.github.io/procurauth/schemas/evaluation-context.schema.json#/$defs/effect" },
+        "status": { "enum": ["pending", "replied", "answered", "abandoned", "expired", "cancelled", "superseded"] },
+        "decision": {
+          "description": "The answer of the owner. It is present when the status is answered, and only then.",
+          "enum": ["approve", "decline"]
+        },
+        "consume_before": {
+          "description": "The time in whole seconds since the Unix epoch after which the approval cannot be used. It is present when the decision is approve, and only then.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "consumed": {
+          "description": "True when the approval is consumed. The default is false. It is only for the decision approve.",
+          "type": "boolean",
+          "default": false
+        },
+        "deny_until": {
+          "description": "The end of the deny time, in whole seconds since the Unix epoch (protocol 17.6). It is only for the decision decline. Without it, the deny time has ended.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "answered_by": { "type": "string" },
+        "device": { "type": "string" },
+        "answered_at": { "type": "integer", "minimum": 0 },
+        "comment": {
+          "description": "The text of a refusal. It goes only to the agent (protocol 17.11).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "intent"],
+          "properties": {
+            "text": { "type": "string" },
+            "intent": { "enum": ["comment", "change_request"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "answered" } }, "required": ["status"] },
+          "then": { "required": ["decision"] },
+          "else": { "not": { "anyOf": [ { "required": ["decision"] }, { "required": ["consume_before"] }, { "required": ["consumed"] }, { "required": ["deny_until"] }, { "required": ["answered_by"] }, { "required": ["device"] }, { "required": ["answered_at"] }, { "required": ["comment"] } ] } }
+        },
+        {
+          "if": { "properties": { "decision": { "const": "approve" } }, "required": ["decision"] },
+          "then": { "required": ["consume_before"], "not": { "anyOf": [ { "required": ["deny_until"] }, { "required": ["comment"] } ] } },
+          "else": { "not": { "anyOf": [ { "required": ["consume_before"] }, { "required": ["consumed"] } ] } }
+        }
+      ]
     },
     "counter": {
       "description": "The first value of one counter: the units that the subject spent in the current window of the fixed clock (protocol 6.7).",
@@ -206,7 +283,7 @@
             ],
             "limits": [
               { "name": "requests", "label": "Requests", "description": "Requests that run.", "unit": "request", "kind": "budget" },
-              { "name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "row", "kind": "ceiling", "min": 1, "max": 1000000 }
+              { "name": "max_rows", "label": "Most rows", "description": "The most rows that one read gives.", "unit": "rows", "kind": "ceiling", "min": 1, "max": 1000000 }
             ]
           }
         }

@@ -77,9 +77,10 @@
           "no_mcp_endpoint",
           "no_budget_session",
           "no_input_tool",
-          "no_approval_tool",
           "no_multi_action",
-          "single_key_set"
+          "single_key_set",
+          "no_approval_support",
+          "no_pdp_credential"
         ]
       }
     },
@@ -170,6 +171,37 @@
           "description": "For a PEP case: answers of the test PDP that replace the answer from the directory. The runner reads the rules in order, and the first rule that matches a question gives the answer. A question that no rule matches gets the answer from the directory. Without a directory, such a question is a fault of the case.",
           "type": "array",
           "items": { "$ref": "#/$defs/script_rule" }
+        },
+        "approval_script": {
+          "description": "For a PEP case: answers of the test PDP on its approval API (protocol 17.4). The runner reads the rules in order, and the first rule that matches a request gives the answer. A request that no rule matches gets HTTP 404 with the error not_found.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/approval_rule" }
+        }
+      }
+    },
+    "approval_rule": {
+      "description": "One rule of the script of the approval API of the test PDP.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "respond"],
+      "properties": {
+        "when": {
+          "description": "The rule matches a request when each member that it gives is equal to the request. An empty object matches each request.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "route": {
+              "description": "submit is POST /approval/v1/requests. status is a read of a request. keepalive is a POST to the keepalive route.",
+              "enum": ["submit", "status", "keepalive"]
+            },
+            "request_id": { "description": "The id in the path of a status or a keepalive.", "type": "string", "minLength": 1 }
+          }
+        },
+        "respond": { "$ref": "#/$defs/script_rule/properties/respond" },
+        "times": {
+          "description": "The most requests that the rule answers in the case. After them, the runner reads the next rules. Without it, the rule answers each request that it matches.",
+          "type": "integer",
+          "minimum": 1
         }
       }
     },
@@ -190,6 +222,16 @@
             "bad_signature", "expired", "future_iat", "long_life", "at_jwt",
             "alg_none", "alg_hs256", "alg_eddsa", "wrong_issuer", "wrong_audience", "unknown_kid"
           ]
+        },
+        "nbf": {
+          "description": "The claim nbf (protocol 9.3). iat gives nbf equal to iat, and the token is good. future gives an nbf that is later than the clock plus the skew, and the token is bad. Without the member, the token has no nbf.",
+          "enum": ["iat", "future"]
+        },
+        "number_forms": {
+          "description": "The JSON form of the number of a claim (protocol 9.3). The member name is the claim. fraction writes the digits and .0, exponent writes the digits and e0, and negative writes a minus sign and the digits. The value of the claim stays the same, and the claim must be a whole number.",
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": { "enum": ["fraction", "exponent", "negative"] }
         }
       }
     },
@@ -208,7 +250,20 @@
             "action": { "type": "string" },
             "resource": { "$ref": "https://sccagg5.github.io/procurauth/schemas/fake-pdp-data.schema.json#/$defs/node_path" },
             "usage": { "description": "True for a question with context.usage. False for a question without it.", "type": "boolean" },
-            "match": { "enum": ["node", "subtree"] }
+            "match": { "enum": ["node", "subtree"] },
+            "effect": {
+              "description": "The member context.approval.effect of the question. It is the text sha256: and 64 digits, or a variable such as {{effect}}.",
+              "type": "string",
+              "pattern": "^(sha256:[0-9a-f]{64}|\\{\\{effect(_[0-9]+)?\\}\\})$"
+            },
+            "no_effect": {
+              "description": "True for a question with no context.approval (protocol 17.1). False for a question that has it.",
+              "type": "boolean"
+            },
+            "permission_only": {
+              "description": "True for a question with context.permission_only (protocol 5.5a). False for a question without it.",
+              "type": "boolean"
+            }
           }
         },
         "respond": {
@@ -230,6 +285,11 @@
               "properties": { "no_answer": { "const": true } }
             }
           ]
+        },
+        "times": {
+          "description": "The most questions that the rule answers in the case. After them, the runner reads the next rules. Without it, the rule answers each question that it matches.",
+          "type": "integer",
+          "minimum": 1
         }
       }
     },
@@ -255,14 +315,14 @@
         "operation": {
           "description": "For a PEP. The runner maps the operation to a request of the service under test with its profile. The README of the directory conformance/ explains each operation.",
           "enum": [
-            "use_plain", "use_budget", "use_ceiling", "use_service", "use_multi", "read_actions", "list_options",
+            "use_plain", "use_budget", "use_ceiling", "use_service", "use_multi", "read_actions", "list_options", "read_health", "use_no_action",
             "mcp_call_plain", "mcp_call_budget", "mcp_call_input", "mcp_call_multi",
             "mcp_call_approval", "mcp_approve", "mcp_refuse"
           ]
         },
         "endpoint": {
-          "description": "For a PDP. The endpoint of the AuthZEN API: the runner reads its path in the metadata of the PDP, or it uses the default path.",
-          "enum": ["evaluation", "evaluations", "metadata"]
+          "description": "For a PDP. The endpoint of the AuthZEN API: the runner reads its path in the metadata of the PDP, or it uses the default path. The value approval_requests is POST /approval/v1/requests of the approval API (protocol 17.4).",
+          "enum": ["evaluation", "evaluations", "metadata", "approval_requests"]
         },
         "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
         "path": {
@@ -280,7 +340,14 @@
         "token": {
           "description": "The name of a token of given.tokens. The runner sends it in the way that suits the role: in the header of the identity token to a PEP.",
           "type": "string"
+        },
+        "variant": {
+          "description": "For the operation mcp_call_approval only. It changes the base call. The values effect_2 and effect_3 change an argument that decides what the tool does, so the effect is the variable effect_2 or effect_3. The value approval_ref gives the control argument approval_ref in place of lease_s. The value wait adds the control argument wait_s, and the value no_control gives none. A control argument never changes the effect (protocol 17.9a).",
+          "enum": ["effect_2", "effect_3", "approval_ref", "wait", "no_control"]
         }
+      },
+      "dependentSchemas": {
+        "variant": { "properties": { "operation": { "const": "mcp_call_approval" } }, "required": ["operation"] }
       },
       "oneOf": [
         { "required": ["operation"], "not": { "anyOf": [ { "required": ["endpoint"] }, { "required": ["method"] }, { "required": ["path"] } ] } },
@@ -301,7 +368,7 @@
         "json": { "description": "Members of the body of the answer, when the body is JSON.", "$ref": "#/$defs/pointer_matchers" },
         "valid_as": {
           "description": "The body of the answer is a good document of this kind, as the core library reads it. A value with no_warning also needs a reader report with no warning.",
-          "enum": ["action_document", "action_document_no_warning", "options_answer", "options_answer_no_warning"]
+          "enum": ["action_document", "action_document_no_warning", "action_document_no_approval_member", "action_document_called_for_each_action", "options_answer", "options_answer_no_warning"]
         },
         "pdp_connections": {
           "description": "For a PEP. The number of connections that the test PDP accepted since the start of the case.",
@@ -317,6 +384,25 @@
             "properties": {
               "json": { "$ref": "#/$defs/pointer_matchers" },
               "headers": { "description": "Matchers for the headers of the question. A question matches when its body matches json and its headers match headers.", "$ref": "#/$defs/header_matchers" },
+              "count": { "$ref": "#/$defs/matcher" }
+            }
+          }
+        },
+        "pdp_approvals": {
+          "description": "For a PEP. The requests that the test PDP received on its approval API during the step. Each entry counts the requests of its route that match each matcher of json and of query. Without count, the entry expects exactly one request.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["route"],
+            "properties": {
+              "route": { "enum": ["submit", "status", "keepalive"] },
+              "json": { "description": "Matchers for the body of the request. A status has no body.", "$ref": "#/$defs/pointer_matchers" },
+              "query": {
+                "description": "Matchers for the query parameters of a status. The member name is the name of the parameter.",
+                "type": "object",
+                "additionalProperties": { "$ref": "#/$defs/matcher" }
+              },
               "count": { "$ref": "#/$defs/matcher" }
             }
           }

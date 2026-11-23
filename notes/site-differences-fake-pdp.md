@@ -36,3 +36,5 @@ This file lists the places where the tool `fake-pdp` differs from the page `docs
 
 19. The page has no approval. The program gives the approval API of protocol 17.4, the reasons of 17.1, the test control `/__fake/approvals` and `/__fake/approval-refs`, and twelve metadata members `procurauth_approval_*`.
 20. The page lists the admin endpoints of the first version. The program has five more.
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.

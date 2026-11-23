@@ -34,3 +34,5 @@ This file lists the places where `access-lint` differs from the section `access-
 19. `--version` prints two lines: the name with the version, and the licence `Apache-2.0`.
 20. The tool does not read the standard input, because the site does not say that `access-lint` does.
 21. The tool reads no environment variable. This includes the variables for an HTTP proxy.
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.

@@ -23,3 +23,5 @@ This file lists the places where `procurauth-pep` and `reference-service` differ
 
 12. The site has no approval in the library. The library has the module `approval`, the value `Outcome::ApprovalRequired`, the refusal `Refusal::Approval` and the counters of `Pep::approval_stats`. The MCP helpers have the replies of 5.7 and the tool `get_action_status`.
 13. The reference service has the tool `append_rows` and the tool `get_action_status`. The tool `write_rows` is gone. The profile of the runner for it has the member `approval_calls`, with one entry for each action. Each action of the service goes through the flow of section 17 (decision 148).
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.

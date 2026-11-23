@@ -42,3 +42,5 @@ This file lists the places where `access-conformance` differs from the section `
 22. The program holds a copy of the cases and of the directory files. The copy comes from `conformance/` when the program is built.
 23. The case U98 was wrong for a service whose action `mcp.session` lists a budget. The change is in `case-fixes.md`.
 24. The directory check cannot prove the counters. It uses questions with no `context.usage`. A directory that has services with credentials is not checked, unless the profile has a credential.
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.

@@ -37,3 +37,5 @@ This file lists the places where the tool `access-token` differs from the sectio
 
 20. The schema name `access-token-config` is in the list `SCHEMA_NAMES` of the crate `procurauth-schema-check`.
 21. The STE test of `conformance/schema-check/tests/ste.rs` reads the `README.md` of each crate. Before, it read only the README of the core.
+
+Status: Applied to the site in lot AL1 (2026-11-23). This status applies to each item of this file.
