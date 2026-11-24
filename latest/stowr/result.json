@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-24T12:27:51Z",
+  "procurauth_tag": "v1.1.1",
+  "project": "stowr",
+  "protocol": "1.1",
+  "repo": "ProcurAuth/stowr",
+  "runner_version": "1.1.1",
+  "seconds": 26,
+  "series": {
+    "U": {
+      "cases": 127,
+      "compliant": true,
+      "failed": 0,
+      "passed": 81,
+      "problems": {},
+      "role": "pep",
+      "skipped": 46,
+      "warned": 0
+    }
+  },
+  "status": "compliant",
+  "tag": "v0.3.1"
+}

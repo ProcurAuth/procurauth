@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-24T12:28:25Z",
+  "procurauth_tag": "v1.1.1",
+  "project": "clickhouse-dash",
+  "protocol": "1.1",
+  "repo": "Circular-fi/Clickhouse-dash",
+  "runner_version": "1.1.1",
+  "seconds": 64,
+  "series": {
+    "U": {
+      "cases": 127,
+      "compliant": true,
+      "failed": 0,
+      "passed": 126,
+      "problems": {
+        "skipped_not_expected": [
+          "U117"
+        ]
+      },
+      "role": "pep",
+      "skipped": 1,
+      "warned": 0
+    }
+  },
+  "status": "compliant",
+  "tag": "v1.6.0"
+}
