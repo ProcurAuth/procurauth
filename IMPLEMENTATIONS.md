@@ -50,6 +50,8 @@ A service conforms only when it follows section 17 for each action of its action
 
 Each project runs `access-conformance` itself. Skipped cases are not failures. The reason of each skipped case is in the output of the runner.
 
+The conformance bench also tests the latest release of each program with the latest runner. See [`conformance/bench/README.md`](conformance/bench/README.md). The page `implementations.html` shows its last results.
+
 ## Add your implementation
 
 Open the form "Add an implementation" in [the issue tracker](https://github.com/ProcurAuth/procurauth/issues/new/choose). Give the name, the role (PEP, PDP or edge) and a link. Give the version of ProcurAuth and the commit that you tested. Add the result of `access-conformance`.

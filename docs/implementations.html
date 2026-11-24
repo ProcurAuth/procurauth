@@ -105,6 +105,31 @@
     <li>A skipped case is not a failure. The runner skips a case when the target lacks the feature that the case needs, for example an MCP endpoint.</li>
     <li>Section 17 is mandatory for a service. A service that cannot ask for an approval for each of its actions does not conform.</li>
   </ul>
+  <h3 id="bench-h">The bench</h3>
+  <p class="prose">The conformance bench tests the latest release of each program with the latest runner. A release of a program or of ProcurAuth starts it. The table below shows the last result. <a href="https://github.com/ProcurAuth/procurauth/tree/conformance-results">The branch <code>conformance-results</code></a> holds the data.</p>
+  <div class="tablewrap"><table id="bench-table" aria-labelledby="bench-h">
+    <thead><tr><th>Program</th><th>Release</th><th>Roles</th><th>Result</th><th>Date</th></tr></thead>
+    <tbody><tr><td colspan="5">The results load from the branch <code>conformance-results</code>.</td></tr></tbody>
+  </table></div>
+  <script>
+  (function () {
+    var body = document.querySelector("#bench-table tbody");
+    var url = "https://raw.githubusercontent.com/ProcurAuth/procurauth/conformance-results/index.json";
+    function cell(row, text) { var td = document.createElement("td"); td.textContent = text; row.appendChild(td); }
+    fetch(url).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); }).then(function (list) {
+      body.textContent = "";
+      list.forEach(function (item) {
+        var row = document.createElement("tr");
+        cell(row, item.project);
+        cell(row, item.tag);
+        cell(row, item.roles.map(function (r) { return r.toUpperCase(); }).join(", "));
+        cell(row, item.status === "compliant" ? "Compliant with " + item.protocol : (item.status === "non-compliant" ? "Not compliant with " + item.protocol : "Not tested"));
+        cell(row, (item.date || "").slice(0, 10));
+        body.appendChild(row);
+      });
+    }).catch(function () { /* The row of the table keeps its text. */ });
+  })();
+  </script>
   <p class="prose">The file <a href="https://github.com/ProcurAuth/procurauth/blob/main/IMPLEMENTATIONS.md"><code>IMPLEMENTATIONS.md</code></a> repeats this list with the pinned commits.</p>
 </section>
 

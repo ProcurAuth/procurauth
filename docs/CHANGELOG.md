@@ -8,6 +8,7 @@ This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en
 
 - The conformance bench (`conformance/bench/` and the workflow `bench`). It tests the released binary of a project with the latest runner. It writes a result and a badge for each project to the branch `conformance-results`.
 - A release of ProcurAuth starts the bench for all projects. A release of a project starts it for this project. The bench never blocks a release. `conformance/bench/README.md` gives the rules.
+- The page `implementations.html` shows the last result of the bench for each program.
 
 ## [1.1.1] - 2026-11-24
 
