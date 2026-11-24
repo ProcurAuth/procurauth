@@ -1,0 +1,13 @@
+{
+  "name": "hune",
+  "repo": "ProcurAuth/hune",
+  "asset": "hune_{version}_linux_amd64.tar.gz",
+  "binary": "hune",
+  "series": [
+    {
+      "role": "pep",
+      "series": "U",
+      "expected": "tests/conformance/expected.txt"
+    }
+  ]
+}

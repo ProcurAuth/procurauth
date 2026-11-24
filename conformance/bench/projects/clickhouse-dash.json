@@ -1,0 +1,13 @@
+{
+  "name": "clickhouse-dash",
+  "repo": "Circular-fi/Clickhouse-dash",
+  "asset": "chdash_{version}_linux_amd64.tar.gz",
+  "binary": "chdash",
+  "series": [
+    {
+      "role": "pep",
+      "series": "U",
+      "expected": "tests/conformance/expected.txt"
+    }
+  ]
+}

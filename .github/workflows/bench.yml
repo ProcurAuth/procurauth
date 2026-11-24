@@ -1,0 +1,174 @@
+name: bench
+
+# The conformance bench. It tests the released programs of the family with the latest runner of ProcurAuth.
+# Each project has two files in conformance/bench/projects/: its data (NAME.json) and its script (NAME.sh).
+# The bench downloads the release of the project and the latest release of the tools of ProcurAuth, and it builds
+# nothing. It writes one result and one badge for each project to the branch conformance-results.
+# A README badge reads the file badge.json of its project from that branch (shields.io endpoint badge).
+#
+# The bench never blocks a release. A project starts it after its own release (workflow_dispatch). A new release of
+# ProcurAuth starts it for all projects (workflow_run). Start it by hand with Actions > bench > Run workflow.
+# Read conformance/bench/README.md for the rules.
+# No job logs in to a registry or publishes an image.
+on:
+  workflow_run:
+    workflows: [release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "The name of one project, or all"
+        required: false
+        default: all
+        type: string
+      tag:
+        description: "The release tag of the project. Empty: the latest release."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+# One publication at a time. A run that waits is not cancelled.
+concurrency:
+  group: bench-results
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: List the projects
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      projects: ${{ steps.list.outputs.projects }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: List the projects
+        id: list
+        shell: bash
+        env:
+          PROJECT: ${{ github.event.inputs.project || 'all' }}
+          TAG: ${{ github.event.inputs.tag || '' }}
+        run: |
+          set -euo pipefail
+          if [ -n "$TAG" ] && [ "$PROJECT" = all ]; then
+            echo "::error::a tag needs one project"
+            exit 1
+          fi
+          if ! printf '%s\n' "$PROJECT" | grep -Eq '^(all|[a-z0-9][a-z0-9-]*)$'; then
+            echo "::error::the project name is not valid"
+            exit 1
+          fi
+          names="$(cd conformance/bench/projects && ls ./*.json | sed 's#^\./##; s#\.json$##')"
+          if [ "$PROJECT" != all ]; then
+            printf '%s\n' "$names" | grep -Fxq "$PROJECT" || { echo "::error::unknown project $PROJECT"; exit 1; }
+            names="$PROJECT"
+          fi
+          printf 'projects=%s\n' "$(printf '%s\n' "$names" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test ${{ matrix.project }}
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.plan.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Run the series of the project
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROJECT: ${{ matrix.project }}
+          TAG: ${{ github.event.inputs.tag || '' }}
+        run: |
+          set -euo pipefail
+          spec_tag="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          mkdir -p "$RUNNER_TEMP/tools"
+          gh release download "$spec_tag" --repo "$GITHUB_REPOSITORY" \
+            --pattern "procurauth-tools-${spec_tag#v}-x86_64-linux.tar.gz" --dir "$RUNNER_TEMP/tools"
+          tar -xzf "$RUNNER_TEMP"/tools/*.tar.gz -C "$RUNNER_TEMP/tools" --strip-components=1
+          BENCH_TOOLS_DIR="$RUNNER_TEMP/tools" BENCH_SPEC_TAG="$spec_tag" BENCH_OUT="$RUNNER_TEMP/out" \
+            conformance/bench/run.sh "$PROJECT" ${TAG:+"$TAG"}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: bench-${{ matrix.project }}
+          path: ${{ runner.temp }}/out
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish the results
+    needs: test
+    if: always() && needs.test.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 1
+          sparse-checkout: conformance/bench
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: bench-*
+          path: ${{ runner.temp }}/results
+      - name: Write the branch conformance-results
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULTS: ${{ runner.temp }}/results
+        run: |
+          set -euo pipefail
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          branch=conformance-results
+          mkdir "$RUNNER_TEMP/branch"
+          cd "$RUNNER_TEMP/branch"
+          git init --quiet
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads "$url" "$branch" >/dev/null 2>&1; then
+            git fetch --quiet --depth 1 "$url" "$branch"
+            git checkout --quiet -b "$branch" FETCH_HEAD
+          else
+            git checkout --quiet --orphan "$branch"
+          fi
+          mkdir -p latest history
+          for dir in "$RESULTS"/bench-*; do
+            [ -f "$dir/result.json" ] || continue
+            project="$(jq -r .project "$dir/result.json")"
+            tag="$(jq -r .tag "$dir/result.json")"
+            spec="$(jq -r .procurauth_tag "$dir/result.json")"
+            mkdir -p "latest/$project" "history/$project"
+            cp "$dir/result.json" "latest/$project/result.json"
+            cp "$dir/badge.json" "latest/$project/badge.json"
+            cp "$dir/result.json" "history/$project/${tag}_${spec}.json"
+          done
+          # One list of the last results. A page of the site reads it to show the compatible programs.
+          jq -s 'map({project, repo, tag, protocol, procurauth_tag, status, date, roles: [.series[].role]}) | sort_by(.project)' \
+            latest/*/result.json > index.json
+          cat > README.md <<'EOF'
+          # Conformance results
+
+          The workflow `bench` of the repository `ProcurAuth/procurauth` writes this branch. Do not edit it by hand.
+          `index.json` lists the last result of each project.
+          `latest/PROJECT/badge.json` is the badge of a project. `latest/PROJECT/result.json` is its last result.
+          `history/PROJECT/` has one result for each release of the project and each version of ProcurAuth.
+          EOF
+          git add -A
+          if git diff --cached --quiet; then
+            echo "no change"
+            exit 0
+          fi
+          git commit --quiet -m "Update the conformance results ($GITHUB_RUN_ID)"
+          git push --quiet "$url" "HEAD:refs/heads/$branch"

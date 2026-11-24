@@ -1,0 +1,13 @@
+{
+  "name": "stowr",
+  "repo": "ProcurAuth/stowr",
+  "asset": "stowr_{version}_linux_amd64.tar.gz",
+  "binary": "stowr",
+  "series": [
+    {
+      "role": "pep",
+      "series": "U",
+      "expected": "test/conformance/expected.txt"
+    }
+  ]
+}

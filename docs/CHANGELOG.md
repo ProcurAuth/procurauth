@@ -4,6 +4,11 @@ This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en
 
 ## [Unreleased]
 
+### Added
+
+- The conformance bench (`conformance/bench/` and the workflow `bench`). It tests the released binary of a project with the latest runner. It writes a result and a badge for each project to the branch `conformance-results`.
+- A release of ProcurAuth starts the bench for all projects. A release of a project starts it for this project. The bench never blocks a release. `conformance/bench/README.md` gives the rules.
+
 ## [1.1.1] - 2026-11-24
 
 Version 1.1.1 is a patch release. The protocol stays at version 1.1 and no rule of the protocol changes.
