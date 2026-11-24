@@ -80,6 +80,19 @@ The script builds the image `procurauth-dev:1` one time. The image is `rust:1-bo
 
 `scripts/ci.sh` runs the format check, clippy, the tests and the conformance runs. It stops at the first failure. `scripts/msrv.sh` checks that the workspace builds with the `rust-version` of the root `Cargo.toml`. `scripts/static.sh --check` builds the seven programs for the musl target and checks that each file is static.
 
+### Continuous integration
+
+A job of the CI for a push or a pull request takes seconds to a few tens of seconds. A check that takes more than one minute does not run on this path.
+
+| Workflow | When | Content |
+| --- | --- | --- |
+| `ci.yml` | Push to `main`, pull request, by hand, call from `release.yml` | The job `policy` (no image is published). The job `checks`: `cargo fmt --check` and `cargo clippy` on the runner. The runner caches the crates and the build files of the dependencies. |
+| `docs.yml` | Push to `main`, pull request | `scripts/check-docs.py`: links, site, ASD-STE100 and hygiene of the files. |
+| `full.yml` | Each night, by hand, call from `release.yml` | The job `tests` runs `scripts/ci.sh`: all the tests, the feature runs and the conformance runs. The job `msrv` runs `scripts/msrv.sh`. |
+| `release.yml` | Tag `v*` | Calls `ci.yml` and `full.yml`, then builds and packs the programs. |
+
+The jobs `tests` and `msrv` use the same scripts as a developer. A failed run of `full.yml` shows a change that broke a test after the pull request merged. Run `scripts/ci.sh` before you open a pull request that changes code. No workflow publishes a container image.
+
 ### Conformance runs
 
 `scripts/conformance.sh [pep|pdp|edge|all]` runs the runner `access-conformance` against the reference programs. It builds them with `scripts/cargo.sh`. It then starts one container with no network, and it starts all the processes in it, on the loopback address. The container holds the repository read only, and it stops by itself after a time limit. No port opens on the host.

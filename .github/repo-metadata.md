@@ -18,6 +18,7 @@ This file lists the settings that a maintainer applies on GitHub with `gh`. The 
 - Enable the private reports of vulnerabilities (Settings, Code security). `SECURITY.md` and `CODE_OF_CONDUCT.md` link to them.
 - Enable the alerts of Dependabot. `.github/dependabot.yml` updates the actions of the workflows.
 - Protect `main`: require the checks `Policy (no image is published)`, `checks` and `docs` before a merge.
+- The workflow `full` runs each night. Do not require it for a merge: it is not part of a pull request. Watch its result. GitHub stops a scheduled workflow after 60 days with no activity in the repository.
 - Do not publish a container image. The releases hold binaries and source only.
 
 ## Labels

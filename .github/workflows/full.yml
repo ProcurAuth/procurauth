@@ -1,0 +1,40 @@
+name: full
+
+# The slow checks. They are not in the fast path of ci.yml, because each of them takes more than one minute.
+# The workflow runs each night, by hand (workflow_dispatch) and before a release (release.yml calls it with workflow_call).
+# The job tests runs scripts/ci.sh: the format check, clippy, all the tests, the tests with and without the features,
+# and the conformance runs of the series U, D and E. The script uses Docker and builds the development image on the runner.
+# The job msrv runs scripts/msrv.sh: it builds the workspace with the oldest Rust version that it supports.
+# Both scripts run on a developer machine too. A developer runs them before a change of the code.
+# The image is local to the runner. No job logs in to a registry or publishes an image.
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests and conformance runs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Format, lint, tests and conformance runs
+        run: scripts/ci.sh
+
+  msrv:
+    name: Build with the oldest Rust version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build with the rust-version of Cargo.toml
+        run: scripts/msrv.sh

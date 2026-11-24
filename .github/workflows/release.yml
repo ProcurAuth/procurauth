@@ -2,6 +2,7 @@ name: release
 
 # A tag such as v1.1 builds the programs for each platform and makes a release.
 # The job prepare compares the tag with Cargo.toml and docs/CHANGELOG.md. The job checks runs the workflow ci.
+# The job full runs the workflow full: the slow checks (tests, conformance runs and MSRV) that ci does not run.
 # The notes of the release are the section of the version in docs/CHANGELOG.md (scripts/changelog-section.sh).
 # The tag must equal a heading: the tag v1.1 needs "## [1.1]", and the tag v1.1.0 needs "## [1.1.0]".
 # The packing of the tar archives is deterministic: names in order, owner 0:0, and the date of the commit on each entry.
@@ -66,8 +67,12 @@ jobs:
     needs: prepare
     uses: ./.github/workflows/ci.yml
 
+  full:
+    needs: prepare
+    uses: ./.github/workflows/full.yml
+
   build:
-    needs: [prepare, checks]
+    needs: [prepare, checks, full]
     strategy:
       fail-fast: true
       matrix:

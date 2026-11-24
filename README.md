@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/ProcurAuth/procurauth/actions/workflows/ci.yml"><img src="https://github.com/ProcurAuth/procurauth/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/ProcurAuth/procurauth/actions/workflows/full.yml"><img src="https://github.com/ProcurAuth/procurauth/actions/workflows/full.yml/badge.svg" alt="Full checks each night"></a>
   <a href="https://github.com/ProcurAuth/procurauth/releases/latest"><img src="https://img.shields.io/github/v/release/ProcurAuth/procurauth?color=4338ca&label=release" alt="Latest release"></a>
   <a href="#licence"><img src="https://img.shields.io/badge/licence-Apache--2.0%20%7C%20CC%20BY%204.0-lightgrey" alt="Licence: Apache-2.0 for the code, CC BY 4.0 for the texts"></a>
   <a href="https://procurauth.github.io/procurauth/implementations.html"><img src="https://img.shields.io/badge/ProcurAuth-1.1-4338ca" alt="ProcurAuth 1.1"></a>
@@ -215,7 +216,8 @@ These are the main directories of the repository.
 Use Docker. Do not install Rust on your machine.
 
 ```sh
-scripts/ci.sh                    # format, lint, tests and the conformance runs
+scripts/ci.sh                    # format, lint, tests and the conformance runs (the workflow full runs it each night)
+scripts/msrv.sh                  # build with Rust 1.89
 scripts/cargo.sh build --release
 scripts/static.sh --check        # static Linux programs (musl)
 python3 -I scripts/check-docs.py # links, site, ASD-STE100 and hygiene of the files

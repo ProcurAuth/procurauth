@@ -34,6 +34,12 @@ python3 -I scripts/check-docs.py           # links, site, ASD-STE100 and hygiene
 
 The workspace needs Rust 1.89. `scripts/msrv.sh` checks it.
 
+### What the CI runs
+
+A job of the CI for a push or a pull request takes seconds to a few tens of seconds. The workflow `ci` checks the workflows, the format and clippy. The workflow `docs` runs `scripts/check-docs.py`.
+
+The tests, the conformance runs and the MSRV check take more than one minute. They do not run for a pull request. The workflow `full` runs them each night, on request (Actions, `full`, Run workflow) and before a release. You run the same checks with `scripts/ci.sh` and `scripts/msrv.sh`. Run them before you open a pull request that changes code.
+
 ## Rules for each file
 
 - Use `example.com` and the address range `203.0.113.0/24` in examples. Never write a real host name, a real address or a real secret.

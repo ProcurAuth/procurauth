@@ -11,6 +11,8 @@ This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en
 - The repository, the site and the manifests use the new addresses. The version of the protocol stays 1.1.
 - `reference-service` and `reference-edge` read a configuration file of 4 MiB at most. A `_file` member of a text key names a file of 1 MiB at most. A `_file` member of a JSON document (`jwks`, `keys`, `key_format`) has the limit of 4 MiB. A larger file stops the program at start.
 - `fake-pdp` and `access-conformance` refuse a hexadecimal value with a sign: a digest, a percent escape and the size of a chunk. Before, `+5` was a valid value.
+- The workflow `ci` is fast: a job takes seconds to a few tens of seconds. The job `checks` runs `cargo fmt --check` and `cargo clippy` on the runner, with no Docker image build. The runner caches the crates and the build files of the dependencies, and only a push to `main` saves the cache. The job names `Policy (no image is published)` and `checks` do not change. The workflow `ci` has the trigger `workflow_dispatch`, and a new push cancels the run of the same pull request.
+- The tests, the feature runs and the conformance runs left the workflow `ci`, because they take more than one minute. They run in the new workflow `full`, and `scripts/ci.sh` still runs them on a developer machine. A pull request no longer runs them: run `scripts/ci.sh` before you open a pull request that changes code.
 - The release workflow runs the workflow `ci` before the builds. It compares the tag with `Cargo.toml` and with this file. The notes of a release are the section of its version in this file. The tar archives are deterministic.
 - The development scripts use `--locked` for each cargo command. The tag of each development image is the start of the SHA-256 of its Dockerfile. `scripts/static.sh` builds for the architecture of the host: x86_64 or aarch64.
 - The site uses the family `site.css` and `site.js`. The footer of each page links the home page of the organisation and the other programs.
@@ -25,6 +27,8 @@ This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en
 - `.editorconfig`, `.gitattributes` and `THIRD-PARTY-NOTICES.md`.
 - The script `scripts/changelog-section.sh`. It prints the section of one version of a changelog.
 - The workflow `ci` has the job `Policy (no image is published)`.
+- The workflow `full`. It runs each night, on request (`workflow_dispatch`) and before a release. The job `tests` runs `scripts/ci.sh`. The job `msrv` runs `scripts/msrv.sh`, which no workflow ran before. The release workflow runs `full` before the builds.
+- The section "Continuous integration" in `devdocs/architecture.md`, and the badge of the workflow `full` in the README.
 - `SECURITY.md` has the section "Known limits" about ES256 signatures and RUSTSEC-2026-0387, and it lists each test value.
 
 ## [1.1] - 2026-11-23
