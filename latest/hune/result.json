@@ -1,22 +1,18 @@
 {
-  "date": "2026-11-24T12:27:54Z",
+  "date": "2026-11-24T19:10:32Z",
   "procurauth_tag": "v1.1.1",
   "project": "hune",
   "protocol": "1.1",
   "repo": "ProcurAuth/hune",
   "runner_version": "1.1.1",
-  "seconds": 37,
+  "seconds": 24,
   "series": {
     "U": {
       "cases": 127,
-      "compliant": false,
-      "failed": 2,
-      "passed": 63,
+      "compliant": true,
+      "failed": 0,
+      "passed": 65,
       "problems": {
-        "failed_not_expected": [
-          "U113",
-          "U120"
-        ],
         "skipped_not_expected": [
           "U04",
           "U100",
@@ -87,6 +83,6 @@
       "warned": 0
     }
   },
-  "status": "non-compliant",
-  "tag": "v0.1.1"
+  "status": "compliant",
+  "tag": "v0.1.2"
 }
