@@ -4,6 +4,10 @@ This file follows the layout of [Keep a Changelog](https://keepachangelog.com/en
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-24
+
+Version 1.1.1 is a patch release. The protocol stays at version 1.1 and no rule of the protocol changes.
+
 ### Changed
 
 - The repository moved from the GitHub user `SCcagg5` to the GitHub organisation `ProcurAuth`. The address of the repository is now `https://github.com/ProcurAuth/procurauth`. GitHub redirects the old address of the repository.
@@ -44,7 +48,7 @@ Version 1.1 aligns the protocol with the portal, ClickHouse Dash and Stowr.
 - Protocol 10.0, 10.1, the new 10.1c, 8.3, 9.4 and 1.3. A health-probe route needs no token and no question. Each other route that runs no action, also a static file, asks the action `access` on the service. The open point 6 of section 15 is Unused.
 - MCP binding 5.7a. A 422 `explanation_required` and a 409 `cannot_supersede` give the tool error `invalid_argument`. A 422 `invalid_evaluation` makes the PEP ask one more time, and a second one gives `approval_expired`. Any other code stays HTTP 503.
 - MCP binding section 12. The binding is the source for a ProcurAuth service. The ten open points are final rules, and a table lists each difference from the contract of the MCP servers. Section 11 says what the binding claims about COAZ-MCP.
-- The protocol and the binding have the version 1.1. The workspace has the version 1.1.0.
+- The protocol and the binding have the version 1.1. The workspace has the version 1.1.1.
 - The conformance data has 245 cases: 127 for a PEP, 98 for a PDP and 20 for an edge. The new cases are U118 to U127, D97, D98 and E20.
 - `IMPLEMENTATIONS.md` lists ClickHouse Dash and the portal. Neither links a library of this repository. The text that said that spec question 53 was still open is gone.
 - Conformance runner. A token of a case has the members `number_forms` and `nbf`. A rule of a script has the member `times`. The runner has the endpoint `approval_requests`, the operations `read_health` and `use_no_action`, and the condition `no_pdp_credential`. The condition `single_key_set` holds for a PEP profile with one signing key.
