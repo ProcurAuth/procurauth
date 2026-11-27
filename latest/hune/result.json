@@ -1,11 +1,11 @@
 {
-  "date": "2026-11-26T22:59:42Z",
+  "date": "2026-11-27T01:19:08Z",
   "procurauth_tag": "v1.1.1",
   "project": "hune",
   "protocol": "1.1",
   "repo": "ProcurAuth/hune",
   "runner_version": "1.1.1",
-  "seconds": 33,
+  "seconds": 25,
   "series": {
     "U": {
       "cases": 127,
@@ -84,5 +84,5 @@
     }
   },
   "status": "compliant",
-  "tag": "v0.3.2"
+  "tag": "v0.3.3"
 }

@@ -14,11 +14,11 @@
   {
     "project": "hune",
     "repo": "ProcurAuth/hune",
-    "tag": "v0.3.2",
+    "tag": "v0.3.3",
     "protocol": "1.1",
     "procurauth_tag": "v1.1.1",
     "status": "compliant",
-    "date": "2026-11-26T22:59:42Z",
+    "date": "2026-11-27T01:19:08Z",
     "roles": [
       "pep"
     ]
